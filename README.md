@@ -1,6 +1,6 @@
 <h1 align="center">rust.tpl</h1>
 
-<p align="center"><strong>The base stack for noirbizarre's Rust projects, as a <a href="https://github.com/noirbizarre/git-tpl">git-tpl</a> template</strong></p>
+<p align="center"><strong>Base stack for Rust projects, as a <a href="https://github.com/noirbizarre/git-tpl">git-tpl</a> template</strong></p>
 
 ---
 
