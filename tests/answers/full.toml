@@ -1,0 +1,28 @@
+# The maximal case: every optional slot on, the full target matrix.
+#
+# Rendered and built by .github/workflows/render.yaml.
+
+crate = "full-example"
+description = "Every optional slot turned on"
+owner = "noirbizarre"
+author = "Axel H. <noirbizarre@gmail.com>"
+copyright_holder = "Axel H."
+copyright_year = 2026
+keywords = "cli, example, template, rust, scaffolding"
+categories = "command-line-utilities, development-tools"
+bin_name = "full-example"
+msrv = true
+msrv_version = "1.88"
+publish = true
+docs = true
+docs_accent = "deep orange"
+targets = [
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl",
+  "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin",
+  "aarch64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+  "aarch64-pc-windows-msvc",
+]

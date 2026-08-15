@@ -1,0 +1,142 @@
+# rust.tpl — the base stack for noirbizarre's Rust projects.
+#
+# What this template owns is deliberately bounded: the toolchain, the hooks,
+# the changelog contract, the CI/release workflows, and enough of Cargo.toml
+# and src/ to build. It does NOT own dependency *versions* — Dependabot bumps
+# those weekly in every consumer, and a template that propagated them would
+# fight Dependabot on every `git tpl update`.
+#
+# Files carrying project-specific additions (mise.toml tasks, prek.toml hooks,
+# Cargo.toml dependencies) end with a `# --- project-specific ---` marker.
+# Add below it, and Git's 3-way merge keeps your additions across updates.
+
+name = "rust"
+description = "Rust project base stack: mise, prek, git-cliff, gh-ship, CI and publication"
+
+# --- Identity ---------------------------------------------------------------
+
+[questions.crate]
+type = "string"
+prompt = "Crate name"
+help = "Also the GitHub repository name. Lowercase, dash-separated."
+# Anchored, and no leading/trailing dash: this string becomes a crate name, a
+# binary name, a URL path and a Rust identifier (via `lib_name`), and each of
+# those rejects a different subset of what a looser pattern would allow.
+pattern = "^[a-z0-9]+(-[a-z0-9]+)*$"
+message = "must be lowercase alphanumeric words separated by single dashes"
+
+[questions.description]
+type = "string"
+prompt = "One-line description"
+help = "Used in Cargo.toml, the README tagline and the documentation site."
+
+[questions.owner]
+type = "string"
+prompt = "GitHub owner"
+default = "noirbizarre"
+
+[questions.author]
+type = "string"
+prompt = "Cargo `authors` entry"
+default = "Axel H. <noirbizarre@gmail.com>"
+
+[questions.copyright_holder]
+type = "string"
+prompt = "Copyright holder"
+help = "Appears in LICENSE and the documentation footer."
+default = "Axel H."
+
+# Rendering is clock-free by design (ADR-006: no runtime context, so that the
+# same template revision and the same answers always produce the same tree).
+# The copyright year therefore cannot be read from a clock and has to be asked.
+# It is stored in `.config/git.tpl.toml`, so it survives every update — and
+# never advances on its own, which is correct: the year of first publication
+# is what a copyright notice records.
+[questions.copyright_year]
+type = "integer"
+prompt = "Copyright year"
+default = 2026
+
+[questions.keywords]
+type = "string"
+prompt = "Cargo keywords (comma-separated, max 5)"
+default = "cli"
+
+[questions.categories]
+type = "string"
+prompt = "Cargo categories (comma-separated)"
+default = "command-line-utilities,development-tools"
+
+[questions.bin_name]
+type = "string"
+prompt = "Binary name"
+help = """
+Usually the crate name. Hosts sometimes mandate another: `git tpl` only \
+resolves to a binary named `git-tpl`, and `gh` extensions must be named \
+`gh-<something>`.\
+"""
+default = "{{ crate }}"
+
+# --- Optional slots ---------------------------------------------------------
+
+[questions.msrv]
+type = "boolean"
+prompt = "Declare and enforce an MSRV?"
+help = "Adds `rust-version` to Cargo.toml and a CI job that checks it holds."
+default = true
+
+[questions.msrv_version]
+type = "string"
+prompt = "Minimum supported Rust version"
+when = "msrv"
+default = "1.88"
+pattern = "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+message = "must be a Rust version such as 1.88 or 1.88.0"
+
+[questions.publish]
+type = "boolean"
+prompt = "Publish to crates.io?"
+help = """
+Adds a Trusted Publishing job to the publish workflow. Answer no for anything \
+distributed only as a `gh` extension or a system package — `publish = false` \
+then goes into Cargo.toml so a stray `cargo publish` cannot create a second \
+install path.\
+"""
+default = true
+
+[questions.docs]
+type = "boolean"
+prompt = "Publish a documentation site?"
+help = "Zensical, built with uvx and deployed to GitHub Pages."
+default = true
+
+[questions.docs_accent]
+type = "choice"
+prompt = "Documentation accent colour"
+when = "docs"
+choices = ["indigo", "deep orange", "teal", "purple", "cyan", "pink", "amber"]
+default = "indigo"
+
+[questions.targets]
+type = "multi_choice"
+prompt = "Release targets"
+help = "Cross-compilation matrix for the publish workflow."
+choices_from = "data.targets.choices"
+
+# --- Data -------------------------------------------------------------------
+
+# The target catalogue lives in a data file rather than inline `choices`,
+# because each target carries four more fields the publish workflow needs
+# (runner, asset name, whether it needs `cross`, executable extension) and a
+# `choices` list can only hold strings.
+[data.targets]
+source = "data/targets.toml"
+
+# --- Computed ---------------------------------------------------------------
+
+[computed]
+# Cargo turns dashes into underscores for the library's Rust identifier, and
+# doing it here means the two can never disagree.
+lib_name = "{{ crate | replace('-', '_') }}"
+repo_url = "https://github.com/{{ owner }}/{{ crate }}"
+docs_url = "https://{{ owner }}.github.io/{{ crate }}/"

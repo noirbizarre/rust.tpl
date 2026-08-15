@@ -1,0 +1,60 @@
+<p align="center">
+  <img src="docs/images/icon.svg" alt="{{ crate }}" width="160">
+</p>
+
+<h1 align="center">{{ crate }}</h1>
+
+<p align="center"><strong>{{ description }}</strong></p>
+
+<p align="center">
+  <a href="{{ repo_url }}/actions/workflows/ci.yaml">
+    <img src="{{ repo_url }}/actions/workflows/ci.yaml/badge.svg" alt="CI">
+  </a>
+  <a href="https://codecov.io/gh/{{ owner }}/{{ crate }}">
+    <img src="https://codecov.io/gh/{{ owner }}/{{ crate }}/graph/badge.svg" alt="Codecov">
+  </a>
+{%- if publish %}
+  <a href="https://crates.io/crates/{{ crate }}">
+    <img src="https://img.shields.io/crates/v/{{ crate }}" alt="crates.io">
+  </a>
+{%- endif %}
+  <img src="https://img.shields.io/github/v/release/{{ owner }}/{{ crate }}" alt="Release">
+{%- if docs %}
+  <a href="{{ docs_url }}">
+    <img src="https://img.shields.io/badge/docs-{{ owner }}.github.io-blue" alt="Documentation">
+  </a>
+{%- endif %}
+  <img src="https://img.shields.io/github/license/{{ owner }}/{{ crate }}" alt="License">
+</p>
+
+---
+
+<!-- One paragraph: what this does and why it exists. Lead with the problem, -->
+<!-- not the implementation. -->
+
+## Installation
+{% if publish %}
+```bash
+cargo install {{ crate }}
+```
+{% endif %}
+Or download a binary for your platform from the
+[latest release]({{ repo_url }}/releases/latest).
+
+## Usage
+
+```bash
+{{ bin_name }} --help
+```
+{% if docs %}
+## Documentation
+
+<{{ docs_url }}>
+{% endif %}
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE).

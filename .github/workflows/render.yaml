@@ -1,0 +1,132 @@
+name: ♻️ CI
+
+# A bad render lands in every consuming repository at once, and git-tpl has no
+# `render` or `test` command for template authors. So the only pre-flight is
+# this: actually render the template and actually build what comes out.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  PINNED_MISE_VERSION: 2026.7.18
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 🕵️ Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          version: ${{ env.PINNED_MISE_VERSION }}
+          cache: true
+      - name: Run hooks
+        run: prek run --all-files --show-diff-on-failure
+
+  render:
+    name: 🎨 Render (${{ matrix.case }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # `minimal` is the one that matters: it is the case where every
+        # conditional takes its other branch, which is where a segment that
+        # renders to a stray `.jinja` or a workflow referencing a task that no
+        # longer exists would show up.
+        case: [minimal, full]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: jdx/mise-action@v4
+        with:
+          version: ${{ env.PINNED_MISE_VERSION }}
+          cache: true
+
+      - name: Install git-tpl
+        run: cargo install git-tpl --locked
+
+      # git-tpl renders from a Git tree, so the target has to be a repository
+      # and it needs an identity to commit the template ref.
+      - name: Render the template
+        run: |
+          set -euo pipefail
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.invalid"
+          git config --global init.defaultBranch main
+
+          out="$RUNNER_TEMP/out"
+          git init "$out"
+          cd "$out"
+
+          # `--dirty` renders the working tree rather than a committed
+          # revision, which is the whole point: this must fail on the PR's
+          # changes, not on what is already merged.
+          git tpl init --dirty "$GITHUB_WORKSPACE" \
+            --answers-from "$GITHUB_WORKSPACE/tests/answers/${{ matrix.case }}.toml" \
+            --defaults
+
+          git -C "$out" ls-files
+
+      - name: Build the rendered project
+        working-directory: ${{ runner.temp }}/out
+        run: cargo build --all-targets
+
+      - name: Test the rendered project
+        working-directory: ${{ runner.temp }}/out
+        run: cargo test
+
+      - name: Check the rendered formatting and lints
+        working-directory: ${{ runner.temp }}/out
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      # actionlint is what catches the escaping mistakes this template is most
+      # exposed to: a `${{ }}` that MiniJinja ate leaves valid YAML with a
+      # meaningless expression, and only a workflow linter notices.
+      - name: Lint the rendered workflows
+        working-directory: ${{ runner.temp }}/out
+        run: actionlint .github/workflows/*.yaml
+
+      - name: Check the rendered configuration parses
+        working-directory: ${{ runner.temp }}/out
+        run: |
+          set -euo pipefail
+          # A conditional that ate a closing bracket produces a file that looks
+          # fine in a diff and fails at the first tool to read it.
+          for file in $(git ls-files '*.toml'); do
+            python3 -c "import tomllib,sys; tomllib.load(open(sys.argv[1],'rb'))" "$file"
+          done
+          for file in $(git ls-files '*.yml' '*.yaml'); do
+            python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" "$file"
+          done
+
+      - name: Validate the release setup
+        working-directory: ${{ runner.temp }}/out
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh extension install noirbizarre/gh-ship
+          # `validate` needs no network, no repository and no auth — it checks
+          # the rendered .github/ship.yml against the workflows it names.
+          gh ship validate

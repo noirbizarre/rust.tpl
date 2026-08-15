@@ -1,0 +1,55 @@
+default_install_hook_types = ["pre-commit", "commit-msg"]
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "check-added-large-files" },
+  { id = "check-merge-conflict" },
+  # `template/` holds files that are valid TOML/YAML by construction — the
+  # rendered ones carry a `.jinja` suffix and are skipped by extension.
+  { id = "check-toml" },
+  { id = "check-yaml" },
+  { id = "end-of-file-fixer" },
+  { id = "mixed-line-ending" },
+  { id = "trailing-whitespace" },
+]
+
+[[repos]]
+repo = "https://github.com/alessandrojcm/commitlint-pre-commit-hook"
+rev = "v9.21.0"
+
+[[repos.hooks]]
+id = "commitlint"
+stages = ["commit-msg"]
+additional_dependencies = ["@commitlint/config-conventional"]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "actionlint"
+name = "actionlint"
+language = "system"
+entry = "actionlint"
+files = "^\\.github/workflows/.*\\.ya?ml$"
+
+[[repos.hooks]]
+id = "typos"
+name = "typos"
+language = "system"
+entry = "typos"
+pass_filenames = false
+
+# A workflow file inside the render root that is NOT named `.jinja` is copied
+# byte-for-byte, which is the whole reason `${{ }}` survives. Naming one
+# `.jinja` without escaping every GitHub expression is the single most likely
+# way to break this template, and it fails silently — MiniJinja resolves
+# `${{ github.ref }}` to `$` and the YAML stays valid.
+#
+# So: a `.jinja` file under `template/.github/` must contain `{% raw %}`.
+[[repos.hooks]]
+id = "workflow-jinja-escaping"
+name = "templated workflows escape their GitHub expressions"
+language = "system"
+entry = """bash -c 'fail=0; for f in template/.github/**/*.jinja template/.github/*.jinja; do [ -e "$f" ] || continue; grep -q "{% raw %}" "$f" || { echo "$f: templated workflow with no {% raw %} block"; fail=1; }; done; exit $fail'"""
+pass_filenames = false

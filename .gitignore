@@ -1,0 +1,16 @@
+# Installed by the commitlint prek hook.
+node_modules/
+
+# --- mise ---------------------------------------------------------------
+#
+# A common global gitignore (`~/.config/git/ignore`) excludes `mise.toml`,
+# `mise.*.toml` and `mise.lock`, on the assumption that mise configuration is a
+# personal thing. Here it is not: `mise.toml` defines this repository's tasks.
+# A repository `.gitignore` takes precedence over `core.excludesFile`, so these
+# negations do the job.
+#
+# The same block ships in `template/.gitignore`, for the same reason.
+!mise.toml
+!mise.lock
+
+mise.local.toml

@@ -1,0 +1,18 @@
+# {{ crate }}
+
+{{ description }}
+
+## Installation
+{% if publish %}
+```bash
+cargo install {{ crate }}
+```
+{% endif %}
+Or download a binary for your platform from the
+[latest release]({{ repo_url }}/releases/latest).
+
+## Usage
+
+```bash
+{{ bin_name }} --help
+```

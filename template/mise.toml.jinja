@@ -1,0 +1,149 @@
+# Toolchain and task definitions.
+#
+# Tool versions are resolved to exact builds in `mise.lock`, which is
+# committed. CI installs from these two files, so local runs and CI runs
+# use identical tool versions — CI drives the tools directly rather than
+# through the tasks defined below.
+#
+# Tools no CI job needs are declared on their own task rather than in `[tools]`,
+# because `mise install` — what CI runs — installs `[tools]` only. It matters:
+# cargo-binstall has no prebuilt artifact for some cargo tools, so a global
+# entry would make every CI job compile them from source.
+#
+# Rust itself is intentionally not managed here: CI needs per-job components
+# (rustfmt, clippy, llvm-tools-preview) and cross-compilation targets, which
+# `dtolnay/rust-toolchain` handles better. `rust-toolchain.toml` pins the
+# channel for both.
+
+[settings]
+# Resolve tools through mise.lock and keep it updated. Without this, the
+# lockfile is ignored and `latest` really means latest.
+lockfile = true
+
+# Do not let mise adopt `rust-toolchain.toml`. Rust is installed by rustup
+# locally and by `dtolnay/rust-toolchain` in CI, which handle per-job
+# components and cross-compilation targets that mise does not. Leaving both
+# in charge would have mise shadow the toolchain CI just installed.
+idiomatic_version_file_enable_tools = []
+
+[tools]
+actionlint = "latest"
+# actionlint silently skips its shellcheck integration when the binary is
+# absent, so without this a local run is NOT the CI run. Runners ship it.
+shellcheck = "latest"
+prek = "latest"
+typos = "latest"
+git-cliff = "latest"
+cargo-binstall = "latest"
+"cargo:cargo-nextest" = "latest"
+"cargo:cargo-llvm-cov" = "latest"
+{%- if docs %}
+# Zensical runs through `uvx`, so uv is the only thing the docs build needs.
+uv = "latest"
+{%- endif %}
+# cargo-insta is declared on the task that uses it instead of here — see the
+# note in the header.
+
+# --- Everyday ---------------------------------------------------------------
+
+[tasks.default]
+description = "Run fmt, lint, build and test"
+depends = ["fmt", "lint", "lint:actions", "build", "test"]
+
+[tasks.build]
+description = "Build the binary"
+run = "cargo build"
+
+[tasks.test]
+description = "Run tests (accepts nextest selectors)"
+raw_args = true
+run = "cargo nextest run"
+
+[tasks.cover]
+description = "Run tests with coverage"
+run = "cargo llvm-cov nextest"
+
+[tasks.fmt]
+description = "Format the code"
+run = "cargo fmt --all"
+
+[tasks."fmt:check"]
+description = "Check the formatting without rewriting"
+run = "cargo fmt --all -- --check"
+
+[tasks.lint]
+description = "Lint the code"
+run = "cargo clippy --all-targets --all-features -- -D warnings"
+
+[tasks.spell]
+description = "Check spelling"
+run = "typos"
+
+[tasks."lint:actions"]
+description = "Lint the GitHub Actions workflows"
+# Suppressions live in .github/actionlint.yml rather than as flags here, so
+# this task and the prek hook cannot drift apart.
+run = "actionlint .github/workflows/*.yaml"
+
+[tasks.snapshots]
+description = "Review and update insta snapshots interactively"
+tools = { "cargo:cargo-insta" = "latest" }
+run = "cargo insta review"
+
+[tasks.check]
+description = "Run every check that does not modify the working tree"
+depends = ["fmt:check", "lint", "lint:actions", "spell", "test"]
+
+[tasks.ci]
+description = "Everything CI runs, locally"
+{%- if docs %}
+depends = ["check", "docs:build"]
+{%- else %}
+depends = ["check"]
+{%- endif %}
+
+# --- {{ crate }} itself ---------------------------------------------------
+
+[tasks.run]
+description = "Run {{ bin_name }} from source"
+raw_args = true
+run = "cargo run --bin {{ bin_name }} --"
+
+[tasks.setup]
+description = "Install {{ bin_name }} locally, into ~/.cargo/bin"
+run = "cargo install --path . --force"
+{% if docs %}
+# --- Documentation ----------------------------------------------------------
+
+[tasks.docs]
+description = "Serve the documentation locally"
+run = "uvx zensical serve"
+
+[tasks."docs:build"]
+description = "Build the documentation"
+run = "uvx zensical build"
+{% endif %}
+# --- Release ----------------------------------------------------------------
+
+[tasks.changelog]
+description = "Preview the changelog for the unreleased commits"
+run = "git cliff --unreleased"
+
+[tasks.release]
+description = "Show the version the next release would take"
+# The release itself is driven by gh-ship from .github/workflows/ship.yaml.
+# This task exists to answer 'what would ship next?' without opening CI.
+run = "git cliff --bumped-version"
+
+[tasks."ship:validate"]
+description = "Check the release setup against what gh-ship requires"
+run = "gh ship validate"
+
+# --- project-specific tasks --------------------------------------------------
+#
+# Add your own tasks below this line. The template owns everything above it and
+# will keep updating it; everything here is yours, and Git's 3-way merge
+# preserves it across `git tpl update`.
+#
+# Artwork tasks belong here rather than in `default` or `check`: they rewrite
+# committed binaries, so a routine run would dirty the working tree every time.

@@ -1,0 +1,19 @@
+# The minimal case: every optional slot off, one target.
+#
+# This is the case that catches conditionals which render an empty file rather
+# than no file, and workflows that reference something only the maximal case
+# provides.
+
+crate = "minimal-example"
+description = "Every optional slot turned off"
+owner = "noirbizarre"
+author = "Axel H. <noirbizarre@gmail.com>"
+copyright_holder = "Axel H."
+copyright_year = 2026
+keywords = "cli"
+categories = "command-line-utilities"
+bin_name = "minimal-example"
+msrv = false
+publish = false
+docs = false
+targets = ["x86_64-unknown-linux-gnu"]

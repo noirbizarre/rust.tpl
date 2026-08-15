@@ -1,0 +1,75 @@
+# Tooling for developing the template itself.
+#
+# There is no Rust crate here — the only build is `git tpl init` into a scratch
+# repository, and the only test is whether what comes out compiles.
+
+[settings]
+lockfile = true
+
+[tools]
+prek = "latest"
+typos = "latest"
+actionlint = "latest"
+shellcheck = "latest"
+
+[tasks.default]
+description = "Lint, then render and build both cases"
+depends = ["lint", "test"]
+
+[tasks.lint]
+description = "Lint the template repository"
+depends = ["spell", "lint:actions"]
+
+[tasks.spell]
+description = "Check spelling"
+run = "typos"
+
+[tasks."lint:actions"]
+description = "Lint this repository's own workflows"
+run = "actionlint .github/workflows/*.yaml"
+
+[tasks.render]
+description = "Render one answer case into a scratch repository (default: full)"
+# A usage spec rather than `raw_args`, so that `mise run render minimal`
+# actually binds the word to something. Without it mise passes nothing through
+# and the task silently renders the default case.
+usage = 'arg "<case>" help="The answer case under tests/answers" default="full"'
+# `--dirty` renders the working tree, not the last commit, which is what makes
+# this an edit-and-see loop rather than an edit-commit-and-see one.
+run = """
+set -euo pipefail
+case="${usage_case:-full}"
+out="${OUT:-$(mktemp -d)}"
+rm -rf "$out"
+git init -q -b main "$out"
+cd "$out"
+git tpl init --dirty "$MISE_PROJECT_ROOT" \\
+  --answers-from "$MISE_PROJECT_ROOT/tests/answers/$case.toml" \\
+  --defaults
+echo
+echo "Rendered $case into $out"
+"""
+
+[tasks.test]
+description = "Render both cases and build the output"
+run = """
+set -euo pipefail
+for case in minimal full; do
+  out="$(mktemp -d)"
+  echo "==> $case"
+  OUT="$out" mise run render "$case"
+  cd "$out"
+  cargo build --all-targets
+  cargo test
+  cargo fmt --all -- --check
+  cargo clippy --all-targets --all-features -- -D warnings
+  actionlint
+  cd - > /dev/null
+done
+"""
+
+[tasks.diff]
+description = "Show what a render would produce in a project, without writing"
+raw_args = true
+run = "git tpl diff --dirty"
+

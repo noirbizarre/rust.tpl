@@ -1,0 +1,86 @@
+# The cross-compilation target catalogue.
+#
+# `choices` is what the `targets` question offers; `matrix` carries the four
+# extra fields the publish workflow needs per target. They are kept in the same
+# file so a target cannot be offered without being buildable.
+#
+# The union of what the existing projects actually release. Order is the order
+# the prompt shows and the matrix emits — and it is load-bearing for
+# determinism, so append rather than reorder.
+
+choices = [
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl",
+  "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin",
+  "aarch64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+  "aarch64-pc-windows-msvc",
+]
+
+# `cross = true` selects `taiki-e/install-action@cross` and `cross build` on
+# that leg. Every Linux target needs it: even the native x86_64 gnu build goes
+# through cross so that a vendored C dependency (libgit2, ring, …) links
+# against a consistent sysroot rather than whatever the runner image ships.
+#
+# `asset` is the suffix in the published filename. It follows the
+# `<os>-<arch>` convention `gh` extensions require, which costs nothing to
+# adopt for a plain binary and means a project can become a `gh` extension
+# later without renaming its assets.
+
+[[matrix]]
+target = "x86_64-unknown-linux-gnu"
+runner = "ubuntu-latest"
+asset = "linux-amd64"
+cross = true
+ext = ""
+
+[[matrix]]
+target = "aarch64-unknown-linux-gnu"
+runner = "ubuntu-latest"
+asset = "linux-arm64"
+cross = true
+ext = ""
+
+[[matrix]]
+target = "x86_64-unknown-linux-musl"
+runner = "ubuntu-latest"
+asset = "linux-amd64-musl"
+cross = true
+ext = ""
+
+[[matrix]]
+target = "aarch64-unknown-linux-musl"
+runner = "ubuntu-latest"
+asset = "linux-arm64-musl"
+cross = true
+ext = ""
+
+[[matrix]]
+target = "x86_64-apple-darwin"
+runner = "macos-latest"
+asset = "darwin-amd64"
+cross = false
+ext = ""
+
+[[matrix]]
+target = "aarch64-apple-darwin"
+runner = "macos-latest"
+asset = "darwin-arm64"
+cross = false
+ext = ""
+
+[[matrix]]
+target = "x86_64-pc-windows-msvc"
+runner = "windows-latest"
+asset = "windows-amd64"
+cross = false
+ext = ".exe"
+
+[[matrix]]
+target = "aarch64-pc-windows-msvc"
+runner = "windows-11-arm"
+asset = "windows-arm64"
+cross = false
+ext = ".exe"
