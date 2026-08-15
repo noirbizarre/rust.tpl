@@ -79,11 +79,6 @@ run = "cargo clippy --all-targets --all-features -- -D warnings"
 description = "Check spelling"
 run = "typos"
 
-[tasks.audit]
-description = "Audit dependencies for known advisories"
-tools = { "cargo:cargo-audit" = "latest" }
-run = "cargo audit"
-
 [tasks."lint:actions"]
 description = "Lint the GitHub Actions workflows"
 # Suppressions live in .github/actionlint.yml rather than as flags here, so
