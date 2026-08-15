@@ -149,6 +149,33 @@ run = "git cliff --bumped-version"
 description = "Check the release setup against what gh-ship requires"
 run = "gh ship validate"
 
+# --- Template ---------------------------------------------------------------
+#
+# This project is rendered from rust.tpl. `git tpl update` advances
+# refs/tpl/<id> and touches nothing else — not HEAD, not the index, not the
+# worktree — so running it is always safe and never a decision. The changes
+# arrive only when you merge:
+#
+#   mise run tpl:update      # bring the rendered ref up to date
+#   mise run tpl:diff        # read what merging it would change
+#   git tpl merge            # take it
+#
+# git-tpl is deliberately not in [tools]: it vendors libgit2 and has no
+# binstall artifact, so a global entry would make every CI job compile it —
+# for a tool no CI job runs. Install it once with `cargo install git-tpl`.
+
+[tasks."tpl:update"]
+description = "Re-render the template into refs/tpl/<id> (leaves the worktree alone)"
+# `raw_args` so `--ref`, `--dirty` and `--answer` reach git-tpl.
+raw_args = true
+run = "git tpl update"
+
+[tasks."tpl:diff"]
+description = "Show what merging the template would change"
+# `raw_args` so `--stat`, `--name-only` and path limiting reach git-tpl.
+raw_args = true
+run = "git tpl diff"
+
 # --- project-specific tasks --------------------------------------------------
 #
 # Add your own tasks below this line. The template owns everything above it and

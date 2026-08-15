@@ -36,6 +36,8 @@ components and cross-compilation targets.
 {%- endif %}
 | `mise run changelog` | Preview the changelog for unreleased commits |
 | `mise run release` | Show the version the next release would take |
+| `mise run tpl:update` | Bring the rendered template ref up to date |
+| `mise run tpl:diff` | Show what merging the template would change |
 
 `mise <task>` is a shorthand for `mise run <task>`, but a builtin subcommand of
 the same name wins it silently — which is why the format task is `format` and
@@ -90,10 +92,18 @@ The toolchain, hooks, CI and release workflows come from
 [rust.tpl](https://github.com/noirbizarre/rust.tpl):
 
 ```bash
-git tpl status     # is there a template update pending?
-git tpl diff       # what would change
-git tpl update && git merge tpl/rust
+git tpl status         # is there a template update pending?
+mise run tpl:update    # advance refs/tpl/<id> — HEAD, index and worktree untouched
+mise run tpl:diff      # read what merging it would change
+git tpl merge          # take it
 ```
+
+`tpl:update` is safe to run at any time: it only advances the rendered ref.
+Nothing reaches your branch until the merge.
+
+Requires git-tpl on your PATH (`cargo install git-tpl`). It is not declared in
+`mise.toml`'s `[tools]` on purpose — it vendors libgit2, so a global entry
+would make every CI job compile a tool no CI job runs.
 
 Files carrying template-owned content — `mise.toml`, `prek.toml`, `Cargo.toml` —
 end with a `# --- project-specific ---` marker. Add below it; Git's 3-way merge
