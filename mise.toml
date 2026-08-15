@@ -6,6 +6,12 @@
 [settings]
 lockfile = true
 
+# Every multi-line task below opens with a bash shebang. Without one mise runs
+# the script through `sh`, which on a GitHub runner is dash: `set -o pipefail`
+# is an error there and `< <(...)` is a syntax error. Locally `/bin/sh` is
+# often a symlink to bash, so the difference is invisible until CI — which is
+# exactly how it was found.
+
 [tools]
 prek = "latest"
 typos = "latest"
@@ -37,6 +43,7 @@ usage = 'arg "<case>" help="The answer case under tests/answers" default="full"'
 # `--dirty` renders the working tree, not the last commit, which is what makes
 # this an edit-and-see loop rather than an edit-commit-and-see one.
 run = """
+#!/usr/bin/env bash
 set -euo pipefail
 case="${usage_case:-full}"
 out="${OUT:-$(mktemp -d)}"
@@ -65,6 +72,7 @@ description = "Fail if a rendered task name is shadowed by a mise builtin"
 # wrong afterwards.
 usage = 'arg "<dir>" help="The rendered project to check" default="."'
 run = """
+#!/usr/bin/env bash
 set -euo pipefail
 dir="${usage_dir:-.}"
 # Named explicitly rather than relying on `-C`: a bare `mise trust` scans for
@@ -92,6 +100,7 @@ echo "no task name is shadowed by a mise builtin"
 [tasks.test]
 description = "Render both cases and build the output"
 run = """
+#!/usr/bin/env bash
 set -euo pipefail
 for case in minimal full; do
   out="$(mktemp -d)"
@@ -107,4 +116,3 @@ for case in minimal full; do
   cd - > /dev/null
 done
 """
-

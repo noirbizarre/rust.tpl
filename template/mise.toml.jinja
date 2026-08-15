@@ -182,5 +182,10 @@ run = "git tpl diff"
 # will keep updating it; everything here is yours, and Git's 3-way merge
 # preserves it across `git tpl update`.
 #
+# Open any multi-line `run` block with `#!/usr/bin/env bash`. Without one mise
+# runs it through `sh`, which is dash on a GitHub runner — `set -o pipefail`
+# errors there and `< <(...)` is a syntax error — while `/bin/sh` is often bash
+# locally. The difference does not show up until CI.
+#
 # Artwork tasks belong here rather than in `default` or `check`: they rewrite
 # committed binaries, so a routine run would dirty the working tree every time.
