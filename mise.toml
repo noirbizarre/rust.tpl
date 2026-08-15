@@ -50,6 +50,45 @@ echo
 echo "Rendered $case into $out"
 """
 
+[tasks."check:tasks"]
+description = "Fail if a rendered task name is shadowed by a mise builtin"
+# `mise <task>` is shorthand for `mise tasks run <task>`, and a builtin
+# subcommand of the same name wins it silently — `mise fmt` formats mise.toml
+# rather than running the task, and reports nothing. mise's own documentation
+# warns that new subcommands can claim a name in any release, so this is not a
+# mistake that can be made once and then be over.
+#
+# `mise help <name>` is the oracle rather than a list written down here: it
+# exits 0 for a builtin or one of its aliases and 2 for everything else,
+# including tasks. Asking the installed mise is the whole point — a list in
+# this repository would be correct on the day it was written and silently
+# wrong afterwards.
+usage = 'arg "<dir>" help="The rendered project to check" default="."'
+run = """
+set -euo pipefail
+dir="${usage_dir:-.}"
+# Named explicitly rather than relying on `-C`: a bare `mise trust` scans for
+# untrusted configs and reports finding none, which looks like a failure when
+# it is not. The rendered mise.toml declares `[settings]` and per-task tools,
+# so it is not one of the "safe" configs mise loads without trust.
+mise trust "$dir/mise.toml" > /dev/null
+
+shadowed=""
+# `--local` matters: without it mise merges in the developer's global tasks
+# from ~/.config/mise, and the check would fail on names the project does not
+# control and cannot rename.
+while read -r task; do
+  [ -n "$task" ] || continue
+  mise help "$task" > /dev/null 2>&1 && shadowed="$shadowed $task"
+done < <(mise -C "$dir" tasks ls --local --name-only)
+
+if [ -n "$shadowed" ]; then
+  echo "shadowed by a mise builtin, so \\`mise <name>\\` will not reach them:$shadowed" >&2
+  exit 1
+fi
+echo "no task name is shadowed by a mise builtin"
+"""
+
 [tasks.test]
 description = "Render both cases and build the output"
 run = """
@@ -58,6 +97,7 @@ for case in minimal full; do
   out="$(mktemp -d)"
   echo "==> $case"
   OUT="$out" mise run render "$case"
+  mise run check:tasks "$out"
   cd "$out"
   cargo build --all-targets
   cargo test
@@ -67,9 +107,4 @@ for case in minimal full; do
   cd - > /dev/null
 done
 """
-
-[tasks.diff]
-description = "Show what a render would produce in a project, without writing"
-raw_args = true
-run = "git tpl diff --dirty"
 

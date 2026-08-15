@@ -45,10 +45,18 @@ uv = "latest"
 # note in the header.
 
 # --- Everyday ---------------------------------------------------------------
+#
+# `mise <task>` is shorthand for `mise tasks run <task>`, and a builtin
+# subcommand of the same name wins it silently — `mise fmt` formats mise.toml
+# rather than running cargo fmt, and says nothing about the task it shadowed.
+# `run` and `fmt` are both builtins, which is why these are `cli` and `format`.
+#
+# mise may claim further names in future releases, so `check:tasks` in the
+# template repository fails the render when it does.
 
 [tasks.default]
-description = "Run fmt, lint, build and test"
-depends = ["fmt", "lint", "lint:actions", "build", "test"]
+description = "Run format, lint, build and test"
+depends = ["format", "lint", "lint:actions", "build", "test"]
 
 [tasks.build]
 description = "Build the binary"
@@ -63,11 +71,11 @@ run = "cargo nextest run"
 description = "Run tests with coverage"
 run = "cargo llvm-cov nextest"
 
-[tasks.fmt]
+[tasks.format]
 description = "Format the code"
 run = "cargo fmt --all"
 
-[tasks."fmt:check"]
+[tasks."format:check"]
 description = "Check the formatting without rewriting"
 run = "cargo fmt --all -- --check"
 
@@ -92,7 +100,7 @@ run = "cargo insta review"
 
 [tasks.check]
 description = "Run every check that does not modify the working tree"
-depends = ["fmt:check", "lint", "lint:actions", "spell", "test"]
+depends = ["format:check", "lint", "lint:actions", "spell", "test"]
 
 [tasks.ci]
 description = "Everything CI runs, locally"
@@ -104,8 +112,10 @@ depends = ["check"]
 
 # --- {{ crate }} itself ---------------------------------------------------
 
-[tasks.run]
+[tasks.cli]
 description = "Run {{ bin_name }} from source"
+# `raw_args` so flags reach the binary rather than mise: `mise cli --help`
+# prints the binary's help, not the task's.
 raw_args = true
 run = "cargo run --bin {{ bin_name }} --"
 

@@ -62,7 +62,7 @@ propagated its own versions would conflict with every one of those PRs.
 mise run render minimal   # render one answer case into a scratch repo
 mise run render full
 mise run test             # render both, then build, test, lint and actionlint
-mise run diff             # what a render would produce, without writing
+mise run check:tasks DIR  # are any task names shadowed by a mise builtin?
 ```
 
 `--dirty` throughout, so the loop is edit-and-see rather than
@@ -70,6 +70,19 @@ edit-commit-and-see.
 
 Both cases run in CI on every pull request. `minimal` is the one that earns its
 keep: it is where every conditional takes its other branch.
+
+### The mise shorthand hazard
+
+`mise <task>` is shorthand for `mise run <task>`, and a builtin subcommand of
+the same name wins it **silently** — `mise fmt` formats `mise.toml` and says
+nothing about the task it shadowed. That is why the rendered tasks are `format`
+rather than `fmt`, and `cli` rather than `run`.
+
+mise's own documentation warns that new subcommands can claim a name in any
+release, so `mise run check:tasks` asks the installed mise which names are
+taken (`mise help <name>` exits 0 only for a builtin or an alias) rather than
+comparing against a list written down here that would go stale. It runs against
+each rendered project in `mise run test` and in CI.
 
 ### The `${{ }}` hazard
 

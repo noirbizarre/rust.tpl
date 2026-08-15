@@ -121,6 +121,13 @@ jobs:
             python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" "$file"
           done
 
+      # Not `working-directory: .../out`: the task is defined in this
+      # repository and takes the rendered project as its argument, so that the
+      # local loop (`mise run test`) and CI run the same check rather than two
+      # copies of it that can drift.
+      - name: Check no task name is shadowed by a mise builtin
+        run: mise run check:tasks "$RUNNER_TEMP/out"
+
       - name: Validate the release setup
         working-directory: ${{ runner.temp }}/out
         env:

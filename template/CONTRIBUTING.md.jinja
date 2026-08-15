@@ -21,9 +21,10 @@ components and cross-compilation targets.
 | Command | What it does |
 |---|---|
 | `mise run build` | Build the binary |
+| `mise run cli` | Run `{{ bin_name }}` from source (passes flags through) |
 | `mise run test` | Run the tests (accepts nextest selectors) |
 | `mise run cover` | Run the tests with coverage |
-| `mise run fmt` | Format |
+| `mise run format` | Format |
 | `mise run lint` | Clippy, warnings denied |
 | `mise run lint:actions` | actionlint over the workflows |
 | `mise run spell` | typos |
@@ -35,6 +36,12 @@ components and cross-compilation targets.
 {%- endif %}
 | `mise run changelog` | Preview the changelog for unreleased commits |
 | `mise run release` | Show the version the next release would take |
+
+`mise <task>` is a shorthand for `mise run <task>`, but a builtin subcommand of
+the same name wins it silently — which is why the format task is `format` and
+not `fmt` (`mise fmt` formats `mise.toml`), and why running the binary is
+`mise cli` and not `mise run` (`mise run` runs a task). Prefer the explicit
+`mise run <task>` in scripts: mise can claim a new name in any release.
 
 ## Commits
 
