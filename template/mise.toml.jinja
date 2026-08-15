@@ -30,7 +30,11 @@ idiomatic_version_file_enable_tools = []
 actionlint = "latest"
 # actionlint silently skips its shellcheck integration when the binary is
 # absent, so without this a local run is NOT the CI run. Runners ship it.
-shellcheck = "latest"
+#
+# The aqua backend is named explicitly: left as a bare `shellcheck` it resolves
+# to `asdf:shellcheck`, which carries no lockfile URLs, and `mise install
+# --locked` — what mise-action runs as soon as a mise.lock exists — fails on it.
+"aqua:koalaman/shellcheck" = "latest"
 prek = "latest"
 typos = "latest"
 git-cliff = "latest"

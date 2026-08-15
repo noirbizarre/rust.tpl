@@ -16,7 +16,10 @@ lockfile = true
 prek = "latest"
 typos = "latest"
 actionlint = "latest"
-shellcheck = "latest"
+# The aqua backend named explicitly. Left as a bare `shellcheck` it resolves to
+# `asdf:shellcheck`, which carries no lockfile URLs — so `mise install --locked`,
+# which mise-action runs as soon as it sees a mise.lock, fails on it.
+"aqua:koalaman/shellcheck" = "latest"
 
 [tasks.default]
 description = "Lint, then render and build both cases"
