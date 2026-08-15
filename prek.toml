@@ -46,10 +46,14 @@ pass_filenames = false
 # way to break this template, and it fails silently — MiniJinja resolves
 # `${{ github.ref }}` to `$` and the YAML stays valid.
 #
-# So: a `.jinja` file under `template/.github/` must contain `{% raw %}`.
+# So: a `.jinja` file under `template/.github/` must open a raw block.
+# `find` rather than a `**` glob, because `bash -c` does not enable globstar
+# and the glob would silently match only one directory level — a hook that
+# passes by not looking. The pattern allows `{%- raw %}` as well as
+# `{% raw %}`, since whitespace control is normal at the top of a file.
 [[repos.hooks]]
 id = "workflow-jinja-escaping"
 name = "templated workflows escape their GitHub expressions"
 language = "system"
-entry = """bash -c 'fail=0; for f in template/.github/**/*.jinja template/.github/*.jinja; do [ -e "$f" ] || continue; grep -q "{% raw %}" "$f" || { echo "$f: templated workflow with no {% raw %} block"; fail=1; }; done; exit $fail'"""
+entry = """bash -c 'bad=$(find template/.github -name "*.jinja" -exec grep -LE "[{]%-? *raw" {} +); [ -z "$bad" ] || { echo "templated workflow with no raw block:"; echo "$bad"; exit 1; }'"""
 pass_filenames = false
