@@ -13,6 +13,17 @@
 name = "rust"
 description = "Rust project base stack: mise, prek, git-cliff, gh-ship, CI and publication"
 
+# An undeclared name in a rendered file is an error, not an empty string.
+#
+# Without this `name = "{{ crate }}"` typed as `{{ crat }}` renders to
+# `name = ""`, which is valid TOML, and the command exits 0 — while the same
+# typo in a `[computed]` expression below has always been a hard error before
+# the first prompt. See git-tpl ADR-014.
+#
+# `{{ x | default('') }}` remains how a template says a value is optional on
+# purpose, which is clearer than relying on leniency anyway.
+strict = true
+
 # --- Identity ---------------------------------------------------------------
 
 [questions.crate]
