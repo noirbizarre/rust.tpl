@@ -41,13 +41,20 @@ git-cliff = "latest"
 cargo-binstall = "latest"
 "cargo:cargo-nextest" = "latest"
 "cargo:cargo-llvm-cov" = "latest"
-# The template this project is rendered from. Prebuilt, and mise verifies the
-# GitHub artifact attestation and SLSA provenance on install.
+# The template this project is rendered from. `cargo:` rather than `github:` or `ubi:`, which both
+# install it fine and write no lockfile URLs — and `mise install --locked`,
+# which mise-action runs as soon as a mise.lock exists, then fails on the entry
+# it cannot verify. The same trap as `shellcheck` above, from the other
+# direction: there the fix was naming a backend that locks, here it is naming
+# one that needs no URL to.
+#
+# It is not a source build. git-tpl ships binstall metadata, so with
+# cargo-binstall present this downloads a release archive — about three seconds
+# against several minutes to compile a crate that vendors libgit2.
 #
 # An explicit version, never `latest`: mise applies a `minimum_release_age`, so
 # `latest` resolves to whatever is old enough rather than to the newest release.
-# `mise.lock` then fixes the exact build.
-"github:noirbizarre/git-tpl" = "0.4.0"
+"cargo:git-tpl" = "0.4.0"
 {%- if docs %}
 # Zensical runs through `uvx`, so uv is the only thing the docs build needs.
 uv = "latest"

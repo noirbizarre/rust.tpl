@@ -41,9 +41,25 @@ checksum = "sha256:3c89db4edcab7cf1c27bff178882e0f6f27f7afdf54e859fa041fca10febe
 url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.x86_64.tar.xz"
 url_api = "https://api.github.com/repos/koalaman/shellcheck/releases/assets/279056930"
 
-[[tools."github:noirbizarre/git-tpl"]]
+[[tools.cargo-binstall]]
+version = "1.12.3"
+backend = "aqua:cargo-bins/cargo-binstall"
+
+[tools.cargo-binstall."platforms.linux-x64"]
+url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.12.3/cargo-binstall-x86_64-unknown-linux-musl.tgz"
+url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/243935989"
+
+[tools.cargo-binstall."platforms.macos-arm64"]
+url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.12.3/cargo-binstall-aarch64-apple-darwin.zip"
+url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/243935983"
+
+[tools.cargo-binstall."platforms.macos-x64"]
+url = "https://github.com/cargo-bins/cargo-binstall/releases/download/v1.12.3/cargo-binstall-x86_64-apple-darwin.zip"
+url_api = "https://api.github.com/repos/cargo-bins/cargo-binstall/releases/assets/243935883"
+
+[[tools."cargo:git-tpl"]]
 version = "0.4.0"
-backend = "github:noirbizarre/git-tpl"
+backend = "cargo:git-tpl"
 
 [[tools.prek]]
 version = "0.4.13"
