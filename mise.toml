@@ -35,7 +35,7 @@ cargo-binstall = "latest"
 #
 # An explicit version, never `latest`: mise applies a `minimum_release_age`, so
 # `latest` resolves to whatever is old enough rather than to the newest release.
-"cargo:git-tpl" = "0.4.0"
+"cargo:git-tpl" = "0.5.0"
 
 [tasks.default]
 description = "Lint, then render and build both cases"
@@ -61,30 +61,26 @@ description = "Check the template for the problems a render cannot find"
 # like `.yaml` instead of being skipped — a real file, silently, which no
 # amount of rendering the other case reveals when only one file is gated.
 #
-# Warnings fail here, though git-tpl exits 0 on them. That is the right default
-# for git-tpl — a template may legitimately mean a `${{ }}` or an undeclared
-# name — and the wrong one for this template, which has decided it never does:
-# `tpl::lint::foreign_expression` is precisely the silent failure the README's
-# `${{ }}` section is about, and the hand-written hook this replaced treated it
-# as fatal. Keeping that severity is the point of the second call.
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-git tpl lint . --dirty
-count=$(git tpl --json lint . --dirty |
-  python3 -c 'import json, sys; print(json.load(sys.stdin)["warnings"])')
-if [ "$count" != "0" ]; then
-  echo "$count warning(s), which are errors in this repository" >&2
-  exit 1
-fi
-"""
+# `-D warnings`, because git-tpl exits 0 on them and this repository has
+# decided it never means one: `tpl::lint::foreign_expression` is precisely the
+# silent failure the README's `${{ }}` section is about, and the hand-written
+# hook this replaced treated it as fatal.
+run = "git tpl lint . --dirty -D warnings"
+
+[tasks."test:template"]
+description = "Run the template's own test cases"
+# The `[expect]` assertions in tests/*.toml: which files a case renders, which
+# it must not, and what they contain. That last part is what `mise run test`
+# cannot check — a project that builds proves nothing about whether a
+# conditional slot was actually skipped or merely rendered something harmless.
+run = "git tpl test . --dirty"
 
 [tasks.render]
 description = "Render one answer case into a scratch directory (default: full)"
 # A usage spec rather than `raw_args`, so that `mise run render minimal`
 # actually binds the word to something. Without it mise passes nothing through
 # and the task silently renders the default case.
-usage = 'arg "<case>" help="The answer case under tests/answers" default="full"'
+usage = 'arg "<case>" help="The test case under tests/" default="full"'
 # `--dirty` renders the working tree, not the last commit, which is what makes
 # this an edit-and-see loop rather than an edit-commit-and-see one.
 #
@@ -98,7 +94,7 @@ case="${usage_case:-full}"
 out="${OUT:-$(mktemp -d)}"
 git tpl render "$MISE_PROJECT_ROOT" --dirty \\
   --output "$out" --force \\
-  --answers-from "$MISE_PROJECT_ROOT/tests/answers/$case.toml" \\
+  --answers-from "$MISE_PROJECT_ROOT/tests/$case.toml" \\
   --defaults --strict-answers
 echo
 echo "Rendered $case into $out"
@@ -145,14 +141,14 @@ echo "no task name is shadowed by a mise builtin"
 """
 
 [tasks.test]
-description = "Render both cases and build the output"
-# What `git tpl lint` cannot answer: whether the rendered project is a working
-# Rust project. git-tpl deliberately runs nothing over a rendering, so this is
-# where the real tools get pointed at it.
+description = "Check the cases, then render both and build the output"
+depends = ["test:template"]
+# What neither `git tpl lint` nor `git tpl test` can answer: whether the
+# rendered project is a working Rust project. git-tpl deliberately runs nothing
+# over a rendering, so this is where the real tools get pointed at it.
 #
-# `git tpl test` (git-tpl#26) will eventually subsume the file-level
-# assertions — which files exist, which are absent, what they contain — but not
-# these: building, testing and linting the output stays the author's job.
+# `test:template` runs first, as a dependency, because a failed `[expect]`
+# assertion is a two-second answer and this loop is a two-minute one.
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
