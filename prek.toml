@@ -40,20 +40,19 @@ language = "system"
 entry = "typos"
 pass_filenames = false
 
-# A workflow file inside the render root that is NOT named `.jinja` is copied
-# byte-for-byte, which is the whole reason `${{ }}` survives. Naming one
-# `.jinja` without escaping every GitHub expression is the single most likely
-# way to break this template, and it fails silently — MiniJinja resolves
-# `${{ github.ref }}` to `$` and the YAML stays valid.
+# The template's own checks: every `.jinja` file parses, no `${{ }}` sits
+# outside a raw block, no conditional path segment renders to a stray suffix.
 #
-# So: a `.jinja` file under `template/.github/` must open a raw block.
-# `find` rather than a `**` glob, because `bash -c` does not enable globstar
-# and the glob would silently match only one directory level — a hook that
-# passes by not looking. The pattern allows `{%- raw %}` as well as
-# `{% raw %}`, since whitespace control is normal at the top of a file.
+# This replaced a hand-written `find`/`grep` hook that only checked a raw block
+# was opened *somewhere* in a file, only looked under `template/.github/` — so
+# `template/cliff.toml.jinja`, whose body is Tera, was never covered — and
+# shipped inert, with a `**` glob that matched one directory level because
+# `bash -c` does not enable globstar.
 [[repos.hooks]]
-id = "workflow-jinja-escaping"
-name = "templated workflows escape their GitHub expressions"
+id = "template"
+name = "git tpl lint"
 language = "system"
-entry = """bash -c 'bad=$(find template/.github -name "*.jinja" -exec grep -LE "[{]%-? *raw" {} +); [ -z "$bad" ] || { echo "templated workflow with no raw block:"; echo "$bad"; exit 1; }'"""
+# Through the mise task, so the "warnings are errors" decision lives in one
+# place rather than in two that can disagree.
+entry = "mise run lint:template"
 pass_filenames = false

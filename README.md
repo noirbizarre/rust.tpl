@@ -59,17 +59,26 @@ propagated its own versions would conflict with every one of those PRs.
 ## Working on the template
 
 ```bash
-mise run render minimal   # render one answer case into a scratch repo
+mise run lint             # git tpl lint, actionlint, typos
+mise run render minimal   # render one answer case into a scratch directory
 mise run render full
 mise run test             # render both, then build, test, lint and actionlint
 mise run check:tasks DIR  # are any task names shadowed by a mise builtin?
 ```
 
 `--dirty` throughout, so the loop is edit-and-see rather than
-edit-commit-and-see.
+edit-commit-and-see. `git tpl render` writes a plain directory — no repository,
+no ref, nothing to clean up but the directory itself.
 
-Both cases run in CI on every pull request. `minimal` is the one that earns its
-keep: it is where every conditional takes its other branch.
+Two layers, and they answer different questions. `git tpl lint` asks whether the
+template is a valid *template*: every `.jinja` file parses, including branches no
+answer set reaches; no `${{ }}` sits where MiniJinja would eat it; no conditional
+path segment renders to a stray suffix. `mise run test` asks whether the output
+is a working *project*, by pointing `cargo` and `actionlint` at it — git-tpl
+deliberately runs nothing over a rendering, so that half is ours.
+
+Both run in CI on every pull request. `minimal` is the case that earns its keep:
+it is where every conditional takes its other branch.
 
 ### The mise shorthand hazard
 
@@ -84,22 +93,45 @@ taken (`mise help <name>` exits 0 only for a builtin or an alias) rather than
 comparing against a list written down here that would go stale. It runs against
 each rendered project in `mise run test` and in CI.
 
+### Conditional files
+
+A path segment that renders **empty** skips the entry, and that is git-tpl's
+only whole-file include mechanism. Where the `{% endif %}` goes decides whether
+it works, and getting it wrong produces a real file rather than an error:
+
+```
+{% if msrv %}msrv.yaml{% endif %}                 ✅ renders to nothing
+{% if msrv %}msrv{% endif %}.yaml                 ❌ renders to `.yaml`
+{% if docs %}zensical.toml{% endif %}.jinja       ✅ renders to nothing
+```
+
+The third looks like the second and is correct, because the `.jinja` suffix is
+stripped from the path *before* the segments are rendered — so for a template
+file the suffix is already gone by the time the conditional collapses, and for a
+verbatim file it is not. Both forms are in `template/`.
+
+`git tpl lint` reports the middle one as `tpl::lint::degenerate_path` and knows
+not to flag the third. Before it existed, one gated file produced `.yaml` in
+silence; two produced a collision that named them both, which is the only reason
+it was ever caught.
+
 ### The `${{ }}` hazard
 
 git-tpl renders with stock MiniJinja delimiters, so GitHub's `${{ … }}` is
-inside the templating language's syntax. Two rules follow, and the
-`workflow-jinja-escaping` prek hook enforces the second:
+inside the templating language's syntax. Two rules follow:
 
 1. **Prefer verbatim workflows.** A file not named `.jinja` is copied
-   byte-for-byte. Whole-file conditionals use a path segment that renders empty
-   — `{% if msrv %}msrv{% endif %}.yaml` — which is git-tpl's only include
-   mechanism. This is why the MSRV job is its own workflow.
-2. **A `.jinja` workflow wraps every GitHub expression in `{% raw %}`.**
-   Forgetting is silent: `${{ github.ref }}` resolves to `$` and the YAML stays
-   valid. Only actionlint on the rendered output notices, which is why CI runs
-   it.
+   byte-for-byte, so its `${{ }}` is never at risk. This is why the MSRV job is
+   its own workflow rather than a job inside `ci.yaml`.
+2. **A `.jinja` workflow wraps every GitHub expression in `{% raw %}`,** or
+   escapes it as `${{ '{{' }} … {{ '}}' }}`. Forgetting is silent:
+   `${{ github.ref }}` resolves to `$` and the YAML stays valid.
 
-The same applies to `cliff.toml`, whose body is Tera.
+`git tpl lint` enforces the second as `tpl::lint::foreign_expression`, checking
+every occurrence rather than merely that a raw block was opened somewhere, and
+recognising the escape idiom. It replaced a hand-written prek hook that did
+neither, missed `cliff.toml.jinja` — also Tera-bodied — entirely, and once
+shipped inert.
 
 ## License
 
