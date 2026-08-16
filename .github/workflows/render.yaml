@@ -2,10 +2,18 @@ name: ♻️ CI
 
 # A bad render lands in every consuming repository at once.
 #
-# `git tpl lint` (the 🕵️ Lint job, via prek) catches what is wrong with the
-# template *as a template*: a file that does not parse, a `${{ }}` MiniJinja
-# would eat, a conditional path segment that renders to a stray suffix. What it
-# cannot answer is whether the output is a working Rust project — git-tpl
+# Three layers, and they answer different questions.
+#
+# `git tpl lint` (the 🕵️ Lint job, via prek) asks whether the template is a
+# valid template: a file that does not parse, a `${{ }}` MiniJinja would eat, a
+# conditional path segment that renders to a stray suffix.
+#
+# `git tpl test` asks whether each case renders what it should — which files
+# appear, which must not, what they contain. That is the layer that proves a
+# conditional slot was actually skipped rather than rendering something
+# harmless, which "it built" never shows.
+#
+# Neither can say whether the output is a working Rust project, because git-tpl
 # deliberately runs nothing over a rendering. So this job renders both cases and
 # points the real tools at them.
 
@@ -43,6 +51,12 @@ jobs:
       - name: Run hooks
         run: prek run --all-files --show-diff-on-failure
 
+      # Not in the 🎨 Render matrix: one invocation covers every case, and a
+      # failed `[expect]` is a two-second answer that should not wait behind a
+      # Rust toolchain and two cargo builds.
+      - name: Check the test cases
+        run: mise run test:template
+
   render:
     name: 🎨 Render (${{ matrix.case }})
     runs-on: ubuntu-latest
@@ -78,7 +92,7 @@ jobs:
         run: |
           git tpl render "$GITHUB_WORKSPACE" --dirty \
             --output "$RUNNER_TEMP/out" --force \
-            --answers-from "$GITHUB_WORKSPACE/tests/answers/${{ matrix.case }}.toml" \
+            --answers-from "$GITHUB_WORKSPACE/tests/${{ matrix.case }}.toml" \
             --defaults --strict-answers
 
       # Before anything builds. The output is a plain directory, not a

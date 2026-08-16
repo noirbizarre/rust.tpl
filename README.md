@@ -59,10 +59,11 @@ propagated its own versions would conflict with every one of those PRs.
 ## Working on the template
 
 ```bash
-mise run lint             # git tpl lint, actionlint, typos
-mise run render minimal   # render one answer case into a scratch directory
+mise run lint             # git tpl lint -D warnings, actionlint, typos
+mise run test:template    # the [expect] assertions in tests/*.toml
+mise run render minimal   # render one case into a scratch directory
 mise run render full
-mise run test             # render both, then build, test, lint and actionlint
+mise run test             # the above, then build, test, lint and actionlint
 mise run check:tasks DIR  # are any task names shadowed by a mise builtin?
 ```
 
@@ -70,15 +71,37 @@ mise run check:tasks DIR  # are any task names shadowed by a mise builtin?
 edit-commit-and-see. `git tpl render` writes a plain directory — no repository,
 no ref, nothing to clean up but the directory itself.
 
-Two layers, and they answer different questions. `git tpl lint` asks whether the
-template is a valid *template*: every `.jinja` file parses, including branches no
-answer set reaches; no `${{ }}` sits where MiniJinja would eat it; no conditional
-path segment renders to a stray suffix. `mise run test` asks whether the output
-is a working *project*, by pointing `cargo` and `actionlint` at it — git-tpl
-deliberately runs nothing over a rendering, so that half is ours.
+Three layers, each answering a different question, cheapest first.
 
-Both run in CI on every pull request. `minimal` is the case that earns its keep:
-it is where every conditional takes its other branch.
+`git tpl lint` asks whether the template is a valid *template*: every `.jinja`
+file parses, including branches no answer set reaches; no `${{ }}` sits where
+MiniJinja would eat it; no conditional path segment renders to a stray suffix.
+`-D warnings`, because two of its five findings are warnings by default and this
+repository has decided it never means one.
+
+`git tpl test` asks whether each case renders *what it should*. The cases in
+`tests/` carry `[expect]` blocks — which files appear, which must not, what they
+contain. That is the layer that proves a conditional slot was skipped rather
+than rendering something harmless, which a project that merely builds never
+shows.
+
+`mise run test` asks whether the output is a working *project*, by pointing
+`cargo` and `actionlint` at it. git-tpl deliberately runs nothing over a
+rendering, so that layer is ours.
+
+All three run in CI on every pull request. `minimal` is the case that earns its
+keep: it is where every conditional takes its other branch, and its `absent`
+list is the only thing that checks they took it.
+
+### The cases are also the answer files
+
+`tests/minimal.toml` and `tests/full.toml` are read twice: by `git tpl test`,
+which uses `[answers]` and `[expect]`, and by `--answers-from`, which reads the
+`[answers]` table and ignores the rest. One file, so the runner and the render
+tasks cannot drift onto different inputs.
+
+Snapshots (`git tpl test --write`) are deliberately not committed here — see
+[git-tpl#51](https://github.com/noirbizarre/git-tpl/issues/51).
 
 ### The mise shorthand hazard
 
