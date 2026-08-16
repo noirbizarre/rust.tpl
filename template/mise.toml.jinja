@@ -41,6 +41,13 @@ git-cliff = "latest"
 cargo-binstall = "latest"
 "cargo:cargo-nextest" = "latest"
 "cargo:cargo-llvm-cov" = "latest"
+# The template this project is rendered from. Prebuilt, and mise verifies the
+# GitHub artifact attestation and SLSA provenance on install.
+#
+# An explicit version, never `latest`: mise applies a `minimum_release_age`, so
+# `latest` resolves to whatever is old enough rather than to the newest release.
+# `mise.lock` then fixes the exact build.
+"github:noirbizarre/git-tpl" = "0.4.0"
 {%- if docs %}
 # Zensical runs through `uvx`, so uv is the only thing the docs build needs.
 uv = "latest"
@@ -160,13 +167,15 @@ run = "gh ship validate"
 # worktree — so running it is always safe and never a decision. The changes
 # arrive only when you merge:
 #
+#   mise run tpl:check       # has it moved?
 #   mise run tpl:update      # bring the rendered ref up to date
 #   mise run tpl:diff        # read what merging it would change
 #   git tpl merge            # take it
 #
-# git-tpl is deliberately not in [tools]: it vendors libgit2 and has no
-# binstall artifact, so a global entry would make every CI job compile it —
-# for a tool no CI job runs. Install it once with `cargo install git-tpl`.
+# git-tpl is in [tools] above, so `mise install` is all these tasks need.
+# It used to be excluded because it vendored libgit2 and had no prebuilt
+# artifact, which would have made every CI job compile it; since 0.4.0 it ships
+# release archives and mise installs them directly.
 
 [tasks."tpl:update"]
 description = "Re-render the template into refs/tpl/<id> (leaves the worktree alone)"
@@ -179,6 +188,22 @@ description = "Show what merging the template would change"
 # `raw_args` so `--stat`, `--name-only` and path limiting reach git-tpl.
 raw_args = true
 run = "git tpl diff"
+
+[tasks."tpl:check"]
+description = "Has the template moved? Exits 1 if merging it would change anything"
+# `update` first, because the rendered ref may not exist at all: a fresh clone
+# has no `refs/tpl/*` — `git clone` and `actions/checkout` fetch neither — and
+# `update` creates it rather than failing, so this works anywhere.
+#
+# `--exit-code` reports *difference*, never conflict. A preview that would
+# conflict is a correct answer to the question asked, and failing on it would
+# make this useless on exactly the projects that have diverged most.
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+git tpl update
+git tpl diff --exit-code --stat
+"""
 
 # --- project-specific tasks --------------------------------------------------
 #
