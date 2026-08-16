@@ -4,10 +4,9 @@
 # than no file, and workflows that reference something only the maximal case
 # provides.
 
-# Answers nest under `[answers]` rather than sitting at the top level.
-# `--answers-from` accepts both shapes, and the nested one is what
-# `git tpl test` (git-tpl#26) expects so a case can carry `[expect]`
-# alongside without the two colliding.
+# Answers nest under `[answers]` because this is a `git tpl test` case, and
+# `[expect]` sits alongside them. `--answers-from` reads the same file, so the
+# render tasks and the test runner cannot drift onto different inputs.
 
 [answers]
 crate = "minimal-example"
@@ -23,3 +22,33 @@ msrv = false
 publish = false
 docs = false
 targets = ["x86_64-unknown-linux-gnu"]
+
+# The five conditional slots, all off. `absent` is the assertion that matters:
+# the conditional-path idiom fails by producing a file rather than by erroring,
+# so "it rendered and built" never proves a slot was actually skipped.
+[expect]
+absent = [
+  ".github/workflows/msrv.yaml",
+  ".github/workflows/docs.yaml",
+  "zensical.toml",
+  "docs/index.md",
+  "docs/adr/README.md",
+]
+files = [
+  ".github/workflows/ci.yaml",
+  ".github/workflows/ship.yaml",
+  ".github/workflows/prepare-release.yaml",
+  ".github/workflows/publish-release.yaml",
+  ".github/workflows/template.yaml",
+  "Cargo.toml",
+  "mise.toml",
+  "prek.toml",
+  "cliff.toml",
+  "src/main.rs",
+]
+
+[expect.contains]
+# `publish = false` and the absent crates.io job are one answer expressed twice,
+# in two files that are edited independently.
+"Cargo.toml" = ['name = "minimal-example"', "publish = false"]
+"mise.toml" = ['tasks."tpl:check"']

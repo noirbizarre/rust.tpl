@@ -2,10 +2,9 @@
 #
 # Rendered and built by .github/workflows/render.yaml.
 
-# Answers nest under `[answers]` rather than sitting at the top level.
-# `--answers-from` accepts both shapes, and the nested one is what
-# `git tpl test` (git-tpl#26) expects so a case can carry `[expect]`
-# alongside without the two colliding.
+# Answers nest under `[answers]` because this is a `git tpl test` case, and
+# `[expect]` sits alongside them. `--answers-from` reads the same file, so the
+# render tasks and the test runner cannot drift onto different inputs.
 
 [answers]
 crate = "full-example"
@@ -32,3 +31,26 @@ targets = [
   "x86_64-pc-windows-msvc",
   "aarch64-pc-windows-msvc",
 ]
+
+# Every conditional slot on. The mirror of `minimal`: what that one asserts is
+# absent, this asserts is present, so a slot that stopped rendering altogether
+# fails here rather than passing both cases quietly.
+[expect]
+files = [
+  ".github/workflows/msrv.yaml",
+  ".github/workflows/docs.yaml",
+  ".github/workflows/template.yaml",
+  "zensical.toml",
+  "docs/index.md",
+  "docs/adr/README.md",
+  "Cargo.toml",
+]
+
+[expect.contains]
+"Cargo.toml" = ['name = "full-example"', 'rust-version = "1.88"']
+# The MSRV job greps this literal line out of Cargo.toml, so the two have to
+# agree — and they are rendered from different answers in different files.
+".github/workflows/msrv.yaml" = ["rust-version"]
+".github/workflows/publish-release.yaml" = ["crates.io", "aarch64-pc-windows-msvc"]
+"zensical.toml" = ['accent = "deep orange"']
+"mise.toml" = ["docs:build"]
