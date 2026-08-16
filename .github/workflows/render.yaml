@@ -1,8 +1,13 @@
 name: ♻️ CI
 
-# A bad render lands in every consuming repository at once, and git-tpl has no
-# `render` or `test` command for template authors. So the only pre-flight is
-# this: actually render the template and actually build what comes out.
+# A bad render lands in every consuming repository at once.
+#
+# `git tpl lint` (the 🕵️ Lint job, via prek) catches what is wrong with the
+# template *as a template*: a file that does not parse, a `${{ }}` MiniJinja
+# would eat, a conditional path segment that renders to a stray suffix. What it
+# cannot answer is whether the output is a working Rust project — git-tpl
+# deliberately runs nothing over a rendering. So this job renders both cases and
+# points the real tools at them.
 
 on:
   push:
@@ -45,9 +50,10 @@ jobs:
       fail-fast: false
       matrix:
         # `minimal` is the one that matters: it is the case where every
-        # conditional takes its other branch, which is where a segment that
-        # renders to a stray `.jinja` or a workflow referencing a task that no
-        # longer exists would show up.
+        # conditional takes its other branch. `git tpl lint` now catches the
+        # degenerate path segments statically, but not a workflow referencing a
+        # task that only the maximal case renders, or a `when`-gated answer used
+        # outside its guard — those need the branch actually taken.
         case: [minimal, full]
     steps:
       - uses: actions/checkout@v7
@@ -62,30 +68,34 @@ jobs:
           version: ${{ env.PINNED_MISE_VERSION }}
           cache: true
 
-      - name: Install git-tpl
-        run: cargo install git-tpl --locked
-
-      # git-tpl renders from a Git tree, so the target has to be a repository
-      # and it needs an identity to commit the template ref.
+      # `--dirty` renders the working tree rather than a committed revision,
+      # which is the whole point: this must fail on the PR's changes, not on
+      # what is already merged.
+      #
+      # `--strict-answers` so a key in the answer file that names no question
+      # is an error rather than a silent fallback to the question's default.
       - name: Render the template
         run: |
-          set -euo pipefail
-          git config --global user.name "CI"
-          git config --global user.email "ci@example.invalid"
-          git config --global init.defaultBranch main
-
-          out="$RUNNER_TEMP/out"
-          git init "$out"
-          cd "$out"
-
-          # `--dirty` renders the working tree rather than a committed
-          # revision, which is the whole point: this must fail on the PR's
-          # changes, not on what is already merged.
-          git tpl init --dirty "$GITHUB_WORKSPACE" \
+          git tpl render "$GITHUB_WORKSPACE" --dirty \
+            --output "$RUNNER_TEMP/out" --force \
             --answers-from "$GITHUB_WORKSPACE/tests/answers/${{ matrix.case }}.toml" \
-            --defaults
+            --defaults --strict-answers
 
-          git -C "$out" ls-files
+      # Before anything builds. The output is a plain directory, not a
+      # repository, so this walks the filesystem — and after `cargo build` that
+      # would mean walking `target/` and parsing whatever Cargo left there.
+      - name: Check the rendered configuration parses
+        working-directory: ${{ runner.temp }}/out
+        run: |
+          set -euo pipefail
+          # A conditional that ate a closing bracket produces a file that looks
+          # fine in a diff and fails at the first tool to read it. `git tpl lint`
+          # proves the *template* parses as a template; this proves the *output*
+          # parses as what it claims to be.
+          find . -name '*.toml' -print0 | xargs -0 -r -n1 \
+            python3 -c "import tomllib,sys; tomllib.load(open(sys.argv[1],'rb'))"
+          find . \( -name '*.yml' -o -name '*.yaml' \) -print0 | xargs -0 -r -n1 \
+            python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))"
 
       - name: Build the rendered project
         working-directory: ${{ runner.temp }}/out
@@ -101,25 +111,18 @@ jobs:
           cargo fmt --all -- --check
           cargo clippy --all-targets --all-features -- -D warnings
 
-      # actionlint is what catches the escaping mistakes this template is most
-      # exposed to: a `${{ }}` that MiniJinja ate leaves valid YAML with a
+      # actionlint is the backstop for the escaping mistakes this template is
+      # most exposed to: a `${{ }}` that MiniJinja ate leaves valid YAML with a
       # meaningless expression, and only a workflow linter notices.
+      #
+      # `-config-file` explicitly. The rendered output is a plain directory, and
+      # bare actionlint wants a Git repository to locate both the project and
+      # its own config — without one it refuses to run, and when given file
+      # arguments it runs but silently ignores `.github/actionlint.yml`, so the
+      # deliberate suppressions in there stop applying.
       - name: Lint the rendered workflows
         working-directory: ${{ runner.temp }}/out
-        run: actionlint .github/workflows/*.yaml
-
-      - name: Check the rendered configuration parses
-        working-directory: ${{ runner.temp }}/out
-        run: |
-          set -euo pipefail
-          # A conditional that ate a closing bracket produces a file that looks
-          # fine in a diff and fails at the first tool to read it.
-          for file in $(git ls-files '*.toml'); do
-            python3 -c "import tomllib,sys; tomllib.load(open(sys.argv[1],'rb'))" "$file"
-          done
-          for file in $(git ls-files '*.yml' '*.yaml'); do
-            python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" "$file"
-          done
+        run: actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml
 
       # Not `working-directory: .../out`: the task is defined in this
       # repository and takes the rendered project as its argument, so that the
