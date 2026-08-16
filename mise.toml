@@ -1,7 +1,7 @@
 # Tooling for developing the template itself.
 #
-# There is no Rust crate here — the only build is `git tpl init` into a scratch
-# repository, and the only test is whether what comes out compiles.
+# There is no Rust crate here — the only build is `git tpl render` into a
+# scratch directory, and the only test is whether what comes out compiles.
 
 [settings]
 lockfile = true
@@ -20,6 +20,15 @@ actionlint = "latest"
 # `asdf:shellcheck`, which carries no lockfile URLs — so `mise install --locked`,
 # which mise-action runs as soon as it sees a mise.lock, fails on it.
 "aqua:koalaman/shellcheck" = "latest"
+# Prebuilt, and mise verifies the GitHub artifact attestation and SLSA
+# provenance on install. The `github:` prefix is required: there is no registry
+# short name yet (git-tpl issue #25).
+#
+# An explicit version, never `latest`. mise applies a `minimum_release_age`, so
+# `latest` resolves to whatever is old enough rather than to the newest release
+# — which today would be 0.2.0, predating both `render` and `lint`. A pin is
+# exempt from the gate; `mise.lock` then fixes the exact build.
+"github:noirbizarre/git-tpl" = "0.4.0"
 
 [tasks.default]
 description = "Lint, then render and build both cases"
@@ -27,7 +36,7 @@ depends = ["lint", "test"]
 
 [tasks.lint]
 description = "Lint the template repository"
-depends = ["spell", "lint:actions"]
+depends = ["spell", "lint:actions", "lint:template"]
 
 [tasks.spell]
 description = "Check spelling"
@@ -37,25 +46,53 @@ run = "typos"
 description = "Lint this repository's own workflows"
 run = "actionlint .github/workflows/*.yaml"
 
+[tasks."lint:template"]
+description = "Check the template for the problems a render cannot find"
+# A render only ever proves the branch it took. This parses every `.jinja` file
+# including branches no answer set reaches, reports a `${{ }}` MiniJinja would
+# consume, and catches a conditional path segment that renders to something
+# like `.yaml` instead of being skipped — a real file, silently, which no
+# amount of rendering the other case reveals when only one file is gated.
+#
+# Warnings fail here, though git-tpl exits 0 on them. That is the right default
+# for git-tpl — a template may legitimately mean a `${{ }}` or an undeclared
+# name — and the wrong one for this template, which has decided it never does:
+# `tpl::lint::foreign_expression` is precisely the silent failure the README's
+# `${{ }}` section is about, and the hand-written hook this replaced treated it
+# as fatal. Keeping that severity is the point of the second call.
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+git tpl lint . --dirty
+count=$(git tpl --json lint . --dirty |
+  python3 -c 'import json, sys; print(json.load(sys.stdin)["warnings"])')
+if [ "$count" != "0" ]; then
+  echo "$count warning(s), which are errors in this repository" >&2
+  exit 1
+fi
+"""
+
 [tasks.render]
-description = "Render one answer case into a scratch repository (default: full)"
+description = "Render one answer case into a scratch directory (default: full)"
 # A usage spec rather than `raw_args`, so that `mise run render minimal`
 # actually binds the word to something. Without it mise passes nothing through
 # and the task silently renders the default case.
 usage = 'arg "<case>" help="The answer case under tests/answers" default="full"'
 # `--dirty` renders the working tree, not the last commit, which is what makes
 # this an edit-and-see loop rather than an edit-commit-and-see one.
+#
+# `--strict-answers` because a key that names no question otherwise falls back
+# to the question's default — and for `msrv`, `docs` or `publish` that silently
+# deletes a whole conditional subtree while the warning scrolls past.
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
 case="${usage_case:-full}"
 out="${OUT:-$(mktemp -d)}"
-rm -rf "$out"
-git init -q -b main "$out"
-cd "$out"
-git tpl init --dirty "$MISE_PROJECT_ROOT" \\
+git tpl render "$MISE_PROJECT_ROOT" --dirty \\
+  --output "$out" --force \\
   --answers-from "$MISE_PROJECT_ROOT/tests/answers/$case.toml" \\
-  --defaults
+  --defaults --strict-answers
 echo
 echo "Rendered $case into $out"
 """
@@ -102,6 +139,13 @@ echo "no task name is shadowed by a mise builtin"
 
 [tasks.test]
 description = "Render both cases and build the output"
+# What `git tpl lint` cannot answer: whether the rendered project is a working
+# Rust project. git-tpl deliberately runs nothing over a rendering, so this is
+# where the real tools get pointed at it.
+#
+# `git tpl test` (git-tpl#26) will eventually subsume the file-level
+# assertions — which files exist, which are absent, what they contain — but not
+# these: building, testing and linting the output stays the author's job.
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
@@ -115,7 +159,13 @@ for case in minimal full; do
   cargo test
   cargo fmt --all -- --check
   cargo clippy --all-targets --all-features -- -D warnings
-  actionlint
+  # `-config-file` explicitly, and the workflow paths explicitly. `git tpl
+  # render` writes a plain directory, and bare `actionlint` looks for a Git
+  # repository to locate both the project and its own config — without one it
+  # refuses to run, and when given file arguments it runs but silently ignores
+  # `.github/actionlint.yml`, so the three deliberate suppressions in there stop
+  # applying and the rendered workflows fail on known false positives.
+  actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml
   cd - > /dev/null
 done
 """

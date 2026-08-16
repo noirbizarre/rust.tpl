@@ -41,6 +41,10 @@ checksum = "sha256:3c89db4edcab7cf1c27bff178882e0f6f27f7afdf54e859fa041fca10febe
 url = "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.darwin.x86_64.tar.xz"
 url_api = "https://api.github.com/repos/koalaman/shellcheck/releases/assets/279056930"
 
+[[tools."github:noirbizarre/git-tpl"]]
+version = "0.4.0"
+backend = "github:noirbizarre/git-tpl"
+
 [[tools.prek]]
 version = "0.4.13"
 backend = "aqua:j178/prek"
