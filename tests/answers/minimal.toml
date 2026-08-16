@@ -4,6 +4,12 @@
 # than no file, and workflows that reference something only the maximal case
 # provides.
 
+# Answers nest under `[answers]` rather than sitting at the top level.
+# `--answers-from` accepts both shapes, and the nested one is what
+# `git tpl test` (git-tpl#26) expects so a case can carry `[expect]`
+# alongside without the two colliding.
+
+[answers]
 crate = "minimal-example"
 description = "Every optional slot turned off"
 owner = "noirbizarre"
