@@ -129,11 +129,10 @@ jobs:
       # most exposed to: a `${{ }}` that MiniJinja ate leaves valid YAML with a
       # meaningless expression, and only a workflow linter notices.
       #
-      # `-config-file` explicitly. The rendered output is a plain directory, and
-      # bare actionlint wants a Git repository to locate both the project and
-      # its own config — without one it refuses to run, and when given file
-      # arguments it runs but silently ignores `.github/actionlint.yml`, so the
-      # deliberate suppressions in there stop applying.
+      # `-config-file` explicitly. The rendered output is a plain directory, so
+      # automatic actionlint config discovery cannot walk up to a Git repository
+      # root and silently finds no config. The deliberate suppressions in
+      # `.github/actionlint.yml` would otherwise not apply.
       - name: Lint the rendered workflows
         working-directory: ${{ runner.temp }}/out
         run: actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml

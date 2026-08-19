@@ -163,11 +163,10 @@ for case in minimal full; do
   cargo fmt --all -- --check
   cargo clippy --all-targets --all-features -- -D warnings
   # `-config-file` explicitly, and the workflow paths explicitly. `git tpl
-  # render` writes a plain directory, and bare `actionlint` looks for a Git
-  # repository to locate both the project and its own config — without one it
-  # refuses to run, and when given file arguments it runs but silently ignores
-  # `.github/actionlint.yml`, so the three deliberate suppressions in there stop
-  # applying and the rendered workflows fail on known false positives.
+  # render` writes a plain directory, so automatic actionlint config discovery
+  # cannot walk up to a Git repository root and silently finds no config. The
+  # deliberate suppressions in `.github/actionlint.yml` would otherwise not
+  # apply and known false positives would fail the rendered workflows.
   actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml
   cd - > /dev/null
 done
