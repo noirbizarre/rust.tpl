@@ -17,7 +17,11 @@ checks is a comment, and it will be violated.
 <!-- 1. **...** — enforced by `tests/....rs`. -->
 
 ## Layout
-
+{% if workspace %}
+A Cargo workspace: `Cargo.toml` at the root is a virtual manifest — no code of
+its own — and each member crate lives under its own directory with its own
+`Cargo.toml` and `src/`.
+{%- else %}
 ```
 src/
 ├── lib.rs      the library surface
@@ -27,6 +31,7 @@ src/
 ```
 
 Dependencies point inward. Nothing in the library knows a command exists.
+{%- endif %}
 
 ## Style
 

@@ -152,16 +152,22 @@ depends = ["test:template"]
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
-for case in minimal full; do
+for case in minimal full workspace; do
   out="$(mktemp -d)"
   echo "==> $case"
   OUT="$out" mise run render "$case"
   mise run check:tasks "$out"
   cd "$out"
-  cargo build --all-targets
-  cargo test
-  cargo fmt --all -- --check
-  cargo clippy --all-targets --all-features -- -D warnings
+  # `workspace` renders a virtual manifest with no members: a real project
+  # fills those in by hand, and until then `cargo build` fails outright
+  # ("the workspace has no members") by Cargo's own design, not a template
+  # bug. Skip the cargo steps for it; everything else below still applies.
+  if [ "$case" != "workspace" ]; then
+    cargo build --all-targets
+    cargo test
+    cargo fmt --all -- --check
+    cargo clippy --all-targets --all-features -- -D warnings
+  fi
   # `-config-file` explicitly, and the workflow paths explicitly. `git tpl
   # render` writes a plain directory, so automatic actionlint config discovery
   # cannot walk up to a Git repository root and silently finds no config. The
