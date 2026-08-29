@@ -48,6 +48,15 @@ jobs:
         with:
           version: ${{ env.PINNED_MISE_VERSION }}
           cache: true
+
+      # A tool restored from the mise cache can come back without its PATH
+      # entry (seen with `prek` specifically: `mise ls` lists it, `mise env`
+      # doesn't put it on PATH). `shims/` is already on PATH courtesy of
+      # mise-action; reshim rebuilds it straight from what's installed, which
+      # sidesteps whatever dropped the per-tool entry rather than explaining it.
+      - name: Ensure mise's shims match what's installed
+        run: mise reshim
+
       - name: Run hooks
         run: prek run --all-files --show-diff-on-failure
 
