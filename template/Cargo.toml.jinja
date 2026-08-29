@@ -2,11 +2,32 @@
 {%- set category_list = categories | split(',') | map('trim') | select | list -%}
 # {{ crate }} — {{ description }}
 #
+{%- if workspace %}
+# A Cargo workspace. This file is a virtual manifest: no [package] of its own,
+# just the members and the [workspace.package]/[workspace.dependencies] tables
+# they share. Add member crates below, past the marker — the template does not
+# know their content.
+{%- else %}
 # Single crate, `[lib]` + `[[bin]]`. The library holds the engine; the binary is
 # a thin CLI over it, so integration tests can exercise either.
+{%- endif %}
+
+{%- if workspace %}
+
+[workspace]
+# Virtual manifests carry no edition of their own to infer a resolver from —
+# without this, Cargo silently defaults new members to the old (v1) resolver.
+resolver = "3"
+# Add your member crates here, e.g. members = ["crates/*"]. The template owns
+# the workspace root, not what fills it.
+members = []
+
+[workspace.package]
+{%- else %}
 
 [package]
 name = "{{ crate }}"
+{%- endif %}
 version = "0.1.0"
 edition = "2024"
 {%- if msrv %}
@@ -32,6 +53,7 @@ categories = [{% for category in category_list %}"{{ category }}"{% if not loop.
 # nothing tests and nobody updates.
 publish = false
 {%- endif %}
+{%- if not workspace %}
 
 [[bin]]
 name = "{{ bin_name }}"
@@ -40,10 +62,15 @@ path = "src/main.rs"
 [lib]
 name = "{{ lib_name }}"
 path = "src/lib.rs"
+{%- endif %}
 
 [profile.release]
 # Release binaries are cross-compiled once per tag and downloaded many times, so
 # the build cost is paid once and the size saving is paid forward.
+#
+# Cargo only reads [profile.*] from a workspace's root manifest, so this stays
+# unconditional: member crates inherit it whether or not this file also
+# defines a [package].
 lto = true
 codegen-units = 1
 strip = true
@@ -53,10 +80,17 @@ strip = true
 # Everything above this line is owned by the template and will keep updating.
 # Everything below is yours.
 #
-# The template seeds these two sections once, at `git tpl init`, and then leaves
-# them alone: Dependabot bumps versions here weekly, and a template that
-# propagated its own would open a conflict against every one of those PRs.
-# Resolve in favour of the project if `git tpl update` ever touches them.
+# The template seeds what follows once, at `git tpl init`, and then leaves it
+# alone: Dependabot bumps versions here weekly, and a template that propagated
+# its own would open a conflict against every one of those PRs. Resolve in
+# favour of the project if `git tpl update` ever touches it.
+{%- if workspace %}
+
+[workspace.dependencies]
+# Shared versions for member crates to inherit via `dep = { workspace = true }`.
+# Owned by the project and Dependabot from here, same deal as [dependencies]
+# in the non-workspace shape.
+{%- else %}
 
 [dependencies]
 # Errors & diagnostics. `thiserror` for typed errors inside the library,
@@ -80,3 +114,4 @@ tempfile = "3"
 insta = { version = "1", features = ["filters"] }
 rstest = "0.26"
 pretty_assertions = "1"
+{%- endif %}

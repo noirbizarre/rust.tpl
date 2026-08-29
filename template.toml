@@ -78,6 +78,18 @@ type = "string"
 prompt = "Cargo categories (comma-separated)"
 default = "command-line-utilities,development-tools"
 
+[questions.workspace]
+type = "boolean"
+prompt = "Is this a Cargo workspace (more than one crate, none of them the project)?"
+help = """
+Renders Cargo.toml as a virtual manifest — [workspace] plus shared \
+[workspace.package]/[workspace.dependencies] tables, no [package] of its own \
+— and skips `src/`, `[[bin]]` and `[lib]` entirely. Add member crates by hand \
+under `members`, same as any other Cargo workspace: the template does not \
+render them.\
+"""
+default = false
+
 [questions.bin_name]
 type = "string"
 prompt = "Binary name"
@@ -87,6 +99,9 @@ resolves to a binary named `git-tpl`, and `gh` extensions must be named \
 `gh-<something>`.\
 """
 default = "{{ crate }}"
+# No single "the binary" exists at a workspace root — each member crate names
+# its own, if it has one.
+when = "not workspace"
 
 # --- Optional slots ---------------------------------------------------------
 

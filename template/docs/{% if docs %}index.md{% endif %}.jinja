@@ -10,9 +10,10 @@ cargo install {{ crate }}
 {% endif %}
 Or download a binary for your platform from the
 [latest release]({{ repo_url }}/releases/latest).
-
+{% if not workspace %}
 ## Usage
 
 ```bash
 {{ bin_name }} --help
 ```
+{% endif -%}

@@ -77,7 +77,11 @@ jobs:
         # degenerate path segments statically, but not a workflow referencing a
         # task that only the maximal case renders, or a `when`-gated answer used
         # outside its guard — those need the branch actually taken.
-        case: [minimal, full]
+        #
+        # `workspace` renders a virtual manifest with no members, so the build
+        # and test steps below are skipped for it — an empty workspace fails
+        # `cargo build` by Cargo's own design, not a template bug.
+        case: [minimal, full, workspace]
     steps:
       - uses: actions/checkout@v7
 
@@ -121,14 +125,17 @@ jobs:
             python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))"
 
       - name: Build the rendered project
+        if: matrix.case != 'workspace'
         working-directory: ${{ runner.temp }}/out
         run: cargo build --all-targets
 
       - name: Test the rendered project
+        if: matrix.case != 'workspace'
         working-directory: ${{ runner.temp }}/out
         run: cargo test
 
       - name: Check the rendered formatting and lints
+        if: matrix.case != 'workspace'
         working-directory: ${{ runner.temp }}/out
         run: |
           cargo fmt --all -- --check

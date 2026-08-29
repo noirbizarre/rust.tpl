@@ -1,0 +1,67 @@
+# The workspace case: `workspace = true`, no member crates.
+#
+# This proves the virtual-manifest shape renders correctly and that `src/` and
+# everything hard-coding `bin_name` (there is no root binary) disappear
+# together. `msrv = true` is deliberate: it is the trickiest interaction, since
+# `rust-version` moves from `[package]` to `[workspace.package]` and the MSRV
+# CI job's grep has to keep matching either way.
+#
+# `mise run test` (repo root) knows this case cannot build — an empty
+# workspace fails `cargo build` by design, until a project adds member crates
+# of its own — and skips the cargo steps for it accordingly.
+
+[answers]
+crate = "workspace-example"
+description = "Cargo.toml as a virtual manifest"
+owner = "noirbizarre"
+author = "Axel H. <noirbizarre@gmail.com>"
+copyright_holder = "Axel H."
+copyright_year = 2026
+keywords = "cli"
+categories = "command-line-utilities"
+workspace = true
+msrv = true
+msrv_version = "1.88"
+publish = false
+docs = false
+targets = ["x86_64-unknown-linux-gnu"]
+# bin_name omitted: `when = "not workspace"` means it is never asked here.
+
+# `src/*.rs` and every conditional slot's absence prove the workspace shape
+# actually skipped what it should, not merely rendered something harmless.
+[expect]
+absent = [
+  "src/main.rs",
+  "src/lib.rs",
+  "src/cli.rs",
+  "src/error.rs",
+  ".github/workflows/docs.yaml",
+  "zensical.toml",
+  "docs/index.md",
+  "docs/adr/README.md",
+]
+files = [
+  "Cargo.toml",
+  "mise.toml",
+  "prek.toml",
+  "cliff.toml",
+  "README.md",
+  "CONTRIBUTING.md",
+  "AGENTS.md",
+  ".github/workflows/ci.yaml",
+  ".github/workflows/msrv.yaml",
+  ".github/workflows/publish-release.yaml",
+]
+
+[expect.contains]
+# `[package]`/`[[bin]]`/`[lib]` absence isn't directly assertable — there's no
+# "must not contain" check — so the presence of the virtual-manifest shape
+# plus the absence of src/*.rs above is the available signal.
+"Cargo.toml" = [
+  "[workspace]",
+  "members = []",
+  "[workspace.package]",
+  'rust-version = "1.88"',
+  "[workspace.dependencies]",
+  "# --- project-specific ---",
+]

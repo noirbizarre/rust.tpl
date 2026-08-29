@@ -16,6 +16,7 @@ copyright_year = 2026
 keywords = "cli, example, template, rust, scaffolding"
 categories = "command-line-utilities, development-tools"
 bin_name = "full-example"
+workspace = false
 msrv = true
 msrv_version = "1.88"
 publish = true

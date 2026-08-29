@@ -127,7 +127,7 @@ depends = ["check", "docs:build"]
 {%- else %}
 depends = ["check"]
 {%- endif %}
-
+{% if not workspace %}
 # --- {{ crate }} itself ---------------------------------------------------
 
 [tasks.cli]
@@ -140,6 +140,7 @@ run = "cargo run --bin {{ bin_name }} --"
 [tasks.setup]
 description = "Install {{ bin_name }} locally, into ~/.cargo/bin"
 run = "cargo install --path . --force"
+{% endif -%}
 {% if docs %}
 # --- Documentation ----------------------------------------------------------
 

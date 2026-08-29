@@ -21,7 +21,9 @@ components and cross-compilation targets.
 | Command | What it does |
 |---|---|
 | `mise run build` | Build the binary |
+{%- if not workspace %}
 | `mise run cli` | Run `{{ bin_name }}` from source (passes flags through) |
+{%- endif %}
 | `mise run test` | Run the tests (accepts nextest selectors) |
 | `mise run cover` | Run the tests with coverage |
 | `mise run format` | Format |
