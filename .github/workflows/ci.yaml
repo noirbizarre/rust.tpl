@@ -1,0 +1,88 @@
+name: ♻️ CI
+
+# A bad render lands in every consuming repository at once.
+#
+# Two layers, and they answer different questions.
+#
+# `git tpl lint` (the 🕵️ Lint job, via prek) asks whether the template is a
+# valid template: a file that does not parse, a `${{ }}` MiniJinja would eat, a
+# conditional path segment that renders to a stray suffix.
+#
+# `git tpl test` (the 🧪 Test job) asks whether each case renders what it
+# should, *and* whether the result is a working Rust project — each case's own
+# `[commands]` points the real tools at its own rendering.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 🕵️ Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # No pinned version: this repository tracks the mise its contributors
+      # actually run, so an incompatibility surfaces here instead of only on
+      # whoever's machine happens to be behind.
+      - uses: jdx/mise-action@v4
+        with:
+          cache: true
+
+      # A tool restored from the mise cache can come back without its PATH
+      # entry (seen with `prek` specifically: `mise ls` lists it, `mise env`
+      # doesn't put it on PATH). `shims/` is already on PATH courtesy of
+      # mise-action; reshim rebuilds it straight from what's installed, which
+      # sidesteps whatever dropped the per-tool entry rather than explaining it.
+      - name: Ensure mise's shims match what's installed
+        run: mise reshim
+
+      # Covers `git tpl lint` too: prek.toml's own `template` hook runs it
+      # (`mise run lint:template`), so there is nothing left for this job to
+      # call directly. No Rust needed here — the cases that build something
+      # (🧪 Test, below) carry their own toolchain.
+      - name: Run hooks
+        run: prek run --all-files --show-diff-on-failure
+
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: jdx/mise-action@v4
+        with:
+          cache: true
+
+      # Installed once here rather than per case's `[commands]`: it lands
+      # outside the sandbox, so every case's `gh ship validate` reuses it.
+      - name: Install gh-ship
+        run: gh extension install noirbizarre/gh-ship
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run the template's test suite
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mise run test
