@@ -102,6 +102,12 @@ default = "{{ crate }}"
 # No single "the binary" exists at a workspace root — each member crate names
 # its own, if it has one.
 when = "not workspace"
+# Every read of `bin_name` in this template already sits inside an equivalent
+# guard (`{% if not workspace %}` or the `else` branch of `{% if workspace %}`),
+# so the injected default here changes no rendering — it only stops
+# `tpl::lint::unguarded_gate` from reporting reads that are already safe by
+# construction. See git-tpl's ADR-025.
+default_when_skipped = true
 
 # --- Optional slots ---------------------------------------------------------
 
@@ -118,6 +124,10 @@ when = "msrv"
 default = "1.88"
 pattern = "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
 message = "must be a Rust version such as 1.88 or 1.88.0"
+# Cargo.toml.jinja's only read of `msrv_version` already sits inside
+# `{% if msrv %}`, so this changes no rendering — it only satisfies
+# `tpl::lint::unguarded_gate`. See git-tpl's ADR-025.
+default_when_skipped = true
 
 [questions.publish]
 type = "boolean"
@@ -142,6 +152,11 @@ prompt = "Documentation accent colour"
 when = "docs"
 choices = ["indigo", "deep orange", "teal", "purple", "cyan", "pink", "amber"]
 default = "indigo"
+# zensical.toml's only read of `docs_accent` is already gated by the same
+# condition at the filename level (`{% if docs %}zensical.toml{% endif %}`),
+# so this changes no rendering — it only satisfies `tpl::lint::unguarded_gate`.
+# See git-tpl's ADR-025.
+default_when_skipped = true
 
 [questions.targets]
 type = "multi_choice"
