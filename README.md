@@ -1,6 +1,11 @@
 <h1 align="center">rust.tpl</h1>
 
-<p align="center"><strong>Base stack for Rust projects, as a <a href="https://github.com/noirbizarre/git-tpl">git-tpl</a> template</strong></p>
+<p align="center">
+  <strong>
+    Base stack for Rust projects, as a
+    <a href="https://github.com/noirbizarre/git-tpl">git-tpl</a> template
+  </strong>
+</p>
 
 ---
 
@@ -22,15 +27,17 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
 | **Release** | gh-ship: `ship.yaml`, `prepare-release.yaml`, `publish-release.yaml` |
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
-| **Crate** | `Cargo.toml` metadata, `[profile.release]`, and a `thiserror`/`miette` skeleton |
+| **Crate** | `Cargo.toml` metadata, `[profile.release]`, a `thiserror`/`miette` skeleton, optional `cargo-binstall` metadata |
+| **Man pages** | optional `build.rs` (clap_mangen + clap_complete) and a `mise run man` task |
+| **Packaging** | optional Homebrew formula / AUR `-bin` PKGBUILD, each with its own release-triggered workflow |
 
 ## Questions
 
 Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 `crate`, `description`, `owner`, `author`, `copyright_holder`, `copyright_year`,
-`keywords`, `categories`, `bin_name`, `msrv`, `msrv_version`, `publish`, `docs`,
-`docs_accent`, `targets`.
+`keywords`, `categories`, `bin_name`, `msrv`, `msrv_version`, `man_pages`,
+`publish`, `docs`, `docs_accent`, `targets`, `homebrew`, `homebrew_tap`, `aur`.
 
 Two of these deserve a note:
 
@@ -44,7 +51,12 @@ Two of these deserve a note:
 ## What it does not render
 
 Deliberately left to each project: `gh` extension packaging, artwork
-(`icons`/`social`) tasks, OS packaging, and architecture-guard hooks.
+(`icons`/`social`) tasks, and architecture-guard hooks.
+
+OS packaging is opt-in rather than out of scope: the `homebrew`/`aur`
+questions render a formula/PKGBUILD skeleton and the workflow that keeps it
+current on every release, but creating and owning the tap repository or the
+AUR account itself is still the project's own work.
 
 ## Project-specific additions
 
@@ -135,7 +147,7 @@ A path segment that renders **empty** skips the entry, and that is git-tpl's
 only whole-file include mechanism. Where the `{% endif %}` goes decides whether
 it works, and getting it wrong produces a real file rather than an error:
 
-```
+```text
 {% if msrv %}msrv.yaml{% endif %}                 ✅ renders to nothing
 {% if msrv %}msrv{% endif %}.yaml                 ❌ renders to `.yaml`
 {% if docs %}zensical.toml{% endif %}.jinja       ✅ renders to nothing

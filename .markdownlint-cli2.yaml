@@ -1,0 +1,29 @@
+---
+# Same convention the template renders into every consumer: no prose line
+# over 120 columns. Tables and code blocks are exempt — they can't be
+# rewrapped without breaking their content.
+config:
+  MD013:
+    line_length: 120
+    tables: false
+    code_blocks: false
+    heading_line_length: 120
+
+  # This README's hero needs raw HTML for centering (the same reason the
+  # template's own README.md.jinja disables it), and its "what it renders"
+  # table uses the spaced ("loose") pipe style, not the compact style MD060
+  # wants.
+  MD033: false # no-inline-html
+  MD041: false # first-line-heading/first-line-h1
+  MD060: false # table-column-style
+
+noBanner: true
+noProgress: true
+showFound: false
+
+# Readable terminal output over the plain default text. Needs
+# `markdownlint-cli2-formatter-pretty` resolvable alongside markdownlint-cli2
+# itself — the prek hook gets it via `additional_dependencies`, which installs
+# both into the same node environment.
+outputFormatters:
+  - ["markdownlint-cli2-formatter-pretty"]

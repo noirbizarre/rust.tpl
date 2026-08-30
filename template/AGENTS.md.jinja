@@ -22,7 +22,7 @@ A Cargo workspace: `Cargo.toml` at the root is a virtual manifest — no code of
 its own — and each member crate lives under its own directory with its own
 `Cargo.toml` and `src/`.
 {%- else %}
-```
+```text
 src/
 ├── lib.rs      the library surface
 ├── main.rs     the {{ bin_name }} binary
@@ -66,7 +66,7 @@ derives the version from the commit history, `prepare-release` applies it, and
 mise run ci
 ```
 
-Formatting, Clippy, spelling, workflow linting{% if docs %}, tests and the documentation build{% else %} and tests{% endif %}. Same as CI.
+Formatting, Clippy, spelling, workflow and Markdown linting, tests{% if docs %} and the documentation build{% endif %}. Same as CI.
 
 ## This repository is generated from a template
 

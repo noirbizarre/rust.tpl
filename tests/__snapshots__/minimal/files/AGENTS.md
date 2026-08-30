@@ -18,7 +18,7 @@ checks is a comment, and it will be violated.
 
 ## Layout
 
-```
+```text
 src/
 ├── lib.rs      the library surface
 ├── main.rs     the minimal-example binary
@@ -61,7 +61,7 @@ derives the version from the commit history, `prepare-release` applies it, and
 mise run ci
 ```
 
-Formatting, Clippy, spelling, workflow linting and tests. Same as CI.
+Formatting, Clippy, spelling, workflow and Markdown linting, tests. Same as CI.
 
 ## This repository is generated from a template
 

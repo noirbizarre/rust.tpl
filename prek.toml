@@ -23,15 +23,38 @@ id = "commitlint"
 stages = ["commit-msg"]
 additional_dependencies = ["@commitlint/config-conventional"]
 
+# actionlint publishes its own hook manifest, so this uses that instead of
+# hand-rolling a `repo = "local"` block: version bumps are then visible to
+# `prek update` the same way the commitlint hook above already is, and
+# `name`/`entry`/`files` come from the manifest — nothing to override. mise
+# is a requirement to work on this project at all, so its shims already put
+# the pinned `actionlint` on PATH; the `actionlint-system` hook's bare
+# `entry = "actionlint"` finds it without help.
+#
+# Keep `rev` in step with `tools.actionlint` in mise.lock: nothing enforces
+# the two agree.
 [[repos]]
-repo = "local"
+repo = "https://github.com/rhysd/actionlint"
+rev = "v1.7.12"
+hooks = [{ id = "actionlint-system" }]
+
+# Mechanically enforces the same 120-column convention the template renders
+# into every consumer — this repository's own README.md gets the same
+# treatment.
+[[repos]]
+repo = "https://github.com/DavidAnson/markdownlint-cli2"
+rev = "v0.23.2"
 
 [[repos.hooks]]
-id = "actionlint"
-name = "actionlint"
-language = "system"
-entry = "actionlint"
-files = "^\\.github/workflows/.*\\.ya?ml$"
+id = "markdownlint-cli2"
+files = "^README\\.md$"
+# For the pretty output formatter .markdownlint-cli2.yaml configures — it
+# needs to resolve alongside markdownlint-cli2 itself, and this installs it
+# into the same node environment as the hook.
+additional_dependencies = ["markdownlint-cli2-formatter-pretty"]
+
+[[repos]]
+repo = "local"
 
 [[repos.hooks]]
 id = "typos"

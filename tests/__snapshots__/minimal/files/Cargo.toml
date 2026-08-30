@@ -8,7 +8,10 @@ name = "minimal-example"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-authors = ["Axel H. <noirbizarre@gmail.com>"]
+# No `authors`: Cargo/crates.io stopped generating and reading it after the
+# 2021 edition — ownership on crates.io comes from the registry account that
+# published, not this field. `author` still feeds LICENSE and, when `aur` is
+# on, the PKGBUILD's `# Maintainer:` line.
 description = "Every optional slot turned off"
 repository = "https://github.com/noirbizarre/minimal-example"
 readme = "README.md"
@@ -18,6 +21,22 @@ categories = ["command-line-utilities"]
 # and `cargo install minimal-example` would create a second install path that
 # nothing tests and nobody updates.
 publish = false
+
+# cargo-binstall otherwise derives an asset name from the target triple, and
+# the publish workflow's assets carry short platform suffixes instead (the
+# `asset` field of each entry in `data/targets.toml`). A wrong guess is not an
+# error: binstall silently falls back to compiling from source, which is the
+# slow path this exists to avoid. So every target the publish workflow builds
+# is mapped by hand, from that same catalogue — one override per selected
+# target, so this list never drifts from the publish matrix.
+#
+# `pkg-fmt = "bin"`: the publish workflow uploads the raw executable, not an
+# archive — see publish-release.yaml's "Stage the asset" step.
+[package.metadata.binstall]
+pkg-fmt = "bin"
+
+[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]
+pkg-url = "{ repo }/releases/download/{ version }/minimal-example_{ version }_linux-amd64"
 
 [[bin]]
 name = "minimal-example"

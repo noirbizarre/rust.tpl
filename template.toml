@@ -129,6 +129,20 @@ message = "must be a Rust version such as 1.88 or 1.88.0"
 # `tpl::lint::unguarded_gate`. See git-tpl's ADR-025.
 default_when_skipped = true
 
+[questions.man_pages]
+type = "boolean"
+prompt = "Generate man pages and shell completions at build time?"
+help = """
+Adds `build.rs` (clap_mangen + clap_complete) and a `mise run man` task \
+collecting the output into `dist/`. Only meaningful for a CLI users invoke \
+through `man <bin> --help` — a `git-*` subcommand is the clearest example, \
+since Git rewrites its own `--help` into exactly that.\
+"""
+default = false
+# No single binary exists at a workspace root to generate pages for.
+when = "not workspace"
+default_when_skipped = true
+
 [questions.publish]
 type = "boolean"
 prompt = "Publish to crates.io?"
@@ -163,6 +177,42 @@ type = "multi_choice"
 prompt = "Release targets"
 help = "Cross-compilation matrix for the publish workflow."
 choices_from = "data.targets.choices"
+
+# --- Packaging (opt-in) ------------------------------------------------------
+#
+# Neither renders a tap or an AUR account — creating and owning those stays
+# the project's own work. Both need at least one matching release target
+# selected above (Homebrew: a macOS or `linux-amd64-musl` target; AUR: a
+# `linux-*-gnu` target) or the rendered formula/PKGBUILD has nothing to point
+# at.
+
+[questions.homebrew]
+type = "boolean"
+prompt = "Publish a Homebrew formula?"
+help = """
+Renders a formula skeleton and a workflow that pushes it to a tap on every \
+release, deriving checksums from the published assets themselves. You still \
+create and own the tap repository, and a `TAP_TOKEN` secret scoped to it.\
+"""
+default = false
+
+[questions.homebrew_tap]
+type = "string"
+prompt = "Homebrew tap repository (owner/repo)"
+help = "Where the rendered formula is pushed on every release."
+when = "homebrew"
+default = "{{ owner }}/homebrew-tap"
+default_when_skipped = true
+
+[questions.aur]
+type = "boolean"
+prompt = "Publish an AUR package (prebuilt binary)?"
+help = """
+Renders a `-bin` PKGBUILD and a workflow that pushes it to the AUR on every \
+release. You still own the AUR account and its `AUR_SSH_PRIVATE_KEY`. A \
+source-build package is a natural follow-up, not rendered here.\
+"""
+default = false
 
 # --- Data -------------------------------------------------------------------
 

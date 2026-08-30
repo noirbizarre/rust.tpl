@@ -15,9 +15,13 @@ bin_name = "full-example"
 workspace = false
 msrv = true
 msrv_version = "1.88"
+man_pages = true
 publish = true
 docs = true
 docs_accent = "deep orange"
+homebrew = true
+homebrew_tap = "noirbizarre/homebrew-tap"
+aur = true
 targets = [
   "x86_64-unknown-linux-gnu",
   "aarch64-unknown-linux-gnu",
@@ -27,6 +31,7 @@ targets = [
   "aarch64-apple-darwin",
   "x86_64-pc-windows-msvc",
   "aarch64-pc-windows-msvc",
+  "x86_64-unknown-freebsd",
 ]
 
 # Every conditional slot on. The mirror of `minimal`: what that one asserts is
@@ -41,16 +46,48 @@ files = [
   "docs/index.md",
   "docs/adr/README.md",
   "Cargo.toml",
+  ".editorconfig",
+  ".markdownlint-cli2.yaml",
+  "build.rs",
+  ".github/workflows/homebrew.yaml",
+  ".github/workflows/aur.yaml",
+  "packaging/homebrew/full-example.rb",
+  "packaging/aur/full-example-bin/PKGBUILD",
 ]
 
 [expect.contains]
-"Cargo.toml" = ['name = "full-example"', 'rust-version = "1.88"']
+"Cargo.toml" = [
+  'name = "full-example"',
+  'rust-version = "1.88"',
+  "[package.metadata.binstall]",
+  "[package.metadata.binstall.overrides.aarch64-pc-windows-msvc]",
+  "[build-dependencies]",
+  "clap_mangen",
+]
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/msrv.yaml" = ["rust-version"]
-".github/workflows/publish-release.yaml" = ["crates.io", "aarch64-pc-windows-msvc"]
+".github/workflows/publish-release.yaml" = [
+  "crates.io",
+  "aarch64-pc-windows-msvc",
+  "x86_64-unknown-freebsd",
+  "target-feature=+crt-static",
+]
 "zensical.toml" = ['accent = "deep orange"']
-"mise.toml" = ["docs:build"]
+"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
+# Regression tripwire for the bot-contributor filter: `github.contributors`
+# is unfiltered by `commit_parsers`, so without this every bot with a merged
+# PR — dependabot, the release bot — would be credited as a first-timer.
+"cliff.toml" = ['is ending_with("[bot]")']
+"prek.toml" = ['docs/.*\\.md']
+"packaging/homebrew/full-example.rb" = [
+  "class FullExample",
+  "@SHA256_DARWIN_ARM64@",
+  "@SHA256_LINUX_AMD64_MUSL@",
+]
+"packaging/aur/full-example-bin/PKGBUILD" = ["@SHA256_X86_64@", "@SHA256_AARCH64@"]
+".github/workflows/homebrew.yaml" = ["noirbizarre/homebrew-tap"]
+".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [commands]
 rendered = [

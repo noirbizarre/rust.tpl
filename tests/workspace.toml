@@ -52,6 +52,8 @@ files = [
   ".github/workflows/ci.yaml",
   ".github/workflows/msrv.yaml",
   ".github/workflows/publish-release.yaml",
+  ".editorconfig",
+  ".markdownlint-cli2.yaml",
 ]
 
 [expect.contains]

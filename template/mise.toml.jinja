@@ -74,7 +74,7 @@ uv = "latest"
 
 [tasks.default]
 description = "Run format, lint, build and test"
-depends = ["format", "lint", "lint:actions", "build", "test"]
+depends = ["format", "lint", "lint:actions", "lint:md", "build", "test"]
 
 [tasks.build]
 description = "Build the binary"
@@ -111,6 +111,20 @@ description = "Lint the GitHub Actions workflows"
 # this task and the prek hook cannot drift apart.
 run = "actionlint .github/workflows/*.yaml"
 
+[tasks."lint:md"]
+description = "Lint the documentation Markdown"
+# Through `npx -p`, not mise's `npm:` backend: .markdownlint-cli2.yaml loads
+# the pretty output formatter alongside markdownlint-cli2 itself, and mise's
+# `npm:` backend installs each tool into its own isolated tree, where one
+# cannot resolve the other — `npx -p pkg1 -p pkg2` installs both into one
+# shared cache instead. Also not in [tools] for the usual reason: `mise
+# install`, what CI's other jobs run, would then pull an npm toolchain onto
+# every job in the matrix for a check only this task needs.
+#
+# Scoped to the same files as the prek hook, minus CHANGELOG.md, which is
+# git-cliff's output, not prose to wrap.
+run = 'npx -y -p markdownlint-cli2 -p markdownlint-cli2-formatter-pretty -- markdownlint-cli2 "AGENTS.md" "CONTRIBUTING.md" "README.md"{% if docs %} "docs/**/*.md"{% endif %}'
+
 [tasks.snapshots]
 description = "Review and update insta snapshots interactively"
 tools = { "cargo:cargo-insta" = "latest" }
@@ -118,7 +132,7 @@ run = "cargo insta review"
 
 [tasks.check]
 description = "Run every check that does not modify the working tree"
-depends = ["format:check", "lint", "lint:actions", "spell", "test"]
+depends = ["format:check", "lint", "lint:actions", "lint:md", "spell", "test"]
 
 [tasks.ci]
 description = "Everything CI runs, locally"
@@ -140,6 +154,28 @@ run = "cargo run --bin {{ bin_name }} --"
 [tasks.setup]
 description = "Install {{ bin_name }} locally, into ~/.cargo/bin"
 run = "cargo install --path . --force"
+{%- if man_pages %}
+
+[tasks.man]
+description = "Collect the generated man page and shell completions into dist/"
+# build.rs writes them into the build script's OUT_DIR, which cargo places in
+# a hash-suffixed directory. Rather than guessing the hash, ask cargo where
+# the build script ran via its JSON message stream.
+tools = { jq = "latest" }
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+out=$(cargo build --message-format=json 2>/dev/null \
+  | jq -r 'select(.reason == "build-script-executed") | select(.package_id | test("{{ crate }}")) | .out_dir' \
+  | tail -n 1)
+test -n "$out" || { echo "could not locate OUT_DIR" >&2; exit 1; }
+rm -rf dist/man dist/completions
+mkdir -p dist/man dist/completions
+cp "$out"/man/*.1 dist/man/
+cp "$out"/completions/* dist/completions/
+echo "dist/man ($(ls dist/man | wc -l) pages), dist/completions ($(ls dist/completions | wc -l) shells)"
+"""
+{%- endif %}
 {% endif -%}
 {% if docs %}
 # --- Documentation ----------------------------------------------------------

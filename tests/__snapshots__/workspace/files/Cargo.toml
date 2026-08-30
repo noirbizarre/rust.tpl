@@ -21,7 +21,10 @@ edition = "2024"
 # against; the two answer different questions.
 rust-version = "1.88"
 license = "MIT"
-authors = ["Axel H. <noirbizarre@gmail.com>"]
+# No `authors`: Cargo/crates.io stopped generating and reading it after the
+# 2021 edition — ownership on crates.io comes from the registry account that
+# published, not this field. `author` still feeds LICENSE and, when `aur` is
+# on, the PKGBUILD's `# Maintainer:` line.
 description = "Cargo.toml as a virtual manifest"
 repository = "https://github.com/noirbizarre/workspace-example"
 readme = "README.md"
