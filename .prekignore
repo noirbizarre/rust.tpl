@@ -1,0 +1,6 @@
+# A recorded snapshot carries its own prek.toml, which prek's workspace mode
+# would otherwise auto-discover as a nested project and run against a frozen
+# recording (see `prek list`). Also keeps it out of this repository's own
+# hooks — a rewrite would desync a snapshot from what `git tpl test` compares
+# against next.
+tests/__snapshots__/

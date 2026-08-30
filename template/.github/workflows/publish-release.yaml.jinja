@@ -133,7 +133,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 {%- endraw %}
-{% if publish %}
+{%- if publish %}
   # Last, deliberately. Publishing to crates.io cannot be undone — `cargo yank`
   # hides a version from resolution but never removes it, and the version number
   # is spent forever. So it happens only once every target has proven the code
