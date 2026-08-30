@@ -38,6 +38,16 @@
 cargo install {{ crate }}
 ```
 {% endif %}
+{%- if homebrew %}
+```bash
+brew install {{ homebrew_tap }}/{{ crate }}
+```
+{% endif %}
+{%- if aur %}
+```bash
+paru -S {{ crate }}-bin  # or your AUR helper of choice
+```
+{% endif %}
 Or download a binary for your platform from the
 [latest release]({{ repo_url }}/releases/latest).
 {% if not workspace %}

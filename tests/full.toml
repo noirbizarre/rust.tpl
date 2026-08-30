@@ -19,6 +19,9 @@ man_pages = true
 publish = true
 docs = true
 docs_accent = "deep orange"
+homebrew = true
+homebrew_tap = "noirbizarre/homebrew-tap"
+aur = true
 targets = [
   "x86_64-unknown-linux-gnu",
   "aarch64-unknown-linux-gnu",
@@ -46,6 +49,10 @@ files = [
   ".editorconfig",
   ".markdownlint-cli2.yaml",
   "build.rs",
+  ".github/workflows/homebrew.yaml",
+  ".github/workflows/aur.yaml",
+  "packaging/homebrew/full-example.rb",
+  "packaging/aur/full-example-bin/PKGBUILD",
 ]
 
 [expect.contains]
@@ -73,6 +80,14 @@ files = [
 # PR — dependabot, the release bot — would be credited as a first-timer.
 "cliff.toml" = ['is ending_with("[bot]")']
 "prek.toml" = ['docs/.*\\.md']
+"packaging/homebrew/full-example.rb" = [
+  "class FullExample",
+  "@SHA256_DARWIN_ARM64@",
+  "@SHA256_LINUX_AMD64_MUSL@",
+]
+"packaging/aur/full-example-bin/PKGBUILD" = ["@SHA256_X86_64@", "@SHA256_AARCH64@"]
+".github/workflows/homebrew.yaml" = ["noirbizarre/homebrew-tap"]
+".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [commands]
 rendered = [

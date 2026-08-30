@@ -34,6 +34,14 @@
 cargo install full-example
 ```
 
+```bash
+brew install noirbizarre/homebrew-tap/full-example
+```
+
+```bash
+paru -S full-example-bin  # or your AUR helper of choice
+```
+
 Or download a binary for your platform from the
 [latest release](https://github.com/noirbizarre/full-example/releases/latest).
 

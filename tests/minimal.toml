@@ -33,6 +33,10 @@ absent = [
   "docs/index.md",
   "docs/adr/README.md",
   "build.rs",
+  ".github/workflows/homebrew.yaml",
+  ".github/workflows/aur.yaml",
+  "packaging/homebrew/minimal-example.rb",
+  "packaging/aur/minimal-example-bin/PKGBUILD",
 ]
 files = [
   ".github/workflows/ci.yaml",
