@@ -29,29 +29,21 @@ additional_dependencies = ["@commitlint/config-conventional"]
 
 # actionlint publishes its own hook manifest, so this uses that instead of
 # hand-rolling a `repo = "local"` block: version bumps are then visible to
-# `prek update` the same way the commitlint hook above already is.
-#
-# `entry` overrides the upstream `actionlint-system` hook — prek explicitly
-# supports overriding `name`, `entry` and `language` on a remote hook — to
-# route through `mise exec --`: a `system`-language hook runs whatever is on
-# PATH, but a git hook's shell usually has not activated mise, so the bare
-# `actionlint` the upstream hook defines can silently resolve to a different
-# build than the one `mise.lock` pins, or to nothing at all. `mise exec --`
-# runs the pinned version regardless.
+# `prek update` the same way the commitlint hook above already is, and
+# `name`/`entry`/`files` come from the manifest — nothing to override. mise
+# is a requirement to work on this project at all, so its shims already put
+# the pinned `actionlint` on PATH; the `actionlint-system` hook's bare
+# `entry = "actionlint"` finds it without help.
 #
 # Keep `rev` in step with `tools.actionlint` in mise.lock: nothing enforces
 # the two agree.
+#
+# Suppressions are configured in .github/actionlint.yml, not here: the same
+# file serves `mise run lint:actions`, so the two cannot disagree.
 [[repos]]
 repo = "https://github.com/rhysd/actionlint"
 rev = "v1.7.12"
-
-# Suppressions are configured in .github/actionlint.yml, not here: the same
-# file serves `mise run lint:actions`, so the two cannot disagree.
-[[repos.hooks]]
-id = "actionlint-system"
-name = "actionlint"
-entry = "mise exec -- actionlint"
-files = "^\\.github/workflows/.*\\.ya?ml$"
+hooks = [{ id = "actionlint-system" }]
 
 # Mechanically enforces the one Markdown convention AGENTS.md's Style section
 # otherwise only states: no prose line over 120 columns. Scoped to the
