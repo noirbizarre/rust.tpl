@@ -27,6 +27,7 @@ components and cross-compilation targets.
 | `mise run format` | Format |
 | `mise run lint` | Clippy, warnings denied |
 | `mise run lint:actions` | actionlint over the workflows |
+| `mise run lint:md` | markdownlint over AGENTS.md, CONTRIBUTING.md, README.md |
 | `mise run spell` | typos |
 | `mise run snapshots` | Review pending insta snapshots |
 | `mise run check` | Everything that does not modify the working tree |
