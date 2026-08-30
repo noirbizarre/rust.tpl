@@ -51,6 +51,7 @@ files = [
 # in two files that are edited independently.
 "Cargo.toml" = ['name = "minimal-example"', "publish = false"]
 "mise.toml" = ['tasks."tpl:check"']
+".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning"]
 
 [commands]
 rendered = [

@@ -51,6 +51,10 @@ files = [
 ".github/workflows/publish-release.yaml" = ["crates.io", "aarch64-pc-windows-msvc"]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build"]
+# Regression tripwire for the bot-contributor filter: `github.contributors`
+# is unfiltered by `commit_parsers`, so without this every bot with a merged
+# PR — dependabot, the release bot — would be credited as a first-timer.
+"cliff.toml" = ['is ending_with("[bot]")']
 
 [commands]
 rendered = [
