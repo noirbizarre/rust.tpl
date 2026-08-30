@@ -25,6 +25,7 @@ defaults:
     shell: bash
 
 env:
+  FORCE_COLOR: 1
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
 
