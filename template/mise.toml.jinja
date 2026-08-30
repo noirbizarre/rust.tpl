@@ -154,6 +154,28 @@ run = "cargo run --bin {{ bin_name }} --"
 [tasks.setup]
 description = "Install {{ bin_name }} locally, into ~/.cargo/bin"
 run = "cargo install --path . --force"
+{%- if man_pages %}
+
+[tasks.man]
+description = "Collect the generated man page and shell completions into dist/"
+# build.rs writes them into the build script's OUT_DIR, which cargo places in
+# a hash-suffixed directory. Rather than guessing the hash, ask cargo where
+# the build script ran via its JSON message stream.
+tools = { jq = "latest" }
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+out=$(cargo build --message-format=json 2>/dev/null \
+  | jq -r 'select(.reason == "build-script-executed") | select(.package_id | test("{{ crate }}")) | .out_dir' \
+  | tail -n 1)
+test -n "$out" || { echo "could not locate OUT_DIR" >&2; exit 1; }
+rm -rf dist/man dist/completions
+mkdir -p dist/man dist/completions
+cp "$out"/man/*.1 dist/man/
+cp "$out"/completions/* dist/completions/
+echo "dist/man ($(ls dist/man | wc -l) pages), dist/completions ($(ls dist/completions | wc -l) shells)"
+"""
+{%- endif %}
 {% endif -%}
 {% if docs %}
 # --- Documentation ----------------------------------------------------------

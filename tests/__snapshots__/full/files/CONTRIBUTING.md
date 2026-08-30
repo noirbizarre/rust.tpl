@@ -22,6 +22,7 @@ components and cross-compilation targets.
 |---|---|
 | `mise run build` | Build the binary |
 | `mise run cli` | Run `full-example` from source (passes flags through) |
+| `mise run man` | Collect the generated man page and shell completions into `dist/` |
 | `mise run test` | Run the tests (accepts nextest selectors) |
 | `mise run cover` | Run the tests with coverage |
 | `mise run format` | Format |

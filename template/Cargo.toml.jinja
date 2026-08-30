@@ -134,4 +134,13 @@ tempfile = "3"
 insta = { version = "1", features = ["filters"] }
 rstest = "0.26"
 pretty_assertions = "1"
+{%- if man_pages %}
+
+[build-dependencies]
+# Same derive feature as [dependencies]' `clap`, since build.rs recompiles
+# src/cli.rs from scratch rather than linking against the library crate.
+clap = { version = "4", features = ["derive", "env", "wrap_help"] }
+clap_mangen = "0.2"
+clap_complete = "4"
+{%- endif %}
 {%- endif %}

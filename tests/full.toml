@@ -15,6 +15,7 @@ bin_name = "full-example"
 workspace = false
 msrv = true
 msrv_version = "1.88"
+man_pages = true
 publish = true
 docs = true
 docs_accent = "deep orange"
@@ -44,6 +45,7 @@ files = [
   "Cargo.toml",
   ".editorconfig",
   ".markdownlint-cli2.yaml",
+  "build.rs",
 ]
 
 [expect.contains]
@@ -52,6 +54,8 @@ files = [
   'rust-version = "1.88"',
   "[package.metadata.binstall]",
   "[package.metadata.binstall.overrides.aarch64-pc-windows-msvc]",
+  "[build-dependencies]",
+  "clap_mangen",
 ]
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
@@ -63,7 +67,7 @@ files = [
   "target-feature=+crt-static",
 ]
 "zensical.toml" = ['accent = "deep orange"']
-"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md']
+"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
 # Regression tripwire for the bot-contributor filter: `github.contributors`
 # is unfiltered by `commit_parsers`, so without this every bot with a merged
 # PR — dependabot, the release bot — would be credited as a first-timer.

@@ -129,6 +129,20 @@ message = "must be a Rust version such as 1.88 or 1.88.0"
 # `tpl::lint::unguarded_gate`. See git-tpl's ADR-025.
 default_when_skipped = true
 
+[questions.man_pages]
+type = "boolean"
+prompt = "Generate man pages and shell completions at build time?"
+help = """
+Adds `build.rs` (clap_mangen + clap_complete) and a `mise run man` task \
+collecting the output into `dist/`. Only meaningful for a CLI users invoke \
+through `man <bin> --help` — a `git-*` subcommand is the clearest example, \
+since Git rewrites its own `--help` into exactly that.\
+"""
+default = false
+# No single binary exists at a workspace root to generate pages for.
+when = "not workspace"
+default_when_skipped = true
+
 [questions.publish]
 type = "boolean"
 prompt = "Publish to crates.io?"

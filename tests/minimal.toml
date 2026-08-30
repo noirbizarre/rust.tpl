@@ -32,6 +32,7 @@ absent = [
   "zensical.toml",
   "docs/index.md",
   "docs/adr/README.md",
+  "build.rs",
 ]
 files = [
   ".github/workflows/ci.yaml",
