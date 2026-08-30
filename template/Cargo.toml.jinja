@@ -37,7 +37,10 @@ edition = "2024"
 rust-version = "{{ msrv_version }}"
 {%- endif %}
 license = "MIT"
-authors = ["{{ author }}"]
+# No `authors`: Cargo/crates.io stopped generating and reading it after the
+# 2021 edition — ownership on crates.io comes from the registry account that
+# published, not this field. `author` still feeds LICENSE and, when `aur` is
+# on, the PKGBUILD's `# Maintainer:` line.
 description = "{{ description }}"
 repository = "{{ repo_url }}"
 {%- if docs %}
