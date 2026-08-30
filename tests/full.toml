@@ -44,7 +44,12 @@ files = [
 ]
 
 [expect.contains]
-"Cargo.toml" = ['name = "full-example"', 'rust-version = "1.88"']
+"Cargo.toml" = [
+  'name = "full-example"',
+  'rust-version = "1.88"',
+  "[package.metadata.binstall]",
+  "[package.metadata.binstall.overrides.aarch64-pc-windows-msvc]",
+]
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/msrv.yaml" = ["rust-version"]

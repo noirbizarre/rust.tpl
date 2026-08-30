@@ -49,7 +49,11 @@ files = [
 [expect.contains]
 # `publish = false` and the absent crates.io job are one answer expressed twice,
 # in two files that are edited independently.
-"Cargo.toml" = ['name = "minimal-example"', "publish = false"]
+"Cargo.toml" = [
+  'name = "minimal-example"',
+  "publish = false",
+  "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
+]
 "mise.toml" = ['tasks."tpl:check"']
 ".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning"]
 

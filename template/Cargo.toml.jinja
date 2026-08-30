@@ -55,6 +55,26 @@ publish = false
 {%- endif %}
 {%- if not workspace %}
 
+# cargo-binstall otherwise derives an asset name from the target triple, and
+# the publish workflow's assets carry short platform suffixes instead (the
+# `asset` field of each entry in `data/targets.toml`). A wrong guess is not an
+# error: binstall silently falls back to compiling from source, which is the
+# slow path this exists to avoid. So every target the publish workflow builds
+# is mapped by hand, from that same catalogue — one override per selected
+# target, so this list never drifts from the publish matrix.
+#
+# `pkg-fmt = "bin"`: the publish workflow uploads the raw executable, not an
+# archive — see publish-release.yaml's "Stage the asset" step.
+[package.metadata.binstall]
+pkg-fmt = "bin"
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+
+[package.metadata.binstall.overrides.{{ entry.target }}]
+pkg-url = "{ repo }/releases/download/{ version }/{{ crate }}_{ version }_{{ entry.asset }}{{ entry.ext }}"
+{%- endif %}
+{%- endfor %}
+
 [[bin]]
 name = "{{ bin_name }}"
 path = "src/main.rs"
