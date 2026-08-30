@@ -1,6 +1,11 @@
 <h1 align="center">rust.tpl</h1>
 
-<p align="center"><strong>Base stack for Rust projects, as a <a href="https://github.com/noirbizarre/git-tpl">git-tpl</a> template</strong></p>
+<p align="center">
+  <strong>
+    Base stack for Rust projects, as a
+    <a href="https://github.com/noirbizarre/git-tpl">git-tpl</a> template
+  </strong>
+</p>
 
 ---
 
@@ -142,7 +147,7 @@ A path segment that renders **empty** skips the entry, and that is git-tpl's
 only whole-file include mechanism. Where the `{% endif %}` goes decides whether
 it works, and getting it wrong produces a real file rather than an error:
 
-```
+```text
 {% if msrv %}msrv.yaml{% endif %}                 ✅ renders to nothing
 {% if msrv %}msrv{% endif %}.yaml                 ❌ renders to `.yaml`
 {% if docs %}zensical.toml{% endif %}.jinja       ✅ renders to nothing
