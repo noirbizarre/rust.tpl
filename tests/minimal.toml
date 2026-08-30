@@ -66,6 +66,12 @@ files = [
 # docs = false, so the prek hook and mise task must not reach into docs/.
 "prek.toml" = ['README\\.md)$']
 
+[expect.lacks]
+# The mirror of full.toml's positive assertion (`"crates.io"` present at
+# publish-release.yaml:70): publish = false must drop the whole crates.io
+# job, not merely leave it unexercised.
+".github/workflows/publish-release.yaml" = ["crates.io"]
+
 [commands]
 rendered = [
   "mise test",
