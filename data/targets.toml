@@ -17,6 +17,7 @@ choices = [
   "aarch64-apple-darwin",
   "x86_64-pc-windows-msvc",
   "aarch64-pc-windows-msvc",
+  "x86_64-unknown-freebsd",
 ]
 
 # `cross = true` selects `taiki-e/install-action@cross` and `cross build` on
@@ -84,3 +85,12 @@ runner = "windows-11-arm"
 asset = "windows-arm64"
 cross = false
 ext = ".exe"
+
+# cross-rs ships a dedicated FreeBSD toolchain image, so this builds the same
+# way as the Linux targets above — no GitHub-hosted FreeBSD runner exists.
+[[matrix]]
+target = "x86_64-unknown-freebsd"
+runner = "ubuntu-latest"
+asset = "freebsd-amd64"
+cross = true
+ext = ""

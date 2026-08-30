@@ -58,6 +58,9 @@ pkg-url = "{ repo }/releases/download/{ version }/full-example_{ version }_windo
 [package.metadata.binstall.overrides.aarch64-pc-windows-msvc]
 pkg-url = "{ repo }/releases/download/{ version }/full-example_{ version }_windows-arm64.exe"
 
+[package.metadata.binstall.overrides.x86_64-unknown-freebsd]
+pkg-url = "{ repo }/releases/download/{ version }/full-example_{ version }_freebsd-amd64"
+
 [[bin]]
 name = "full-example"
 path = "src/main.rs"

@@ -27,6 +27,7 @@ targets = [
   "aarch64-apple-darwin",
   "x86_64-pc-windows-msvc",
   "aarch64-pc-windows-msvc",
+  "x86_64-unknown-freebsd",
 ]
 
 # Every conditional slot on. The mirror of `minimal`: what that one asserts is
@@ -55,7 +56,12 @@ files = [
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/msrv.yaml" = ["rust-version"]
-".github/workflows/publish-release.yaml" = ["crates.io", "aarch64-pc-windows-msvc"]
+".github/workflows/publish-release.yaml" = [
+  "crates.io",
+  "aarch64-pc-windows-msvc",
+  "x86_64-unknown-freebsd",
+  "target-feature=+crt-static",
+]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md']
 # Regression tripwire for the bot-contributor filter: `github.contributors`
