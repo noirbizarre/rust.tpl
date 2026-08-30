@@ -21,13 +21,7 @@ actionlint = "latest"
 "aqua:koalaman/shellcheck" = "latest"
 # Needed by the `cargo:` backend below, or it builds from source instead.
 cargo-binstall = "latest"
-# `cargo:` rather than `github:`/`ubi:`: both install fine but write no
-# lockfile URLs, the same trap as `shellcheck` above. With cargo-binstall
-# present this downloads a release archive, not a from-source build.
-#
-# Pinned, never `latest`: mise's `minimum_release_age` would resolve `latest`
-# to whatever is old enough, not the newest release.
-"cargo:git-tpl" = "0.11.0"
+"cargo:git-tpl" = "latest"
 
 [tasks.default]
 description = "Lint, then run every test case"
