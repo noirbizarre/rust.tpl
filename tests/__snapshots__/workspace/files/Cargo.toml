@@ -1,0 +1,59 @@
+# workspace-example — Cargo.toml as a virtual manifest
+#
+# A Cargo workspace. This file is a virtual manifest: no [package] of its own,
+# just the members and the [workspace.package]/[workspace.dependencies] tables
+# they share. Add member crates below, past the marker — the template does not
+# know their content.
+
+[workspace]
+# Virtual manifests carry no edition of their own to infer a resolver from —
+# without this, Cargo silently defaults new members to the old (v1) resolver.
+resolver = "3"
+# Add your member crates here, e.g. members = ["crates/*"]. The template owns
+# the workspace root, not what fills it.
+members = []
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# The MSRV. Checked by a dedicated CI job, which greps this very line — keep it
+# a plain literal. `rust-toolchain.toml` separately pins the channel to develop
+# against; the two answer different questions.
+rust-version = "1.88"
+license = "MIT"
+authors = ["Axel H. <noirbizarre@gmail.com>"]
+description = "Cargo.toml as a virtual manifest"
+repository = "https://github.com/noirbizarre/workspace-example"
+readme = "README.md"
+keywords = ["cli"]
+categories = ["command-line-utilities"]
+# Not published to crates.io. Distribution is through the release assets alone,
+# and `cargo install workspace-example` would create a second install path that
+# nothing tests and nobody updates.
+publish = false
+
+[profile.release]
+# Release binaries are cross-compiled once per tag and downloaded many times, so
+# the build cost is paid once and the size saving is paid forward.
+#
+# Cargo only reads [profile.*] from a workspace's root manifest, so this stays
+# unconditional: member crates inherit it whether or not this file also
+# defines a [package].
+lto = true
+codegen-units = 1
+strip = true
+
+# --- project-specific --------------------------------------------------------
+#
+# Everything above this line is owned by the template and will keep updating.
+# Everything below is yours.
+#
+# The template seeds what follows once, at `git tpl init`, and then leaves it
+# alone: Dependabot bumps versions here weekly, and a template that propagated
+# its own would open a conflict against every one of those PRs. Resolve in
+# favour of the project if `git tpl update` ever touches it.
+
+[workspace.dependencies]
+# Shared versions for member crates to inherit via `dep = { workspace = true }`.
+# Owned by the project and Dependabot from here, same deal as [dependencies]
+# in the non-workspace shape.

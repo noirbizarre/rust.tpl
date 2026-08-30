@@ -6,9 +6,10 @@
 # `rust-version` moves from `[package]` to `[workspace.package]` and the MSRV
 # CI job's grep has to keep matching either way.
 #
-# `mise run test` (repo root) knows this case cannot build — an empty
-# workspace fails `cargo build` by design, until a project adds member crates
-# of its own — and skips the cargo steps for it accordingly.
+# An empty workspace fails `cargo build` by Cargo's own design, so unlike
+# `full`/`minimal`, this case's own `[commands]` stubs a member first.
+
+snapshot = true
 
 [answers]
 crate = "workspace-example"
@@ -64,4 +65,17 @@ files = [
   'rust-version = "1.88"',
   "[workspace.dependencies]",
   "# --- project-specific ---",
+]
+
+[commands]
+before = ["cargo new crates/example --name example --vcs none"]
+rendered = [
+  '''sed -i "s#members = \[\]#members = [\"crates/example\"]#" Cargo.toml''',
+  # the stub member has no tests, so `mise build` proves the shape, not `mise test`
+  "mise build",
+  # prek requires files to be git-tracked
+  "git init -q",
+  "git add .",
+  "prek -a",
+  "gh ship validate",
 ]

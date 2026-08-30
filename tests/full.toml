@@ -1,10 +1,6 @@
 # The maximal case: every optional slot on, the full target matrix.
-#
-# Rendered and built by .github/workflows/render.yaml.
 
-# Answers nest under `[answers]` because this is a `git tpl test` case, and
-# `[expect]` sits alongside them. `--answers-from` reads the same file, so the
-# render tasks and the test runner cannot drift onto different inputs.
+snapshot = true
 
 [answers]
 crate = "full-example"
@@ -55,3 +51,13 @@ files = [
 ".github/workflows/publish-release.yaml" = ["crates.io", "aarch64-pc-windows-msvc"]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build"]
+
+[commands]
+rendered = [
+  "mise test",
+  # prek requires files to be git-tracked
+  "git init -q",
+  "git add .",
+  "prek -a",
+  "gh ship validate",
+]
