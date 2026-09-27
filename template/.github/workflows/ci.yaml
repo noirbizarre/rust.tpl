@@ -20,6 +20,17 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
 
+  # sccache caches individual objects, so a Cargo.lock bump doesn't force a full rebuild the way rust-cache's key does.
+  RUSTC_WRAPPER: sccache
+  # Incremental compilation's on-disk state can't be reused by sccache, so the two are mutually exclusive.
+  CARGO_INCREMENTAL: "0"
+  # Backs sccache with GitHub's own Actions cache instead of a separate cloud bucket and its credentials.
+  SCCACHE_GHA_ENABLED: "true"
+  # lld-link ships with windows-latest (no install step) and links faster than link.exe; nextest links one binary
+  # per test target, so this matters. Scoped to this triple, so it's a no-op on Linux/macOS — which already
+  # defaults to Apple's own faster linker on Xcode 15+.
+  CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER: lld-link
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -37,6 +48,11 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+
+      # mold links faster than GNU ld, and clippy still has to link every test/example target it type-checks.
+      - uses: rui314/setup-mold@v1
+
+      - uses: mozilla-actions/sccache-action@v0.0.11
 
       # Tool versions come from mise.toml + mise.lock, so CI runs exactly
       # what `mise run default` runs locally. No pinned mise version: an
@@ -74,6 +90,13 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
+
+      # mold is Linux-only, so it only applies to this one leg of the matrix.
+      - name: Install mold (faster Linux linker)
+        if: matrix.os.flag == 'linux'
+        uses: rui314/setup-mold@v1
+
+      - uses: mozilla-actions/sccache-action@v0.0.11
 
       # nextest and llvm-cov are pinned by mise.lock rather than resolved
       # per-run, so a tool release cannot change CI behaviour on its own.
