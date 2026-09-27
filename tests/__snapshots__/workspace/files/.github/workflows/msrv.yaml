@@ -22,6 +22,11 @@ defaults:
 env:
   CARGO_TERM_COLOR: always
 
+  # See ci.yaml for why these three are set together.
+  RUSTC_WRAPPER: sccache
+  CARGO_INCREMENTAL: "0"
+  SCCACHE_GHA_ENABLED: "true"
+
 concurrency:
   group: msrv-${{ github.ref }}
   cancel-in-progress: true
@@ -43,6 +48,11 @@ jobs:
         with:
           toolchain: ${{ steps.msrv.outputs.version }}
       - uses: Swatinem/rust-cache@v2
+
+      # This job is Linux-only, so mold always applies (see ci.yaml).
+      - uses: rui314/setup-mold@v1
+
+      - uses: mozilla-actions/sccache-action@v0.0.11
 
       # `check`, not `test`: dev-dependencies routinely require a newer
       # toolchain than the crate itself, and the MSRV is a promise about
