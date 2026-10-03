@@ -29,6 +29,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
 | **Crate** | `Cargo.toml` metadata, `[profile.release]`, a `thiserror`/`miette` skeleton, optional `cargo-binstall` metadata |
 | **Man pages** | optional `build.rs` (clap_mangen + clap_complete) and a `mise run man` task |
+| **Archive** | optional `<crate>_<tag>_<asset>.tar.gz` per Unix target in the native package layout (`bin/`, `share/doc`, man pages, completions, `lib/systemd/user`), built reproducibly, and a systemd user unit skeleton |
 | **Packaging** | optional Homebrew formula / AUR `-bin` PKGBUILD, each with its own release-triggered workflow |
 
 ## Questions
@@ -37,7 +38,7 @@ Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 `crate`, `description`, `owner`, `author`, `copyright_holder`, `copyright_year`,
 `keywords`, `categories`, `bin_name`, `msrv`, `msrv_version`, `man_pages`,
-`publish`, `docs`, `docs_accent`, `targets`, `homebrew`, `homebrew_tap`, `aur`.
+`archive`, `service`, `publish`, `docs`, `docs_accent`, `targets`, `homebrew`, `homebrew_tap`, `aur`.
 
 Two of these deserve a note:
 
@@ -52,6 +53,15 @@ Two of these deserve a note:
 
 Deliberately left to each project: `gh` extension packaging, artwork
 (`icons`/`social`) tasks, and architecture-guard hooks.
+
+With `archive` on, the Homebrew formula and the AUR `-bin` package install from
+the tarball instead of the raw binary, which is how they get man pages,
+completions and the service unit. The raw binaries are published either way
+(cargo-binstall and `gh` extensions fetch them by name). Man pages and
+completions come from `build.rs` when `man_pages` is on; a project that
+generates them another way (a `completions` subcommand, say) adds a step to
+`publish-release.yaml` filling `stage/man` and `stage/completions` before the
+archive step, and the archive picks them up.
 
 OS packaging is opt-in rather than out of scope: the `homebrew`/`aur`
 questions render a formula/PKGBUILD skeleton and the workflow that keeps it

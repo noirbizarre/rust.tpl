@@ -16,6 +16,8 @@ workspace = false
 msrv = true
 msrv_version = "1.88"
 man_pages = true
+archive = true
+service = true
 publish = true
 docs = true
 docs_accent = "deep orange"
@@ -52,6 +54,7 @@ files = [
   ".github/workflows/aur.yaml",
   "packaging/homebrew/full-example.rb",
   "packaging/aur/full-example-bin/PKGBUILD",
+  "packaging/systemd/full-example.service",
 ]
 
 [expect.contains]
@@ -71,6 +74,12 @@ files = [
   "aarch64-pc-windows-msvc",
   "x86_64-unknown-freebsd",
   "target-feature=+crt-static",
+  # archive = true: the tarball step, in the layout memcastle's ADR-013 fixes.
+  "Package the Unix binaries",
+  "Generate man pages and completions",
+  "share/doc/full-example",
+  "lib/systemd/user/full-example.service",
+  "gzip -n -9",
 ]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
@@ -83,10 +92,25 @@ files = [
   "class FullExample",
   "@SHA256_DARWIN_ARM64@",
   "@SHA256_LINUX_AMD64_MUSL@",
+  "@SHA256_LINUX_ARM64_MUSL@",
+  "man1.install",
+  "zsh_completion.install",
 ]
-"packaging/aur/full-example-bin/PKGBUILD" = ["@SHA256_X86_64@", "@SHA256_AARCH64@"]
+"packaging/aur/full-example-bin/PKGBUILD" = [
+  "@SHA256_X86_64@",
+  "@SHA256_AARCH64@",
+  "linux-amd64.tar.gz",
+  "cp -a lib",
+]
+"packaging/systemd/full-example.service" = ["ExecStart=/usr/bin/full-example"]
 ".github/workflows/homebrew.yaml" = ["noirbizarre/homebrew-tap"]
 ".github/workflows/aur.yaml" = ["full-example-bin"]
+
+[expect.lacks]
+# archive = true: the licence and unit come out of the tarball, so the AUR
+# workflow must not also fetch and hash them from the tag.
+".github/workflows/aur.yaml" = ["SHA256_LICENSE", "SHA256_SERVICE"]
+"packaging/aur/full-example-bin/PKGBUILD" = ["SHA256_LICENSE"]
 
 [commands]
 rendered = [

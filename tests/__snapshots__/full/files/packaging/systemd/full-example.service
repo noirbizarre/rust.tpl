@@ -1,0 +1,24 @@
+# Package-owned systemd *user* unit: installed to /usr/lib/systemd/user/.
+# Never edit it in place; override with `systemctl --user edit full-example`.
+[Unit]
+Description=Every optional slot turned on
+Documentation=https://github.com/noirbizarre/full-example
+After=network.target
+
+[Service]
+# Stays in the foreground. Switch to Type=notify only once the binary calls
+# sd_notify, or systemd will report it started before it is ready.
+Type=simple
+# Add the subcommand that starts the daemon here, if the binary has one.
+ExecStart=/usr/bin/full-example
+# Optional (`-`): holds secrets and stays user-owned (mode 0600).
+# %E is $XDG_CONFIG_HOME.
+EnvironmentFile=-%E/full-example/secret.env
+Restart=on-failure
+# systemd's start-rate limit stops a crash loop, so this cannot spin forever.
+NoNewPrivileges=yes
+PrivateTmp=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=default.target

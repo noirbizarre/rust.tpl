@@ -66,13 +66,16 @@ jobs:
 
           declare -A targets=(
 {%- if "aarch64-apple-darwin" in targets %}
-            [DARWIN_ARM64]="{{ crate }}_${TAG}_darwin-arm64"
+            [DARWIN_ARM64]="{{ crate }}_${TAG}_darwin-arm64{{ ".tar.gz" if archive }}"
 {%- endif %}
 {%- if "x86_64-apple-darwin" in targets %}
-            [DARWIN_AMD64]="{{ crate }}_${TAG}_darwin-amd64"
+            [DARWIN_AMD64]="{{ crate }}_${TAG}_darwin-amd64{{ ".tar.gz" if archive }}"
 {%- endif %}
 {%- if "x86_64-unknown-linux-musl" in targets %}
-            [LINUX_AMD64_MUSL]="{{ crate }}_${TAG}_linux-amd64-musl"
+            [LINUX_AMD64_MUSL]="{{ crate }}_${TAG}_linux-amd64-musl{{ ".tar.gz" if archive }}"
+{%- endif %}
+{%- if "aarch64-unknown-linux-musl" in targets and archive %}
+            [LINUX_ARM64_MUSL]="{{ crate }}_${TAG}_linux-arm64-musl.tar.gz"
 {%- endif %}
           )
           for placeholder in "${!targets[@]}"; do

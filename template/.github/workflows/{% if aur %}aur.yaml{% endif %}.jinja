@@ -85,17 +85,23 @@ jobs:
           }
 
 {%- if "x86_64-unknown-linux-gnu" in targets %}
-          sed -i "s/@SHA256_X86_64@/$(checksum "{{ crate }}_${TAG}_linux-amd64")/" build/PKGBUILD
+          sed -i "s/@SHA256_X86_64@/$(checksum "{{ crate }}_${TAG}_linux-amd64{{ ".tar.gz" if archive }}")/" build/PKGBUILD
 {%- endif %}
 {%- if "aarch64-unknown-linux-gnu" in targets %}
-          sed -i "s/@SHA256_AARCH64@/$(checksum "{{ crate }}_${TAG}_linux-arm64")/" build/PKGBUILD
+          sed -i "s/@SHA256_AARCH64@/$(checksum "{{ crate }}_${TAG}_linux-arm64{{ ".tar.gz" if archive }}")/" build/PKGBUILD
 {%- endif %}
 
+{%- if not archive %}
           # Not a release asset: the raw binary carries no licence file, so the
           # licence is fetched from the tag and hashed here.
           license=$(curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${TAG}/LICENSE" | sha256sum | cut -d' ' -f1)
           sed -i "s/@SHA256_LICENSE@/${license}/" build/PKGBUILD
+{%- if service %}
+          service=$(curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${TAG}/packaging/systemd/{{ crate }}.service" | sha256sum | cut -d' ' -f1)
+          sed -i "s/@SHA256_SERVICE@/${service}/" build/PKGBUILD
+{%- endif %}
 
+{%- endif %}
           # A leftover placeholder means an asset was renamed upstream and the
           # package would pin nothing: an empty `sha256sums` entry does not
           # fail a build, it accepts whatever it downloads. Fail here instead.
