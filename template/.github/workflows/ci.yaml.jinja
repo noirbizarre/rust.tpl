@@ -1,3 +1,4 @@
+{%- raw -%}
 name: ♻️ CI
 
 on:
@@ -152,3 +153,39 @@ jobs:
 
       - name: Validate the release setup
         run: gh ship validate
+{%- endraw %}
+{%- if msrv %}
+{%- raw %}
+
+  # `rust-version` in Cargo.toml is a promise. Without a job that keeps it, it
+  # drifts the first time anyone uses a newer language feature — and the
+  # breakage surfaces in a user's build, not here.
+  msrv:
+    name: 🧓 MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the MSRV from Cargo.toml
+        id: msrv
+        run: |
+          version=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+      - uses: Swatinem/rust-cache@v2
+
+      # This job is Linux-only, so mold always applies (see the lint job).
+      - uses: rui314/setup-mold@v1
+
+      - uses: mozilla-actions/sccache-action@v0.0.11
+
+      # `check`, not `test`: dev-dependencies routinely require a newer
+      # toolchain than the crate itself, and the MSRV is a promise about
+      # consuming the library, not about developing it.
+      - name: Check
+        run: cargo check --all-targets
+{%- endraw %}
+{%- endif %}

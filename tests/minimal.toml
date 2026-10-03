@@ -22,12 +22,13 @@ publish = false
 docs = false
 targets = ["x86_64-unknown-linux-gnu"]
 
-# The five conditional slots, all off. `absent` is the assertion that matters:
+# Every conditional slot, all off. `absent` is the assertion that matters:
 # the conditional-path idiom fails by producing a file rather than by erroring,
-# so "it rendered and built" never proves a slot was actually skipped.
+# so "it rendered and built" never proves a slot was actually skipped. (The MSRV
+# job is a conditional block inside ci.yaml rather than a file, so it is
+# asserted under `lacks` below.)
 [expect]
 absent = [
-  ".github/workflows/msrv.yaml",
   ".github/workflows/docs.yaml",
   "zensical.toml",
   "docs/index.md",
@@ -71,6 +72,8 @@ files = [
 # publish-release.yaml:70): publish = false must drop the whole crates.io
 # job, not merely leave it unexercised.
 ".github/workflows/publish-release.yaml" = ["crates.io"]
+# msrv = false must drop the job from ci.yaml, not merely leave it unexercised.
+".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version"]
 
 [commands]
 rendered = [
