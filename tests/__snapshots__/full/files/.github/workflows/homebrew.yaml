@@ -65,9 +65,10 @@ jobs:
           }
 
           declare -A targets=(
-            [DARWIN_ARM64]="full-example_${TAG}_darwin-arm64"
-            [DARWIN_AMD64]="full-example_${TAG}_darwin-amd64"
-            [LINUX_AMD64_MUSL]="full-example_${TAG}_linux-amd64-musl"
+            [DARWIN_ARM64]="full-example_${TAG}_darwin-arm64.tar.gz"
+            [DARWIN_AMD64]="full-example_${TAG}_darwin-amd64.tar.gz"
+            [LINUX_AMD64_MUSL]="full-example_${TAG}_linux-amd64-musl.tar.gz"
+            [LINUX_ARM64_MUSL]="full-example_${TAG}_linux-arm64-musl.tar.gz"
           )
           for placeholder in "${!targets[@]}"; do
             sha256=$(checksum "${targets[$placeholder]}")

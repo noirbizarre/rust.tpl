@@ -38,6 +38,7 @@ absent = [
   ".github/workflows/aur.yaml",
   "packaging/homebrew/minimal-example.rb",
   "packaging/aur/minimal-example-bin/PKGBUILD",
+  "packaging/systemd/minimal-example.service",
 ]
 files = [
   ".github/workflows/ci.yaml",
@@ -71,7 +72,7 @@ files = [
 # The mirror of full.toml's positive assertion (`"crates.io"` present at
 # publish-release.yaml:70): publish = false must drop the whole crates.io
 # job, not merely leave it unexercised.
-".github/workflows/publish-release.yaml" = ["crates.io"]
+".github/workflows/publish-release.yaml" = ["crates.io", "Package the Unix binaries", "gzip -n"]
 # msrv = false must drop the job from ci.yaml, not merely leave it unexercised.
 ".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version"]
 

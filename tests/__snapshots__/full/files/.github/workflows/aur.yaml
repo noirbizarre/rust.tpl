@@ -83,14 +83,8 @@ jobs:
             gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$1" --dir assets >&2
             sha256sum "assets/$1" | cut -d' ' -f1
           }
-          sed -i "s/@SHA256_X86_64@/$(checksum "full-example_${TAG}_linux-amd64")/" build/PKGBUILD
-          sed -i "s/@SHA256_AARCH64@/$(checksum "full-example_${TAG}_linux-arm64")/" build/PKGBUILD
-
-          # Not a release asset: the raw binary carries no licence file, so the
-          # licence is fetched from the tag and hashed here.
-          license=$(curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${TAG}/LICENSE" | sha256sum | cut -d' ' -f1)
-          sed -i "s/@SHA256_LICENSE@/${license}/" build/PKGBUILD
-
+          sed -i "s/@SHA256_X86_64@/$(checksum "full-example_${TAG}_linux-amd64.tar.gz")/" build/PKGBUILD
+          sed -i "s/@SHA256_AARCH64@/$(checksum "full-example_${TAG}_linux-arm64.tar.gz")/" build/PKGBUILD
           # A leftover placeholder means an asset was renamed upstream and the
           # package would pin nothing: an empty `sha256sums` entry does not
           # fail a build, it accepts whatever it downloads. Fail here instead.

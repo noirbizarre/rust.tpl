@@ -26,22 +26,29 @@ options=('!strip' '!debug')
 # The `gnu` asset, not `musl`: an AUR package targets Arch's own glibc.
 # This project tags without a `v` prefix, so the tag is `$pkgver` as-is.
 #
-# The release asset is the raw executable itself, not an archive — makepkg
-# leaves an unrecognised extension alone rather than trying to extract it, so
-# these name it plainly and `package()` installs it directly.
-source_x86_64=("full-example-$pkgver-x86_64::$url/releases/download/$pkgver/full-example_${pkgver}_linux-amd64")
+# The release archive, not the raw executable: it carries the man pages,
+# completions and service unit the bare binary cannot. makepkg extracts it into
+# `$srcdir/<crate>-$pkgver-<asset>/`, laid out as a prefix.
+source_x86_64=("full-example-$pkgver-x86_64.tar.gz::$url/releases/download/$pkgver/full-example_${pkgver}_linux-amd64.tar.gz")
 sha256sums_x86_64=('@SHA256_X86_64@')
-source_aarch64=("full-example-$pkgver-aarch64::$url/releases/download/$pkgver/full-example_${pkgver}_linux-arm64")
+source_aarch64=("full-example-$pkgver-aarch64.tar.gz::$url/releases/download/$pkgver/full-example_${pkgver}_linux-arm64.tar.gz")
 sha256sums_aarch64=('@SHA256_AARCH64@')
 
-# Fetched separately: the raw binary asset carries no licence file, and MIT
-# is not one of the licences Arch keeps in /usr/share/licenses/common.
-source=("LICENSE-$pkgver::$url/raw/$pkgver/LICENSE")
-sha256sums=('@SHA256_LICENSE@')
-
 package() {
-	install -Dm755 "$srcdir/full-example-$pkgver-$CARCH" "$pkgdir/usr/bin/full-example"
-	install -Dm644 "$srcdir/LICENSE-$pkgver" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	case "$CARCH" in
+		x86_64) _asset=linux-amd64 ;;
+		aarch64) _asset=linux-arm64 ;;
+	esac
+	cd "$srcdir/full-example-$pkgver-$_asset"
+
+	install -Dm755 bin/full-example "$pkgdir/usr/bin/full-example"
+	# The rest of the archive is already laid out as `/usr`: man pages,
+	# completions and the service unit land where they belong, and only what
+	# the project actually ships is there to copy.
+	[ -d share ] && cp -a share "$pkgdir/usr/"
+	[ -d lib ] && cp -a lib "$pkgdir/usr/"
+	# MIT is not one of the licences Arch keeps in /usr/share/licenses/common.
+	install -Dm644 share/doc/full-example/LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
 
 # --- project-specific ---------------------------------------------------

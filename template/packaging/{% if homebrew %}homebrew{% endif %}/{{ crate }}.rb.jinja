@@ -9,45 +9,73 @@ class {{ crate | split('-') | map('capitalize') | join('') }} < Formula
   version "@VERSION@"
   license "MIT"
 
+{%- if archive %}
+
+  # The release archive, not the raw executable: it carries the man pages and
+  # completions the bare binary cannot. Homebrew strips the archive's single
+  # top-level directory, so the paths in `install` start at `bin/`.
+  #
+  # This project tags without a `v` prefix, so the tag is `#{version}` as-is.
+{%- else %}
+
   # The release asset is the raw executable itself, not an archive — this
   # project's publish workflow uploads one so it can become a `gh` extension
   # without renaming assets later, and Homebrew installs a bare download
   # exactly as well as an archived one.
   #
   # This project tags without a `v` prefix, so the tag is `#{version}` as-is.
+{%- endif %}
 {%- if "aarch64-apple-darwin" in targets or "x86_64-apple-darwin" in targets %}
   on_macos do
 {%- if "aarch64-apple-darwin" in targets %}
     on_arm do
-      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_darwin-arm64"
+      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_darwin-arm64{{ ".tar.gz" if archive }}"
       sha256 "@SHA256_DARWIN_ARM64@"
     end
 {%- endif %}
 {%- if "x86_64-apple-darwin" in targets %}
     on_intel do
-      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_darwin-amd64"
+      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_darwin-amd64{{ ".tar.gz" if archive }}"
       sha256 "@SHA256_DARWIN_AMD64@"
     end
 {%- endif %}
   end
 {%- endif %}
-{%- if "x86_64-unknown-linux-musl" in targets %}
+{%- if "x86_64-unknown-linux-musl" in targets or ("aarch64-unknown-linux-musl" in targets and archive) %}
 
   # musl rather than gnu: the binary is statically linked, so it runs on any
   # distribution Homebrew supports regardless of its glibc.
   on_linux do
+{%- if "x86_64-unknown-linux-musl" in targets %}
     on_intel do
-      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_linux-amd64-musl"
+      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_linux-amd64-musl{{ ".tar.gz" if archive }}"
       sha256 "@SHA256_LINUX_AMD64_MUSL@"
     end
+{%- endif %}
+{%- if "aarch64-unknown-linux-musl" in targets and archive %}
+    on_arm do
+      url "{{ repo_url }}/releases/download/#{version}/{{ crate }}_#{version}_linux-arm64-musl{{ ".tar.gz" if archive }}"
+      sha256 "@SHA256_LINUX_ARM64_MUSL@"
+    end
+{%- endif %}
   end
 {%- endif %}
 
   def install
+{%- if archive %}
+    bin.install "bin/{{ bin_name }}"
+
+    # Each is optional: the archive only carries what the project generates.
+    man1.install Dir["share/man/man1/*.1"] unless Dir["share/man/man1/*.1"].empty?
+    bash_completion.install "share/bash-completion/completions/{{ bin_name }}" if File.exist?("share/bash-completion/completions/{{ bin_name }}")
+    zsh_completion.install "share/zsh/site-functions/_{{ bin_name }}" if File.exist?("share/zsh/site-functions/_{{ bin_name }}")
+    fish_completion.install "share/fish/vendor_completions.d/{{ bin_name }}.fish" if File.exist?("share/fish/vendor_completions.d/{{ bin_name }}.fish")
+{%- else %}
     # Exactly one file lands here, whichever `url` above matched — renamed on
     # the way in because the downloaded asset's name carries the platform
     # suffix, not the command users are meant to type.
     bin.install Dir["*"].first => "{{ bin_name }}"
+{%- endif %}
   end
 
   test do

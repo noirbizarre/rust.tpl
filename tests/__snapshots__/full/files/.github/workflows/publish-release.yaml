@@ -149,6 +149,70 @@ jobs:
           merge-multiple: true
           path: dist
 
+      # The man pages and completions are plain text, identical for every
+      # target, so they are generated once here by the host build rather than
+      # on each cross-compiled leg (which could not run its own build script).
+      # Output lands in `stage/man` and `stage/completions`, which the archive
+      # step below picks up. A project that generates them differently — a
+      # `completions` subcommand, say — adds its own step before that one,
+      # filling the same two directories.
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Generate man pages and completions
+        run: |
+          set -euo pipefail
+          out=$(cargo build --locked --message-format=json 2>/dev/null \
+            | jq -r 'select(.reason == "build-script-executed") | select(.package_id | test("full-example")) | .out_dir' \
+            | tail -n 1)
+          test -n "$out" || { echo "could not locate OUT_DIR" >&2; exit 1; }
+          mkdir -p stage/man stage/completions
+          cp "$out"/man/*.1 stage/man/
+          cp "$out"/completions/* stage/completions/
+
+      # The native-package layout: the executable under `bin/` and everything
+      # else where a package manager would put it, so unpacking at a prefix
+      # (`tar -xzf ... --strip-components=1 -C /usr/local`) is an install. The
+      # raw binaries stay published as they are: cargo-binstall and `gh`
+      # extensions fetch them by name.
+      #
+      # Optional files are taken from where a project stages them
+      # (`stage/man`, `stage/completions`) and skipped when absent.
+      #
+      # Every flag below exists so the same inputs give the same bytes: a fixed
+      # order, the commit time for every mtime, no owner, and `gzip -n` so the
+      # gzip header carries neither a name nor a clock.
+      #
+      # Windows has no tarball: its asset is the `.exe`, which needs no layout.
+      - name: Package the Unix binaries
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          # `install -D` creates parent directories with the umask's mode.
+          umask 022
+          epoch="$(git log -1 --format=%ct)"
+          assets=(linux-amd64 linux-arm64 linux-amd64-musl linux-arm64-musl darwin-amd64 darwin-arm64 freebsd-amd64 )
+          for asset in "${assets[@]}"; do
+            name="full-example-${TAG}-${asset}"
+            root="stage/${name}"
+            # <mode> <source> <path in the archive>; a missing source is skipped.
+            put() { if [ -f "$2" ]; then install -D -m "$1" "$2" "${root}/$3"; fi; }
+            install -D -m 755 "dist/full-example_${TAG}_${asset}" "${root}/bin/full-example"
+            install -D -m 644 LICENSE "${root}/share/doc/full-example/LICENSE"
+            install -D -m 644 README.md "${root}/share/doc/full-example/README.md"
+            for page in stage/man/*.1; do
+              put 644 "${page}" "share/man/man1/$(basename "${page}")"
+            done
+            put 644 stage/completions/full-example.bash "share/bash-completion/completions/full-example"
+            put 644 stage/completions/_full-example "share/zsh/site-functions/_full-example"
+            put 644 stage/completions/full-example.fish "share/fish/vendor_completions.d/full-example.fish"
+            install -D -m 644 packaging/systemd/full-example.service "${root}/lib/systemd/user/full-example.service"
+            tar -C stage --sort=name --format=gnu --mtime="@${epoch}" \
+              --owner=0 --group=0 --numeric-owner -cf - "${name}" \
+              | gzip -n -9 > "dist/full-example_${TAG}_${asset}.tar.gz"
+          done
+
       - name: Checksums
         working-directory: dist
         # `--` so an asset whose name begins with a dash is treated as a

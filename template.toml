@@ -178,6 +178,40 @@ prompt = "Release targets"
 help = "Cross-compilation matrix for the publish workflow."
 choices_from = "data.targets.choices"
 
+# --- Distribution (opt-in) ---------------------------------------------------
+#
+# Both are about what a release *contains*, as opposed to Packaging below,
+# which is about who republishes it. The raw per-target binaries are always
+# published (cargo-binstall and `gh` extensions fetch them by name); these add
+# to them, never replace them.
+
+[questions.archive]
+type = "boolean"
+prompt = "Also publish a tar.gz per Unix target, in the native package layout?"
+help = """
+Adds `<crate>_<tag>_<asset>.tar.gz` next to each raw Unix binary, laid out as \
+a prefix (`bin/`, `share/doc/`, and `share/man`, completions and \
+`lib/systemd/user` when the project has them) so unpacking it at `/usr/local` \
+is an install. Built reproducibly. The Homebrew formula and AUR package then \
+install from it, which is how they get man pages and completions. Windows \
+keeps its bare `.exe`.\
+"""
+default = false
+when = "not workspace"
+default_when_skipped = true
+
+[questions.service]
+type = "boolean"
+prompt = "Ship a systemd user unit?"
+help = """
+Renders `packaging/systemd/<crate>.service`, a package-owned user unit for a \
+binary that runs as a daemon. It goes into the archive and the AUR package. \
+Edit the skeleton: `ExecStart` assumes the binary takes no subcommand.\
+"""
+default = false
+when = "not workspace"
+default_when_skipped = true
+
 # --- Packaging (opt-in) ------------------------------------------------------
 #
 # Neither renders a tap or an AUR account — creating and owning those stays
