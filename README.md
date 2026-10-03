@@ -23,7 +23,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
 | **Hooks** | `prek.toml`: fmt, clippy, actionlint, typos, commitlint |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
-| **CI** | `ci.yaml` (hooks, 3-OS test matrix, `gh ship validate`), optional `msrv.yaml` |
+| **CI** | `ci.yaml` (hooks, 3-OS test matrix, `gh ship validate`, optional MSRV check) |
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
 | **Release** | gh-ship: `ship.yaml`, `prepare-release.yaml`, `publish-release.yaml` |
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
@@ -148,8 +148,8 @@ only whole-file include mechanism. Where the `{% endif %}` goes decides whether
 it works, and getting it wrong produces a real file rather than an error:
 
 ```text
-{% if msrv %}msrv.yaml{% endif %}                 ✅ renders to nothing
-{% if msrv %}msrv{% endif %}.yaml                 ❌ renders to `.yaml`
+{% if docs %}docs.yaml{% endif %}                 ✅ renders to nothing
+{% if docs %}docs{% endif %}.yaml                 ❌ renders to `.yaml`
 {% if docs %}zensical.toml{% endif %}.jinja       ✅ renders to nothing
 ```
 
@@ -169,8 +169,10 @@ git-tpl renders with stock MiniJinja delimiters, so GitHub's `${{ … }}` is
 inside the templating language's syntax. Two rules follow:
 
 1. **Prefer verbatim workflows.** A file not named `.jinja` is copied
-   byte-for-byte, so its `${{ }}` is never at risk. This is why the MSRV job is
-   its own workflow rather than a job inside `ci.yaml`.
+   byte-for-byte, so its `${{ }}` is never at risk. A job that is merely
+   optional does not need to be one: `ci.yaml.jinja` carries the MSRV job behind
+   `{% if msrv %}` and wraps the rest in `{% raw %}`, which is what keeps it one
+   `CI / MSRV` check rather than a workflow of its own.
 2. **A `.jinja` workflow wraps every GitHub expression in `{% raw %}`,** or
    escapes it as `${{ '{{' }} … {{ '}}' }}`. Forgetting is silent:
    `${{ github.ref }}` resolves to `$` and the YAML stays valid.

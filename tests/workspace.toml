@@ -50,7 +50,6 @@ files = [
   "CONTRIBUTING.md",
   "AGENTS.md",
   ".github/workflows/ci.yaml",
-  ".github/workflows/msrv.yaml",
   ".github/workflows/publish-release.yaml",
   ".editorconfig",
   ".markdownlint-cli2.yaml",
