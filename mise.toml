@@ -16,6 +16,9 @@ lockfile = true
 prek = "latest"
 typos = "latest"
 actionlint = "latest"
+# Same tool `ubuntu-latest` runners already carry, pinned here so the version
+# `tests/scripts/check-codecov-matrix.sh` runs against locally matches CI's.
+yq = "latest"
 # Bare `shellcheck` resolves to `asdf:shellcheck`, which writes no lockfile
 # URLs — `mise install --locked` (what mise-action runs) fails on it.
 "aqua:koalaman/shellcheck" = "latest"

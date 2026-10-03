@@ -90,6 +90,9 @@ files = [
 
 [commands]
 rendered = [
+  # Cheap and answer-independent, so it runs before the expensive checks
+  # below. See the script's own header for what it guards against.
+  'bash -c "$TEMPLATE_ROOT/tests/scripts/check-codecov-matrix.sh"',
   "mise test",
   # prek requires files to be git-tracked
   "git init -q",
