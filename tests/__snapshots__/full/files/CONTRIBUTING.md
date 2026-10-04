@@ -20,7 +20,7 @@ components and cross-compilation targets.
 
 | Command | What it does |
 |---|---|
-| `mise run build` | Build the binary |
+| `mise run build` | Build the project |
 | `mise run cli` | Run `full-example` from source (passes flags through) |
 | `mise run man` | Collect the generated man page and shell completions into `dist/` |
 | `mise run test` | Run the tests (accepts nextest selectors) |

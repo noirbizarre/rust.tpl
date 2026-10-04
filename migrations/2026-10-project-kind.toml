@@ -1,0 +1,9 @@
+message = """
+`workspace` (yes/no) is replaced by `kind`, which also covers binary-only and \
+library-only projects. If `.config/git.tpl.toml` has `workspace = true`, set \
+`kind = "workspace"` there; `workspace = false` maps to the new default, \
+`kind = "library-and-binary"`, and needs no change. A binary-only or \
+library-only project can now drop `src/lib.rs` or `src/main.rs` by choosing \
+`kind = "binary"` or `kind = "library"`: that is a manual refactor, the \
+template will not delete your files for you.\
+"""

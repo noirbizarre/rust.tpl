@@ -33,7 +33,8 @@
 <!-- not the implementation. -->
 
 ## Installation
-{% if publish %}
+{% if has_bin %}
+{%- if publish %}
 ```bash
 cargo install {{ crate }}
 ```
@@ -50,13 +51,35 @@ paru -S {{ crate }}-bin  # or your AUR helper of choice
 {% endif %}
 Or download a binary for your platform from the
 [latest release]({{ repo_url }}/releases/latest).
-{% if not workspace %}
+{%- elif has_lib %}
+{%- if publish %}
+```bash
+cargo add {{ crate }}
+```
+{%- else %}
+```toml
+[dependencies]
+{{ crate }} = { git = "{{ repo_url }}" }
+```
+{%- endif %}
+{%- else %}
+<!-- List the member crates and how to install each of them. -->
+{%- endif %}
+{%- if has_bin %}
+
 ## Usage
 
 ```bash
 {{ bin_name }} --help
 ```
-{% endif -%}
+{%- elif has_lib %}
+
+## Usage
+
+```rust
+{{ lib_name }}::run()?;
+```
+{%- endif %}
 {% if docs %}
 ## Documentation
 

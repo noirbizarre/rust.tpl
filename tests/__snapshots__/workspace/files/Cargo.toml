@@ -59,4 +59,4 @@ strip = true
 [workspace.dependencies]
 # Shared versions for member crates to inherit via `dep = { workspace = true }`.
 # Owned by the project and Dependabot from here, same deal as [dependencies]
-# in the non-workspace shape.
+# in the single-crate shapes.

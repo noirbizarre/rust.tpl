@@ -1,0 +1,81 @@
+# Library only: `src/lib.rs`, nothing a binary needs.
+#
+# Binary questions (`bin_name`, `man_pages`, `service`, `archive`, `homebrew`,
+# `aur`, `targets`) are not asked, so no answer is given for them here. The
+# assertions that matter are the absences: CLI dependencies, `[[bin]]`,
+# binary-specific tooling and the per-target release build.
+
+snapshot = true
+
+[answers]
+owner = "noirbizarre"
+author = "Axel H. <noirbizarre@gmail.com>"
+copyright_holder = "Axel H."
+copyright_year = 2026
+docs = false
+crate = "library-example"
+description = "A library without a binary"
+kind = "library"
+keywords = "example"
+categories = "development-tools"
+msrv = true
+msrv_version = "1.88"
+publish = true
+
+[expect]
+absent = [
+  "src/main.rs",
+  "src/cli.rs",
+  "build.rs",
+  ".github/workflows/homebrew.yaml",
+  ".github/workflows/aur.yaml",
+  "packaging/homebrew/library-example.rb",
+  "packaging/aur/library-example-bin/PKGBUILD",
+  "packaging/systemd/library-example.service",
+]
+files = [
+  "src/lib.rs",
+  "src/error.rs",
+  "Cargo.toml",
+  ".github/workflows/publish-release.yaml",
+]
+
+[expect.contains]
+"Cargo.toml" = ['name = "library-example"', 'rust-version = "1.88"', "thiserror", "[dev-dependencies]"]
+"README.md" = ["cargo add library-example"]
+# crates.io is the whole release: no build matrix to wait for.
+".github/workflows/publish-release.yaml" = ["📦 crates.io"]
+
+[expect.lacks]
+"Cargo.toml" = [
+  "[lib]",
+  "[[bin]]",
+  "binstall",
+  "clap",
+  "console",
+  "demand",
+  'features = ["fancy"]',
+  "assert_cmd",
+  "predicates",
+  "[build-dependencies]",
+]
+"mise.toml" = ["[tasks.cli]", "[tasks.setup]", "[tasks.man]"]
+".github/workflows/publish-release.yaml" = [
+  "matrix",
+  "Package the Unix binaries",
+  "Stage the asset",
+  "needs: [build",
+]
+"AGENTS.md" = ["main.rs", "cli.rs"]
+"CONTRIBUTING.md" = ["mise run cli", "attach the binaries"]
+"README.md" = ["--help", "cargo install", "Or download a binary"]
+
+[commands]
+rendered = [
+  "mise test",
+  # prek requires files to be git-tracked
+  "git init -q",
+  "git add .",
+  "prek -a",
+  "gh ship validate",
+]

@@ -77,7 +77,7 @@ description = "Run format, lint, build and test"
 depends = ["format", "lint", "lint:actions", "lint:md", "build", "test"]
 
 [tasks.build]
-description = "Build the binary"
+description = "Build the project"
 run = "cargo build"
 
 [tasks.test]
@@ -141,7 +141,7 @@ depends = ["check", "docs:build"]
 {%- else %}
 depends = ["check"]
 {%- endif %}
-{% if not workspace %}
+{% if has_bin %}
 # --- {{ crate }} itself ---------------------------------------------------
 
 [tasks.cli]

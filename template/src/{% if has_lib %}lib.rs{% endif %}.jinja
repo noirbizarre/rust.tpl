@@ -1,8 +1,13 @@
 //! {{ description }}
 //!
+{%- if has_bin %}
 //! The engine lives here; `src/main.rs` is a thin CLI over it. That split is
 //! what lets the integration tests assert against the library for behaviour
 //! and against the binary for output.
+{%- else %}
+//! Add the crate-level overview here: what the library offers and a short
+//! usage example, which `cargo test` then runs as a doc test.
+{%- endif %}
 
 // miette's `Diagnostic` payloads carry source text and spans, which puts most
 // error variants past clippy's 128-byte `Result` threshold. The lint is right

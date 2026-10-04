@@ -32,13 +32,37 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Archive** | optional `<crate>_<tag>_<asset>.tar.gz` per Unix target in the native package layout (`bin/`, `share/doc`, man pages, completions, `lib/systemd/user`), built reproducibly, and a systemd user unit skeleton |
 | **Packaging** | optional Homebrew formula / AUR `-bin` PKGBUILD, each with its own release-triggered workflow |
 
+## Project shapes
+
+One answer, `kind`, picks what the project builds, and everything else follows
+from it. The default is `library-and-binary`, which is what this template
+rendered before `kind` existed.
+
+| `kind` | Renders | Does not render |
+|---|---|---|
+| `binary` | `src/main.rs`, `src/cli.rs`, `src/error.rs` (private to the binary), CLI dependencies, per-target release assets, binary packaging | `src/lib.rs`, any public library API, an explicit `[lib]` |
+| `library` | `src/lib.rs`, `src/error.rs`, a release workflow that only publishes to crates.io | `src/main.rs`, CLI modules and dependencies (`clap`, `console`, `demand`), `bin_name`, `targets`, `man_pages`, `archive`, `service`, `homebrew`, `aur`, `[[bin]]` |
+| `library-and-binary` | both, with the binary a thin CLI over the library | |
+| `workspace` | a virtual manifest with `[workspace.package]` and `[workspace.dependencies]` | a root `src/`, root targets and anything binary-specific |
+
+Cargo's automatic target discovery is used wherever it is enough: no `[lib]`
+is ever rendered, and `[[bin]]` only when `bin_name` differs from `crate`.
+
 ## Questions
 
 Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 `crate`, `description`, `owner`, `author`, `copyright_holder`, `copyright_year`,
-`keywords`, `categories`, `bin_name`, `msrv`, `msrv_version`, `man_pages`,
-`archive`, `service`, `publish`, `docs`, `docs_accent`, `targets`, `homebrew`, `homebrew_tap`, `aur`.
+`kind`, `keywords`, `categories`, `msrv`, `msrv_version`, `publish`, `docs`,
+`docs_accent`.
+
+Only asked when the shape contains a binary (`binary`, `library-and-binary`):
+`bin_name`, `man_pages`, `archive`, `service`, `targets`, `homebrew`,
+`homebrew_tap`, `aur`.
+
+Projects rendered before `kind` existed carry `workspace = true|false` in
+`.config/git.tpl.toml`; `git tpl update` shows a migration note explaining how
+to set `kind` instead.
 
 Two of these deserve a note:
 
@@ -98,14 +122,15 @@ Two layers, cheapest first.
 the result actually works. `[expect]` and `snapshot = true` cover the first;
 each case's own `[commands]` covers the second, rendering it into a sandbox
 and running `mise test`, `prek -a` and `gh ship validate` against it —
-`workspace` runs `mise build` instead of `mise test` and stubs a member crate
+There is one case per project shape (`binary`, `library`, `minimal`/`full` for
+library + binary, `workspace`). `workspace` runs `mise build` instead of `mise test` and stubs a member crate
 first, since an empty workspace has nothing else to build.
 
 CI (`.github/workflows/ci.yaml`) calls this directly, once: `mise run test`.
 
 ### The cases are also the answer files
 
-`tests/minimal.toml` and `tests/full.toml` are read twice: by `git tpl test`,
+The `tests/*.toml` cases are read twice: by `git tpl test`,
 which uses `[answers]` and `[expect]`, and by `--answers-from`, which reads the
 `[answers]` table and ignores the rest. One file, so the runner and the render
 tasks cannot drift onto different inputs.

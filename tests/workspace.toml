@@ -20,7 +20,7 @@ copyright_holder = "Axel H."
 copyright_year = 2026
 keywords = "cli"
 categories = "command-line-utilities"
-workspace = true
+kind = "workspace"
 msrv = true
 msrv_version = "1.88"
 publish = false
@@ -36,6 +36,9 @@ absent = [
   "src/lib.rs",
   "src/cli.rs",
   "src/error.rs",
+  "build.rs",
+  ".github/workflows/homebrew.yaml",
+  ".github/workflows/aur.yaml",
   ".github/workflows/docs.yaml",
   "zensical.toml",
   "docs/index.md",
@@ -56,9 +59,8 @@ files = [
 ]
 
 [expect.contains]
-# `[package]`/`[[bin]]`/`[lib]` absence isn't directly assertable — there's no
-# "must not contain" check — so the presence of the virtual-manifest shape
-# plus the absence of src/*.rs above is the available signal.
+# The virtual-manifest shape is asserted here, and its absence of `[package]`
+# and targets under `lacks` below.
 "Cargo.toml" = [
   "[workspace]",
   "members = []",
@@ -67,6 +69,28 @@ files = [
   "[workspace.dependencies]",
   "# --- project-specific ---",
 ]
+# Not a binary, not published: the release workflow gh-ship waits on is a no-op.
+".github/workflows/publish-release.yaml" = ["Nothing to publish"]
+
+[expect.lacks]
+# A virtual manifest: no package, no targets, no binary-only metadata, no CLI
+# dependencies.
+"Cargo.toml" = [
+  "[package]\n",
+  "[[bin]]",
+  "[lib]",
+  "binstall",
+  "clap",
+  "\n[dependencies]",
+]
+# No root binary: nothing to build per target, nothing to attach.
+".github/workflows/publish-release.yaml" = [
+  "matrix",
+  "Package the Unix binaries",
+  "Stage the asset",
+  "📦 crates.io",
+]
+"mise.toml" = ["[tasks.cli]", "[tasks.setup]", "[tasks.man]"]
 
 [commands]
 before = ["cargo new crates/example --name example --vcs none"]

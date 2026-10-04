@@ -16,7 +16,7 @@ copyright_year = 2026
 keywords = "cli"
 categories = "command-line-utilities"
 bin_name = "minimal-example"
-workspace = false
+kind = "library-and-binary"
 msrv = false
 publish = false
 docs = false
@@ -51,6 +51,9 @@ files = [
   "prek.toml",
   "cliff.toml",
   "src/main.rs",
+  "src/lib.rs",
+  "src/cli.rs",
+  "src/error.rs",
   ".editorconfig",
   ".markdownlint-cli2.yaml",
 ]
@@ -69,6 +72,9 @@ files = [
 "prek.toml" = ['README\\.md)$']
 
 [expect.lacks]
+# Cargo's automatic targets are enough when the binary is named after the
+# crate, so neither explicit section is emitted.
+"Cargo.toml" = ["[lib]", "[[bin]]"]
 # The mirror of full.toml's positive assertion (`"crates.io"` present at
 # publish-release.yaml:70): publish = false must drop the whole crates.io
 # job, not merely leave it unexercised.

@@ -12,14 +12,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// Everything that can go wrong.
 ///
-/// Diagnostic codes are `{{ lib_name }}::<module>::<kind>`. A code is a public
+/// Diagnostic codes are `library_example::<module>::<kind>`. A code is a public
 /// identifier users grep for, so renaming one is a breaking change.
 #[derive(Debug, Error, Diagnostic)]
 #[non_exhaustive]
 pub enum Error {
     /// Reading or writing a file failed.
     #[error("failed to access `{path}`")]
-    #[diagnostic(code({{ lib_name }}::error::io))]
+    #[diagnostic(code(library_example::error::io))]
     Io {
         /// The path that could not be accessed.
         path: String,

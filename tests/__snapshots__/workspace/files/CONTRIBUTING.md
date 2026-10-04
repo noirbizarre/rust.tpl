@@ -20,7 +20,7 @@ components and cross-compilation targets.
 
 | Command | What it does |
 |---|---|
-| `mise run build` | Build the binary |
+| `mise run build` | Build the project |
 | `mise run test` | Run the tests (accepts nextest selectors) |
 | `mise run cover` | Run the tests with coverage |
 | `mise run format` | Format |
@@ -38,8 +38,7 @@ components and cross-compilation targets.
 
 `mise <task>` is a shorthand for `mise run <task>`, but a builtin subcommand of
 the same name wins it silently — which is why the format task is `format` and
-not `fmt` (`mise fmt` formats `mise.toml`), and why running the binary is
-`mise cli` and not `mise run` (`mise run` runs a task). Prefer the explicit
+not `fmt` (`mise fmt` formats `mise.toml`). Prefer the explicit
 `mise run <task>` in scripts: mise can claim a new name in any release.
 
 ## Commits
@@ -61,7 +60,7 @@ Releases are run by [gh-ship](https://github.com/noirbizarre/gh-ship).
 3. gh-ship opens (or updates) the Release PR from `release/next`. Review it.
 4. Merging it triggers 🚢 Ship again, which runs `gh ship release`: it tags the
    merge commit, creates a draft release, dispatches 📦 Publish Release to
-   attach the binaries, then makes the
+   finish the release, then makes the
    release public.
 
 Nothing to release is the normal case for step 1, and costs one workflow run

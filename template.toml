@@ -6,6 +6,11 @@
 # those weekly in every consumer, and a template that propagated them would
 # fight Dependabot on every `git tpl update`.
 #
+# The project shape is a single answer, `kind`: binary, library, library +
+# binary, or Cargo workspace. Everything else (targets, source files, CLI
+# dependencies, packaging, release assets) is derived from it, so a project
+# only carries what its shape needs.
+#
 # Files carrying project-specific additions (mise.toml tasks, prek.toml hooks,
 # Cargo.toml dependencies) end with a `# --- project-specific ---` marker.
 # Add below it, and Git's 3-way merge keeps your additions across updates.
@@ -68,27 +73,27 @@ type = "integer"
 prompt = "Copyright year"
 default = 2026
 
+[questions.kind]
+type = "choice"
+prompt = "Project shape"
+help = "What the generated project builds. Everything else (targets, files, dependencies, packaging) follows from it."
+choices = [
+  { value = "binary", label = "Binary only", help = "src/main.rs and the CLI modules, no library crate" },
+  { value = "library", label = "Library only", help = "src/lib.rs, no binary, no CLI dependencies, no binary packaging" },
+  { value = "library-and-binary", label = "Library + binary", help = "A public library and a thin CLI over it" },
+  { value = "workspace", label = "Cargo workspace", help = "A virtual manifest: no root src/, add member crates by hand" },
+]
+default = "library-and-binary"
+
 [questions.keywords]
 type = "string"
 prompt = "Cargo keywords (comma-separated, max 5)"
-default = "cli"
+default = "{{ 'cli' if has_bin else '' }}"
 
 [questions.categories]
 type = "string"
 prompt = "Cargo categories (comma-separated)"
-default = "command-line-utilities,development-tools"
-
-[questions.workspace]
-type = "boolean"
-prompt = "Is this a Cargo workspace (more than one crate, none of them the project)?"
-help = """
-Renders Cargo.toml as a virtual manifest — [workspace] plus shared \
-[workspace.package]/[workspace.dependencies] tables, no [package] of its own \
-— and skips `src/`, `[[bin]]` and `[lib]` entirely. Add member crates by hand \
-under `members`, same as any other Cargo workspace: the template does not \
-render them.\
-"""
-default = false
+default = "{{ 'command-line-utilities,development-tools' if has_bin else 'development-tools' }}"
 
 [questions.bin_name]
 type = "string"
@@ -99,14 +104,13 @@ resolves to a binary named `git-tpl`, and `gh` extensions must be named \
 `gh-<something>`.\
 """
 default = "{{ crate }}"
-# No single "the binary" exists at a workspace root — each member crate names
-# its own, if it has one.
-when = "not workspace"
+# Only a project that builds a binary has one to name. A workspace root has no
+# single binary (each member names its own) and a library has none at all.
+when = "{{ has_bin }}"
 # Every read of `bin_name` in this template already sits inside an equivalent
-# guard (`{% if not workspace %}` or the `else` branch of `{% if workspace %}`),
-# so the injected default here changes no rendering — it only stops
-# `tpl::lint::unguarded_gate` from reporting reads that are already safe by
-# construction. See git-tpl's ADR-025.
+# guard (`has_bin`), so the injected default here changes no rendering — it
+# only stops `tpl::lint::unguarded_gate` from reporting reads that are already
+# safe by construction. See git-tpl's ADR-025.
 default_when_skipped = true
 
 # --- Optional slots ---------------------------------------------------------
@@ -120,7 +124,7 @@ default = true
 [questions.msrv_version]
 type = "string"
 prompt = "Minimum supported Rust version"
-when = "msrv"
+when = "{{ msrv }}"
 default = "1.88"
 pattern = "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
 message = "must be a Rust version such as 1.88 or 1.88.0"
@@ -139,8 +143,8 @@ through `man <bin> --help` — a `git-*` subcommand is the clearest example, \
 since Git rewrites its own `--help` into exactly that.\
 """
 default = false
-# No single binary exists at a workspace root to generate pages for.
-when = "not workspace"
+# Pages are generated for a binary; a library or a workspace root has none.
+when = "{{ has_bin }}"
 default_when_skipped = true
 
 [questions.publish]
@@ -163,7 +167,7 @@ default = true
 [questions.docs_accent]
 type = "choice"
 prompt = "Documentation accent colour"
-when = "docs"
+when = "{{ docs }}"
 choices = ["indigo", "deep orange", "teal", "purple", "cyan", "pink", "amber"]
 default = "indigo"
 # zensical.toml's only read of `docs_accent` is already gated by the same
@@ -176,7 +180,16 @@ default_when_skipped = true
 type = "multi_choice"
 prompt = "Release targets"
 help = "Cross-compilation matrix for the publish workflow."
+# Release targets are binaries to build: a library is published as source.
+when = "{{ has_bin }}"
 choices_from = "data.targets.choices"
+# Every read of `targets` already sits inside a `has_bin` guard, but the lint
+# only recognises a guard on the question's own `when`, so a default has to be
+# injected when it is skipped to satisfy `tpl::lint::unguarded_gate` (ADR-025).
+# It is also what a `--defaults` run of a binary project gets, rather than an
+# error or an empty release matrix: the one target every runner can build.
+default = ["x86_64-unknown-linux-gnu"]
+default_when_skipped = true
 
 # --- Distribution (opt-in) ---------------------------------------------------
 #
@@ -197,7 +210,7 @@ install from it, which is how they get man pages and completions. Windows \
 keeps its bare `.exe`.\
 """
 default = false
-when = "not workspace"
+when = "{{ has_bin }}"
 default_when_skipped = true
 
 [questions.service]
@@ -209,7 +222,7 @@ binary that runs as a daemon. It goes into the archive and the AUR package. \
 Edit the skeleton: `ExecStart` assumes the binary takes no subcommand.\
 """
 default = false
-when = "not workspace"
+when = "{{ has_bin }}"
 default_when_skipped = true
 
 # --- Packaging (opt-in) ------------------------------------------------------
@@ -229,12 +242,15 @@ release, deriving checksums from the published assets themselves. You still \
 create and own the tap repository, and a `TAP_TOKEN` secret scoped to it.\
 """
 default = false
+# A formula installs a binary.
+when = "{{ has_bin }}"
+default_when_skipped = true
 
 [questions.homebrew_tap]
 type = "string"
 prompt = "Homebrew tap repository (owner/repo)"
 help = "Where the rendered formula is pushed on every release."
-when = "homebrew"
+when = "{{ homebrew }}"
 default = "{{ owner }}/homebrew-tap"
 default_when_skipped = true
 
@@ -247,6 +263,9 @@ release. You still own the AUR account and its `AUR_SSH_PRIVATE_KEY`. A \
 source-build package is a natural follow-up, not rendered here.\
 """
 default = false
+# A `-bin` package ships a binary.
+when = "{{ has_bin }}"
+default_when_skipped = true
 
 # --- Data -------------------------------------------------------------------
 
@@ -260,6 +279,13 @@ source = "data/targets.toml"
 # --- Computed ---------------------------------------------------------------
 
 [computed]
+# The project shape, as the three booleans every template file actually asks.
+# `kind` is read directly nowhere else, so a fifth shape changes these and not
+# thirty files.
+is_workspace = "{{ kind == 'workspace' }}"
+has_bin = "{{ kind in ['binary', 'library-and-binary'] }}"
+has_lib = "{{ kind in ['library', 'library-and-binary'] }}"
+
 # Cargo turns dashes into underscores for the library's Rust identifier, and
 # doing it here means the two can never disagree.
 lib_name = "{{ crate | replace('-', '_') }}"

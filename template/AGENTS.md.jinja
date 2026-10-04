@@ -17,11 +17,11 @@ checks is a comment, and it will be violated.
 <!-- 1. **...** — enforced by `tests/....rs`. -->
 
 ## Layout
-{% if workspace %}
+{% if is_workspace %}
 A Cargo workspace: `Cargo.toml` at the root is a virtual manifest — no code of
 its own — and each member crate lives under its own directory with its own
 `Cargo.toml` and `src/`.
-{%- else %}
+{%- elif has_bin and has_lib %}
 ```text
 src/
 ├── lib.rs      the library surface
@@ -31,6 +31,25 @@ src/
 ```
 
 Dependencies point inward. Nothing in the library knows a command exists.
+{%- elif has_bin %}
+```text
+src/
+├── main.rs     the {{ bin_name }} binary, and the logic it runs
+├── cli.rs      argument types only
+└── error.rs    the binary's error type
+```
+
+There is no library crate: nothing here is a public API. Move logic into
+modules of the binary, not into a `lib.rs`.
+{%- else %}
+```text
+src/
+├── lib.rs      the library surface
+└── error.rs    the crate's error type
+```
+
+There is no binary. Anything `pub` in `lib.rs` is public API, so keep the
+surface small and deliberate.
 {%- endif %}
 
 ## Style
@@ -39,8 +58,11 @@ Dependencies point inward. Nothing in the library knows a command exists.
 says what. Ideally naming the failure it prevents. A comment that restates the
 code is worse than none.
 
-**Errors are typed and actionable.** `thiserror` for the library, `miette` at
-the binary edge. A diagnostic must carry the two things the user does not
+**Errors are typed and actionable.** {% if has_bin and has_lib %}`thiserror` for the library, `miette` at
+the binary edge.{% elif has_bin %}`thiserror` for the error type, `miette` to render it at the
+binary edge.{% elif has_lib %}`thiserror` for the error type, `miette`'s `Diagnostic` so a caller can
+render it as it likes.{% else %}`thiserror` for the library, `miette` at
+the binary edge.{% endif %} A diagnostic must carry the two things the user does not
 already know: what specifically failed, and what to do about it. Diagnostic
 codes are `{{ lib_name }}::<module>::<kind>`, and a code is a public identifier
 users grep for — renaming one is a breaking change.

@@ -1,0 +1,67 @@
+# Binary only: `src/main.rs` and the CLI modules, no library crate.
+#
+# `bin_name` differs from the crate name on purpose: it is the one case where
+# Cargo's automatic binary target is not enough and `[[bin]]` has to be
+# rendered. `man_pages` and `publish` are on so the binary-only tooling
+# (`build.rs`, crates.io job) is proven to survive without a library.
+
+snapshot = true
+
+[answers]
+owner = "noirbizarre"
+author = "Axel H. <noirbizarre@gmail.com>"
+copyright_holder = "Axel H."
+copyright_year = 2026
+msrv = false
+docs = false
+crate = "binary-example"
+description = "A binary without a library"
+kind = "binary"
+keywords = "cli"
+categories = "command-line-utilities"
+bin_name = "bx"
+man_pages = true
+publish = true
+targets = ["x86_64-unknown-linux-gnu"]
+
+[expect]
+absent = ["src/lib.rs"]
+files = [
+  "src/main.rs",
+  "src/cli.rs",
+  "src/error.rs",
+  "build.rs",
+  "Cargo.toml",
+  ".github/workflows/publish-release.yaml",
+]
+
+[expect.contains]
+"Cargo.toml" = [
+  'name = "binary-example"',
+  "[[bin]]",
+  'name = "bx"',
+  "[package.metadata.binstall]",
+  "clap",
+  "[build-dependencies]",
+  "assert_cmd",
+]
+# The binary does not depend on a library crate that does not exist.
+"src/main.rs" = ["mod error;", "fn run()"]
+"mise.toml" = ["[tasks.cli]", "[tasks.man]"]
+".github/workflows/publish-release.yaml" = ["Stage the asset", "📦 crates.io"]
+
+[expect.lacks]
+"Cargo.toml" = ["[lib]"]
+"src/main.rs" = ["binary_example::"]
+"AGENTS.md" = ["├── lib.rs"]
+"README.md" = ["cargo add"]
+
+[commands]
+rendered = [
+  "mise test",
+  # prek requires files to be git-tracked
+  "git init -q",
+  "git add .",
+  "prek -a",
+  "gh ship validate",
+]
