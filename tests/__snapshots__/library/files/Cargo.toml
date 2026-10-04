@@ -1,0 +1,62 @@
+# library-example — A library without a binary
+#
+# Single crate, library only (`src/lib.rs`). Cargo discovers the target on its
+# own.
+
+[package]
+name = "library-example"
+version = "0.1.0"
+edition = "2024"
+# The MSRV. Checked by the MSRV job in ci.yaml, which greps this very line — keep it
+# a plain literal. `rust-toolchain.toml` separately pins the channel to develop
+# against; the two answer different questions.
+rust-version = "1.88"
+license = "MIT"
+# No `authors`: Cargo/crates.io stopped generating and reading it after the
+# 2021 edition — ownership on crates.io comes from the registry account that
+# published, not this field. `author` still feeds LICENSE and, when `aur` is
+# on, the PKGBUILD's `# Maintainer:` line.
+description = "A library without a binary"
+repository = "https://github.com/noirbizarre/library-example"
+readme = "README.md"
+keywords = ["example"]
+categories = ["development-tools"]
+
+[profile.release]
+# Release binaries are cross-compiled once per tag and downloaded many times, so
+# the build cost is paid once and the size saving is paid forward.
+#
+# Cargo only reads [profile.*] from a workspace's root manifest, so this stays
+# unconditional: member crates inherit it whether or not this file also
+# defines a [package].
+lto = true
+codegen-units = 1
+strip = true
+
+# --- project-specific --------------------------------------------------------
+#
+# Everything above this line is owned by the template and will keep updating.
+# Everything below is yours.
+#
+# The template seeds what follows once, at `git tpl init`, and then leaves it
+# alone: Dependabot bumps versions here weekly, and a template that propagated
+# its own would open a conflict against every one of those PRs. Resolve in
+# favour of the project if `git tpl update` ever touches it.
+
+[dependencies]
+# Errors & diagnostics. `thiserror` for typed errors inside the library,
+# `miette` to render them at the binary edge.
+thiserror = "2"
+# No `fancy` feature: that is the binary's terminal rendering, and a library
+# should leave it to whoever links it.
+miette = "7"
+
+# Configuration & serialisation
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[dev-dependencies]
+tempfile = "3"
+insta = { version = "1", features = ["filters"] }
+rstest = "0.26"
+pretty_assertions = "1"

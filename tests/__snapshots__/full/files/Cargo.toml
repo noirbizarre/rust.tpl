@@ -1,7 +1,8 @@
 # full-example — Every optional slot turned on
 #
-# Single crate, `[lib]` + `[[bin]]`. The library holds the engine; the binary is
-# a thin CLI over it, so integration tests can exercise either.
+# Single crate, library + binary. The library (`src/lib.rs`) holds the engine;
+# the binary (`src/main.rs`) is a thin CLI over it, so integration tests can
+# exercise either. Cargo discovers both targets on its own.
 
 [package]
 name = "full-example"
@@ -63,14 +64,6 @@ pkg-url = "{ repo }/releases/download/{ version }/full-example_{ version }_windo
 
 [package.metadata.binstall.overrides.x86_64-unknown-freebsd]
 pkg-url = "{ repo }/releases/download/{ version }/full-example_{ version }_freebsd-amd64"
-
-[[bin]]
-name = "full-example"
-path = "src/main.rs"
-
-[lib]
-name = "full_example"
-path = "src/lib.rs"
 
 [profile.release]
 # Release binaries are cross-compiled once per tag and downloaded many times, so

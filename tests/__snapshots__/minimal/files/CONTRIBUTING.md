@@ -20,7 +20,7 @@ components and cross-compilation targets.
 
 | Command | What it does |
 |---|---|
-| `mise run build` | Build the binary |
+| `mise run build` | Build the project |
 | `mise run cli` | Run `minimal-example` from source (passes flags through) |
 | `mise run test` | Run the tests (accepts nextest selectors) |
 | `mise run cover` | Run the tests with coverage |

@@ -39,6 +39,9 @@ env:
   RUSTFLAGS: -D warnings
 
 jobs:
+{%- endraw %}
+{%- if has_bin %}
+{%- raw %}
   build:
     name: 🏗️ ${{ matrix.target }}
     runs-on: ${{ matrix.runner }}
@@ -236,16 +239,39 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 {%- endraw %}
+{%- elif not publish %}
+{%- raw %}
+  # Nothing to attach and nothing to publish: this project builds no binary and
+  # is not published to crates.io, so a release is the tag and its notes alone.
+  # gh-ship still dispatches this workflow and waits on it, so it has to exist
+  # and succeed.
+  publish:
+    name: 🚀 Publish
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Nothing to publish."
+{%- endraw %}
+{%- endif %}
 {%- if publish %}
+{%- if has_bin %}
   # Last, deliberately. Publishing to crates.io cannot be undone — `cargo yank`
   # hides a version from resolution but never removes it, and the version number
   # is spent forever. So it happens only once every target has proven the code
   # compiles and the assets are on the release: if this job then fails,
   # re-running it costs nothing, whereas the reverse ordering could leave a
   # permanent crates.io release with no binaries behind it.
+{%- else %}
+  # The whole release: this project builds no binary, so there are no assets to
+  # attach and crates.io is the only place it is published. Publishing cannot be
+  # undone — `cargo yank` hides a version from resolution but never removes it,
+  # and the version number is spent forever — but the job is safe to re-run, see
+  # the "already published" check below.
+{%- endif %}
   crates:
     name: 📦 crates.io
+{%- if has_bin %}
     needs: [build, publish]
+{%- endif %}
     runs-on: ubuntu-latest
 
     # Must match the Environment configured under

@@ -1,14 +1,14 @@
 //! Argument types only.
 //!
 //! No behaviour lives here: parsing is one concern and doing the work is
-//! another, and keeping them apart is what lets the library be used without
-//! the CLI.
+//! another, and keeping them apart is what lets `build.rs` and the tests reuse
+//! the argument definitions without running the program.
 
 use clap::{Parser, Subcommand};
 
-/// {{ description }}
+/// A binary without a library
 #[derive(Debug, Parser)]
-#[command(name = "{{ bin_name }}", version, about, long_about = None)]
+#[command(name = "bx", version, about, long_about = None)]
 pub struct Cli {
     /// Increase verbosity. Repeat for more.
     #[arg(short, long, global = true, action = clap::ArgAction::Count)]

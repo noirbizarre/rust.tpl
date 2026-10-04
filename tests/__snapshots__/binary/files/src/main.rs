@@ -1,4 +1,4 @@
-//! The {{ bin_name }} binary.
+//! The bx binary.
 
 #![allow(clippy::result_large_err)]
 
@@ -8,8 +8,10 @@ use clap::Parser;
 use miette::MietteHandlerOpts;
 
 mod cli;
+mod error;
 
 use cli::{Cli, Command};
+use error::Result;
 
 fn main() -> ExitCode {
     let args = Cli::parse();
@@ -17,7 +19,7 @@ fn main() -> ExitCode {
     install_miette_hook(verbose);
 
     let result = match args.command {
-        Command::Run => {{ lib_name }}::run(),
+        Command::Run => run(),
     };
 
     match result {
@@ -30,6 +32,14 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// Run the thing.
+///
+/// Private: this crate has no library, so the logic lives beside `main` and
+/// nothing outside the binary can call it.
+fn run() -> Result<()> {
+    Ok(())
 }
 
 /// Install miette's diagnostic handler.
@@ -49,4 +59,14 @@ fn install_miette_hook(verbose: bool) {
         };
         Box::new(opts.build())
     }));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn running_with_nothing_to_do_succeeds() {
+        assert!(run().is_ok());
+    }
 }

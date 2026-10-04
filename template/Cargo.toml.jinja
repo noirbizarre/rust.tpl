@@ -2,17 +2,24 @@
 {%- set category_list = categories | split(',') | map('trim') | select | list -%}
 # {{ crate }} — {{ description }}
 #
-{%- if workspace %}
+{%- if is_workspace %}
 # A Cargo workspace. This file is a virtual manifest: no [package] of its own,
 # just the members and the [workspace.package]/[workspace.dependencies] tables
 # they share. Add member crates below, past the marker — the template does not
 # know their content.
+{%- elif has_bin and has_lib %}
+# Single crate, library + binary. The library (`src/lib.rs`) holds the engine;
+# the binary (`src/main.rs`) is a thin CLI over it, so integration tests can
+# exercise either. Cargo discovers both targets on its own.
+{%- elif has_bin %}
+# Single crate, binary only (`src/main.rs`). There is no library: the logic
+# lives in private modules of the binary. Cargo discovers the target on its own.
 {%- else %}
-# Single crate, `[lib]` + `[[bin]]`. The library holds the engine; the binary is
-# a thin CLI over it, so integration tests can exercise either.
+# Single crate, library only (`src/lib.rs`). Cargo discovers the target on its
+# own.
 {%- endif %}
 
-{%- if workspace %}
+{%- if is_workspace %}
 
 [workspace]
 # Virtual manifests carry no edition of their own to infer a resolver from —
@@ -56,7 +63,7 @@ categories = [{% for category in category_list %}"{{ category }}"{% if not loop.
 # nothing tests and nobody updates.
 publish = false
 {%- endif %}
-{%- if not workspace %}
+{%- if has_bin %}
 
 # cargo-binstall otherwise derives an asset name from the target triple, and
 # the publish workflow's assets carry short platform suffixes instead (the
@@ -77,14 +84,15 @@ pkg-fmt = "bin"
 pkg-url = "{ repo }/releases/download/{ version }/{{ crate }}_{ version }_{{ entry.asset }}{{ entry.ext }}"
 {%- endif %}
 {%- endfor %}
+{%- if bin_name != crate %}
 
+# Cargo names an automatic binary after the package, so a differently named one
+# has to be declared. Nothing else is: the library and a same-named binary are
+# discovered from `src/`.
 [[bin]]
 name = "{{ bin_name }}"
 path = "src/main.rs"
-
-[lib]
-name = "{{ lib_name }}"
-path = "src/lib.rs"
+{%- endif %}
 {%- endif %}
 
 [profile.release]
@@ -107,32 +115,40 @@ strip = true
 # alone: Dependabot bumps versions here weekly, and a template that propagated
 # its own would open a conflict against every one of those PRs. Resolve in
 # favour of the project if `git tpl update` ever touches it.
-{%- if workspace %}
+{%- if is_workspace %}
 
 [workspace.dependencies]
 # Shared versions for member crates to inherit via `dep = { workspace = true }`.
 # Owned by the project and Dependabot from here, same deal as [dependencies]
-# in the non-workspace shape.
+# in the single-crate shapes.
 {%- else %}
 
 [dependencies]
 # Errors & diagnostics. `thiserror` for typed errors inside the library,
 # `miette` to render them at the binary edge.
 thiserror = "2"
+{%- if has_bin %}
 miette = { version = "7", features = ["fancy"] }
 
 # CLI
 clap = { version = "4", features = ["derive", "env", "wrap_help"] }
 console = "0.16"
 demand = "2"
+{%- else %}
+# No `fancy` feature: that is the binary's terminal rendering, and a library
+# should leave it to whoever links it.
+miette = "7"
+{%- endif %}
 
 # Configuration & serialisation
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 
 [dev-dependencies]
+{%- if has_bin %}
 assert_cmd = "2"
 predicates = "3"
+{%- endif %}
 tempfile = "3"
 insta = { version = "1", features = ["filters"] }
 rstest = "0.26"
