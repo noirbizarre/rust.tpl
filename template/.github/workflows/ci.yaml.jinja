@@ -118,6 +118,9 @@ jobs:
         run: Set-MpPreference -DisableRealtimeMonitoring $true
 
       - name: Run tests (with coverage)
+        env:
+          # Concurrent coverage-instrumented test builds exhaust Windows runner memory.
+          CARGO_BUILD_JOBS: ${{ matrix.os.flag == 'windows' && '1' || 'default' }}
         run: |
           cargo llvm-cov nextest --profile ci
           cargo llvm-cov report --lcov --output-path lcov.info
