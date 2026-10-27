@@ -19,10 +19,6 @@ on:
       tag:
         required: true
         type: string
-      build:
-        description: Build binaries, or reuse artifacts from this CI run
-        type: boolean
-        default: true
       prerelease:
         description: Refresh the development channel instead of a stable draft
         type: boolean
@@ -51,25 +47,76 @@ jobs:
 {%- if has_bin %}
 {%- raw %}
   build:
-    name: 🏗️ Build
-    # Dispatch has no build input; gh-ship must always build the requested tag.
-    if: github.event_name == 'workflow_dispatch' || inputs.build
-    uses: ./.github/workflows/build-release.yaml
-    with:
-      revision: ${{ inputs.prerelease && github.sha || format('refs/tags/{0}', inputs.tag) }}
-      label: ${{ inputs.tag }}
+    name: 🏗️ ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Explicit empty extensions keep the matrix type valid for actionlint.
+        include:
+{%- endraw %}
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+          - { target: {{ entry.target }}, runner: {{ entry.runner }}, asset: {{ entry.asset }}, cross: {{ entry.cross | lower }}, ext: "{{ entry.ext }}" }
+{%- endif %}
+{%- endfor %}
+{%- raw %}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Freeze development to the tested main commit, and stable releases to their tag.
+          ref: ${{ inputs.prerelease && github.sha || format('refs/tags/{0}', inputs.tag) }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+      - uses: taiki-e/install-action@cross
+        if: matrix.cross
+      # Downloaded MSVC binaries must start without the VC++ redistributable.
+      - name: Statically link the MSVC C runtime
+        if: endsWith(matrix.target, 'windows-msvc')
+        run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
+      - name: Build
+        env:
+          TARGET: ${{ matrix.target }}
+          CROSS: ${{ matrix.cross }}
+        run: |
+          if [ "$CROSS" = "true" ]; then
+            cross build --release --locked --target "$TARGET"
+          else
+            cargo build --release --locked --target "$TARGET"
+          fi
+      - name: Stage the asset
+        env:
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+          EXT: ${{ matrix.ext }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mkdir -p dist
+{%- endraw %}
+          cp "target/${TARGET}/release/{{ bin_name }}${EXT}" "dist/{{ crate }}_${TAG}_${ASSET}${EXT}"
+{%- raw %}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: asset-${{ matrix.asset }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
 
   publish:
     name: 🚀 Publish
     needs: build
-    # An explicitly reused build is skipped, not failed. Override the implicit success gate.
 {%- endraw %}
     if: >-
-      ${{ '{{' }} !cancelled() &&
-        (needs.build.result == 'success' ||
-          (github.event_name != 'workflow_dispatch' && !inputs.build && needs.build.result == 'skipped')) &&
-        (!inputs.prerelease || (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-          inputs.tag == 'development' && github.repository == '{{ owner }}/{{ crate }}')) {{ '}}' }}
+      ${{ '{{' }} !inputs.prerelease || (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+        inputs.tag == 'development' && github.repository == '{{ owner }}/{{ crate }}') {{ '}}' }}
 {%- raw %}
     runs-on: ubuntu-latest
     # Finish uploads before another run can replace the same channel's assets.

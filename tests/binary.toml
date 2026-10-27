@@ -25,7 +25,7 @@ publish = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [expect]
-absent = ["src/lib.rs", ".github/workflows/publish-main.yaml", ".github/scripts/publish-main.py"]
+absent = ["src/lib.rs", ".github/workflows/build-release.yaml", ".github/workflows/publish-main.yaml", ".github/scripts/publish-main.py"]
 files = [
   "src/main.rs",
   "src/cli.rs",
@@ -48,8 +48,8 @@ files = [
 # The binary does not depend on a library crate that does not exist.
 "src/main.rs" = ["mod error;", "fn run()"]
 "mise.toml" = ["[tasks.cli]", "[tasks.man]"]
-".github/workflows/publish-release.yaml" = ["build-release.yaml", "📦 crates.io", "if: ${{ !inputs.prerelease }}"]
-".github/workflows/build-release.yaml" = ["Stage the asset", 'release/bx${EXT}']
+".github/workflows/publish-release.yaml" = ["Stage the asset", 'release/bx${EXT}', "📦 crates.io", "if: ${{ !inputs.prerelease }}"]
+".github/workflows/ci.yaml" = ["if: github.event_name == 'pull_request'", "cargo build --locked"]
 
 [expect.lacks]
 "Cargo.toml" = ["[lib]"]
@@ -57,6 +57,7 @@ files = [
 "AGENTS.md" = ["├── lib.rs"]
 "README.md" = ["cargo add"]
 ".github/workflows/ci.yaml" = ["tag: development", "prerelease: true"]
+".github/workflows/publish-release.yaml" = ["inputs.build", "build-release.yaml"]
 
 [commands]
 rendered = [

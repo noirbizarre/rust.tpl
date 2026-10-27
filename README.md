@@ -23,7 +23,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
 | **Hooks** | `prek.toml`: fmt, clippy, actionlint, typos, commitlint |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
-| **CI** | `ci.yaml` (hooks, 3-OS tests, shared release-target Build matrix, `gh ship validate`, optional MSRV check) |
+| **CI** | `ci.yaml` (hooks, 3-OS tests, PR-only debug Build matrix, `gh ship validate`, optional MSRV check) |
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
 | **Release** | gh-ship: `ship.yaml`, `prepare-release.yaml`, `publish-release.yaml` |
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
@@ -71,20 +71,20 @@ Two of these deserve a note:
   and a copyright notice records the year of first publication anyway.
 - **`targets`** is a `multi_choice` over `data/targets.toml`, which also carries
   the runner, asset name, `cross` flag and executable extension each target
-  needs in the shared CI/publication matrix.
+  needs in the PR and publication matrices.
 
 ### Development prereleases
 
-Opt in with `rolling_prerelease = true`. Successful main-push CI publishes its
-already-built raw binaries at `releases/download/development/<crate>_development_<asset>`
+Opt in with `rolling_prerelease = true`. Successful main-push CI builds and publishes
+raw release binaries at `releases/download/development/<crate>_development_<asset>`
 (with `.exe` for Windows), plus `SHA256SUMS`. This channel
 does not include the optional stable-release tarballs. PRs build every selected
-target without publication credentials; superseded PR runs are cancelled.
+target in debug mode without publication credentials or artifact uploads; superseded PR runs are cancelled.
 
-CI and stable publication use `build-release.yaml`. After its checks pass, main CI
-calls `publish-release.yaml` with `tag: development`, `build: false` and
-`prerelease: true`, reusing that run's binaries. Stable callers keep the default
-`build: true` and `prerelease: false`; gh-ship owns their draft-release lifecycle.
+Main skips CI's PR-only Build matrix. After its normal checks pass, it calls
+`publish-release.yaml` with `tag: development` and `prerelease: true`. That workflow
+owns the optimized release matrix for both channels. Stable callers keep the default
+`prerelease: false`; gh-ship owns their draft-release lifecycle.
 Both channels use the release environment's GitHub App. The development release
 never becomes Latest or publishes to crates.io; Homebrew/AUR accept only stable releases.
 
@@ -92,6 +92,10 @@ Downloads are mutable and asset replacement is not atomic. Verify checksums,
 retry mismatches during updates, and record the source SHA from release notes and binary asset labels.
 Pin a stable release for immutable downloads. A binary's package version still
 comes from Cargo.toml; the development tag is a channel marker, not each refreshed build's source SHA.
+
+This draft proposal is being trialled independently in Bee before upstream acceptance.
+Bee uses its existing reduced-debug `ci` profile for PR builds; the template uses
+Cargo's default debug profile. Main release builds use the same optimized settings.
 
 ## What it does not render
 

@@ -153,10 +153,43 @@ jobs:
       - name: Validate the release setup
         run: gh ship validate
 
-  # Validate the same sysroots, flags and targets that stable publication uses.
+  # Link every target on PRs without paying release optimization/LTO costs.
   build:
-    name: 🏗️ Build
-    uses: ./.github/workflows/build-release.yaml
-    with:
-      revision: ${{ github.sha }}
-      label: development
+    name: 🏗️ Build (${{ matrix.target }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    env:
+      # cross's containers do not contain the caller's sccache executable.
+      RUSTC_WRAPPER: ""
+      RUSTFLAGS: -D warnings
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: pr-build-${{ matrix.target }}
+      - uses: taiki-e/install-action@cross
+        if: matrix.cross
+      # Exercise the same CRT choice as downloaded Windows release binaries.
+      - name: Statically link the MSVC C runtime
+        if: endsWith(matrix.target, 'windows-msvc')
+        run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
+      - name: Build
+        env:
+          TARGET: ${{ matrix.target }}
+          CROSS: ${{ matrix.cross }}
+        run: |
+          if [ "$CROSS" = "true" ]; then
+            cross build --locked --target "$TARGET"
+          else
+            cargo build --locked --target "$TARGET"
+          fi

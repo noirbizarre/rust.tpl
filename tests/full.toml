@@ -69,7 +69,7 @@ files = [
 ]
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
-".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "id-token: write", "build: false", "prerelease: true"]
+".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "id-token: write", "needs: [lint, test, ship, msrv]", "prerelease: true", "if: github.event_name == 'pull_request'"]
 ".github/workflows/publish-release.yaml" = [
   "crates.io",
   # archive = true: the tarball step, in the layout memcastle's ADR-013 fixes.
@@ -82,9 +82,12 @@ files = [
   "actions/download-artifact",
   "if: ${{ !inputs.prerelease }}",
   "name: 📦 crates.io\n    if: ${{ !inputs.prerelease }}",
+  "aarch64-pc-windows-msvc",
+  "x86_64-unknown-freebsd",
+  "target-feature=+crt-static",
+  "Stage the asset",
 ]
 "zensical.toml" = ['accent = "deep orange"']
-".github/workflows/build-release.yaml" = ["aarch64-pc-windows-msvc", "x86_64-unknown-freebsd", "target-feature=+crt-static", "Stage the asset"]
 "mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
 # Regression tripwire for the bot-contributor filter: `github.contributors`
 # is unfiltered by `commit_parsers`, so without this every bot with a merged
@@ -114,6 +117,8 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
+".github/workflows/ci.yaml" = ["--release", "build: false", "needs: [lint, test, ship, build", "actions/upload-artifact"]
+".github/workflows/publish-release.yaml" = ["inputs.build", "build-release.yaml"]
 # archive = true: the licence and unit come out of the tarball, so the AUR
 # workflow must not also fetch and hash them from the tag.
 ".github/workflows/aur.yaml" = ["SHA256_LICENSE", "SHA256_SERVICE"]

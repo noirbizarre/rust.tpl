@@ -191,18 +191,56 @@ jobs:
 {%- endif %}
 {%- if has_bin %}
 
-  # Validate the same sysroots, flags and targets that stable publication uses.
+  # Link every target on PRs without paying release optimization/LTO costs.
   build:
-    name: 🏗️ Build
-    uses: ./.github/workflows/build-release.yaml
-    with:
-      revision: ${{ '{{' }} github.sha {{ '}}' }}
-      label: development
+    name: 🏗️ Build (${{ '{{' }} matrix.target {{ '}}' }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ '{{' }} matrix.runner {{ '}}' }}
+    env:
+      # cross's containers do not contain the caller's sccache executable.
+      RUSTC_WRAPPER: ""
+      RUSTFLAGS: -D warnings
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+          - { target: {{ entry.target }}, runner: {{ entry.runner }}, cross: {{ entry.cross | lower }} }
+{%- endif %}
+{%- endfor %}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ '{{' }} matrix.target {{ '}}' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: pr-build-${{ '{{' }} matrix.target {{ '}}' }}
+      - uses: taiki-e/install-action@cross
+        if: matrix.cross
+      # Exercise the same CRT choice as downloaded Windows release binaries.
+      - name: Statically link the MSVC C runtime
+        if: endsWith(matrix.target, 'windows-msvc')
+        run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
+      - name: Build
+        env:
+          TARGET: ${{ '{{' }} matrix.target {{ '}}' }}
+          CROSS: ${{ '{{' }} matrix.cross {{ '}}' }}
+        run: |
+          if [ "$CROSS" = "true" ]; then
+            cross build --locked --target "$TARGET"
+          else
+            cargo build --locked --target "$TARGET"
+          fi
 {%- if rolling_prerelease %}
 
   development:
     name: 🚀 Development prerelease
-    needs: [lint, test, ship, build{{ ', msrv' if msrv }}]
+    # The PR-only Build job is deliberately skipped on main, so it is not a dependency.
+    needs: [lint, test, ship{{ ', msrv' if msrv }}]
     if: ${{ '{{' }} github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == '{{ owner }}/{{ crate }}' {{ '}}' }}
 {%- if publish %}
     # Reusable-workflow permission validation includes the skipped stable crates.io job.
@@ -213,7 +251,6 @@ jobs:
     uses: ./.github/workflows/publish-release.yaml
     with:
       tag: development
-      build: false
       prerelease: true
 {%- endif %}
 {%- endif %}
