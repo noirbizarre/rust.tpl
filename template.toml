@@ -258,13 +258,22 @@ default_when_skipped = true
 type = "boolean"
 prompt = "Publish an AUR package (prebuilt binary)?"
 help = """
-Renders a `-bin` PKGBUILD and a workflow that pushes it to the AUR on every \
+Renders a prebuilt PKGBUILD and a workflow that pushes it to the AUR on every \
 release. You still own the AUR account and its `AUR_SSH_PRIVATE_KEY`. A \
 source-build package is a natural follow-up, not rendered here.\
 """
 default = false
 # A `-bin` package ships a binary.
 when = "{{ has_bin }}"
+default_when_skipped = true
+
+[questions.aur_package_name]
+type = "string"
+prompt = "AUR package name"
+help = "The complete package name (default: <crate>-bin), independent of the executable and release assets. Overrides do not infer provides/conflicts; declare required relationships in the project-specific PKGBUILD section."
+default = "{{ crate }}-bin"
+pattern = "^[a-z0-9][a-z0-9@._+-]*$"
+when = "{{ aur }}"
 default_when_skipped = true
 
 # --- Data -------------------------------------------------------------------

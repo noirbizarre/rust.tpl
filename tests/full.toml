@@ -97,6 +97,10 @@ files = [
   "zsh_completion.install",
 ]
 "packaging/aur/full-example-bin/PKGBUILD" = [
+  "pkgname=full-example-bin",
+  "_pkgname=full-example",
+  'provides=("$_pkgname=$pkgver")',
+  'conflicts=("$_pkgname")',
   "@SHA256_X86_64@",
   "@SHA256_AARCH64@",
   "linux-amd64.tar.gz",

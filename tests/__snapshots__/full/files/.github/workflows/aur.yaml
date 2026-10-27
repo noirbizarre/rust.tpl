@@ -1,6 +1,6 @@
 name: 📦 AUR
 
-# Publishes the -bin package once a release is public. The trigger is
+# Publishes the prebuilt package once a release is public. The trigger is
 # `release: published` rather than the completion of 📦 Publish Release,
 # because gh-ship only undrafts the release after that workflow succeeds — so
 # waiting for `published` means the URLs baked into the PKGBUILD already

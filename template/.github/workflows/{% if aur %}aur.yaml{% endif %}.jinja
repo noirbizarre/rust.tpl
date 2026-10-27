@@ -1,6 +1,6 @@
 name: 📦 AUR
 
-# Publishes the -bin package once a release is public. The trigger is
+# Publishes the prebuilt package once a release is public. The trigger is
 # `release: published` rather than the completion of 📦 Publish Release,
 # because gh-ship only undrafts the release after that workflow succeeds — so
 # waiting for `published` means the URLs baked into the PKGBUILD already
@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   aur:
-    name: 📦 {{ crate }}-bin
+    name: 📦 {{ aur_package_name }}
     runs-on: ubuntu-latest
 
     # makepkg and namcap only exist on Arch, and a container is cheaper than
@@ -40,7 +40,7 @@ jobs:
     # push is registered as its own deployment.
     environment:
       name: aur
-      url: https://aur.archlinux.org/packages/{{ crate }}-bin
+      url: https://aur.archlinux.org/packages/{{ aur_package_name }}
 
     env:
       TAG: ${{ '{{' }} inputs.tag || github.event.release.tag_name {{ '}}' }}
@@ -71,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build assets
-          cp packaging/aur/{{ crate }}-bin/PKGBUILD build/PKGBUILD
+          cp packaging/aur/{{ aur_package_name }}/PKGBUILD build/PKGBUILD
 
           # This project tags without a `v` prefix, so the tag is the version.
           sed -i "s/@VERSION@/${TAG}/" build/PKGBUILD
@@ -168,7 +168,7 @@ jobs:
           ssh-keyscan -H aur.archlinux.org > "$ssh_dir/known_hosts"
           export GIT_SSH_COMMAND="ssh -i $ssh_dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$ssh_dir/known_hosts"
 
-          git clone "ssh://aur@aur.archlinux.org/{{ crate }}-bin.git" aur
+          git clone "ssh://aur@aur.archlinux.org/{{ aur_package_name }}.git" aur
           cp build/PKGBUILD build/.SRCINFO aur/
 
           cd aur
@@ -180,7 +180,7 @@ jobs:
           # indistinguishable from a pkgbase whose files are not tracked yet.
           git add PKGBUILD .SRCINFO
           if git diff --cached --quiet; then
-            echo "::notice::{{ crate }}-bin is already up to date on the AUR"
+            echo "::notice::{{ aur_package_name }} is already up to date on the AUR"
             exit 0
           fi
 
