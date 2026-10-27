@@ -1,6 +1,9 @@
 # Installed by the commitlint prek hook.
 node_modules/
 
+# Publisher policy tests import the rendered Python helper.
+__pycache__/
+
 # --- mise ---------------------------------------------------------------
 #
 # A common global gitignore (`~/.config/git/ignore`) excludes `mise.toml`,

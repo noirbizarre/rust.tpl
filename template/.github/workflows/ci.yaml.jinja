@@ -189,3 +189,23 @@ jobs:
         run: cargo check --all-targets
 {%- endraw %}
 {%- endif %}
+{%- if has_bin %}
+
+  # Validate the same sysroots, flags and targets that stable publication uses.
+  build:
+    name: 🏗️ Build
+    uses: ./.github/workflows/release-builds.yaml
+    with:
+      revision: ${{ '{{' }} github.sha {{ '}}' }}
+      label: main
+{%- if rolling_prerelease %}
+
+  rolling:
+    name: 🚀 Main prerelease
+    needs: [lint, test, ship, build{{ ', msrv' if msrv }}]
+    if: ${{ '{{' }} github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == '{{ owner }}/{{ crate }}' {{ '}}' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish-main.yaml
+{%- endif %}
+{%- endif %}

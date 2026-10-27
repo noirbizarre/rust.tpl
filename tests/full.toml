@@ -18,6 +18,7 @@ msrv_version = "1.88"
 man_pages = true
 archive = true
 service = true
+rolling_prerelease = true
 publish = true
 docs = true
 docs_accent = "deep orange"
@@ -71,9 +72,6 @@ files = [
 ".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version"]
 ".github/workflows/publish-release.yaml" = [
   "crates.io",
-  "aarch64-pc-windows-msvc",
-  "x86_64-unknown-freebsd",
-  "target-feature=+crt-static",
   # archive = true: the tarball step, in the layout memcastle's ADR-013 fixes.
   "Package the Unix binaries",
   "Generate man pages and completions",
@@ -82,6 +80,8 @@ files = [
   "gzip -n -9",
 ]
 "zensical.toml" = ['accent = "deep orange"']
+".github/workflows/release-builds.yaml" = ["aarch64-pc-windows-msvc", "x86_64-unknown-freebsd", "target-feature=+crt-static", "Stage the asset"]
+".github/workflows/publish-main.yaml" = ["cancel-in-progress: false", "actions/download-artifact", "contents: write"]
 "mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
 # Regression tripwire for the bot-contributor filter: `github.contributors`
 # is unfiltered by `commit_parsers`, so without this every bot with a merged

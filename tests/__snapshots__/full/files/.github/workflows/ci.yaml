@@ -183,3 +183,19 @@ jobs:
       # consuming the library, not about developing it.
       - name: Check
         run: cargo check --all-targets
+
+  # Validate the same sysroots, flags and targets that stable publication uses.
+  build:
+    name: 🏗️ Build
+    uses: ./.github/workflows/release-builds.yaml
+    with:
+      revision: ${{ github.sha }}
+      label: main
+
+  rolling:
+    name: 🚀 Main prerelease
+    needs: [lint, test, ship, build, msrv]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'noirbizarre/full-example' }}
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish-main.yaml

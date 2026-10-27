@@ -179,7 +179,7 @@ default_when_skipped = true
 [questions.targets]
 type = "multi_choice"
 prompt = "Release targets"
-help = "Cross-compilation matrix for the publish workflow."
+help = "Release-mode build matrix shared by CI and publication."
 # Release targets are binaries to build: a library is published as source.
 when = "{{ has_bin }}"
 choices_from = "data.targets.choices"
@@ -197,6 +197,14 @@ default_when_skipped = true
 # which is about who republishes it. The raw per-target binaries are always
 # published (cargo-binstall and `gh` extensions fetch them by name); these add
 # to them, never replace them.
+
+[questions.rolling_prerelease]
+type = "boolean"
+prompt = "Publish successful main CI binaries as a rolling prerelease?"
+help = "Maintains a main prerelease with raw binaries, checksums and source metadata; stable releases stay separate."
+default = false
+when = "{{ has_bin }}"
+default_when_skipped = true
 
 [questions.archive]
 type = "boolean"

@@ -1,0 +1,87 @@
+name: 🏗️ Release Builds
+
+on:
+  workflow_call:
+    inputs:
+      revision:
+        description: Exact source commit or release tag to build
+        required: true
+        type: string
+      label:
+        description: Asset version label (main for CI)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# These settings live here because reusable workflows do not inherit caller env.
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  CARGO_NET_RETRY: "10"
+  RUSTUP_MAX_RETRIES: "10"
+  RUSTFLAGS: -D warnings
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: 🏗️ ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Explicit empty extensions keep the matrix type valid for actionlint.
+        include:
+          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, asset: linux-amd64, cross: true, ext: "" }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Separate cross sysroots and host builds instead of sharing incompatible outputs.
+          key: release-${{ matrix.target }}
+      - uses: taiki-e/install-action@cross
+        if: matrix.cross
+
+      # Downloaded MSVC binaries must start without the VC++ redistributable.
+      - name: Statically link the MSVC C runtime
+        if: endsWith(matrix.target, 'windows-msvc')
+        run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "${GITHUB_ENV}"
+
+      - name: Build
+        env:
+          TARGET: ${{ matrix.target }}
+          CROSS: ${{ matrix.cross }}
+        run: |
+          if [ "$CROSS" = "true" ]; then
+            cross build --release --locked --target "$TARGET"
+          else
+            cargo build --release --locked --target "$TARGET"
+          fi
+
+      - name: Stage the asset
+        env:
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+          EXT: ${{ matrix.ext }}
+          LABEL: ${{ inputs.label }}
+        run: |
+          mkdir -p dist
+          cp "target/${TARGET}/release/minimal-example${EXT}" "dist/minimal-example_${LABEL}_${ASSET}${EXT}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: asset-${{ matrix.asset }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7

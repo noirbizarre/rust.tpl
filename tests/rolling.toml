@@ -1,0 +1,37 @@
+# Bee-shaped raw-binary distribution, including a renamed executable.
+[answers]
+crate = "rolling-example"
+bin_name = "agent"
+description = "Rolling release policy fixture"
+kind = "library-and-binary"
+publish = false
+archive = false
+docs = false
+msrv = false
+rolling_prerelease = true
+homebrew = true
+aur = true
+aur_package_name = "rolling-agent"
+targets = [
+  "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl", "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-pc-windows-msvc",
+]
+
+[expect]
+files = [".github/scripts/publish-main.py", ".github/workflows/publish-main.yaml"]
+
+[expect.contains]
+".github/workflows/ci.yaml" = ["needs: [lint, test, ship, build]", "release-builds.yaml", "publish-main.yaml"]
+".github/workflows/release-builds.yaml" = ['ext: ".exe"', "windows-latest", "target-feature=+crt-static", 'release/agent${EXT}']
+".github/scripts/publish-main.py" = ["rolling-example_main_windows-amd64.exe", "SHA256SUMS", "build.json"]
+".github/workflows/homebrew.yaml" = ["needs: stable", "!github.event.release.prerelease", "--json isDraft,isPrerelease"]
+".github/workflows/aur.yaml" = ["needs: stable", "!github.event.release.prerelease", "--json isDraft,isPrerelease"]
+"Cargo.toml" = ["publish = false", "[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]"]
+
+[expect.lacks]
+".github/workflows/publish-release.yaml" = ["cargo publish", "matrix:"]
+".github/workflows/publish-main.yaml" = ["workflow_dispatch", "cargo build", "secrets.APP_PRIVATE_KEY"]
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]

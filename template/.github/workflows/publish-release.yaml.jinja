@@ -43,78 +43,11 @@ jobs:
 {%- if has_bin %}
 {%- raw %}
   build:
-    name: 🏗️ ${{ matrix.target }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # `ext` is emitted on every leg, empty where it does not apply. Omitting
-        # it on the non-Windows ones would make `${{ matrix.ext }}` reference a
-        # property that is not in the matrix type whenever no Windows target is
-        # selected — an actionlint error, not a runtime one, so it would only
-        # surface in the consuming project's CI.
-        include:
-{%- endraw %}
-{%- for entry in data.targets.matrix %}
-{%- if entry.target in targets %}
-          - { target: {{ entry.target }}, runner: {{ entry.runner }}, asset: {{ entry.asset }}, cross: {{ entry.cross | lower }}, ext: "{{ entry.ext }}" }
-{%- endif %}
-{%- endfor %}
-{%- raw %}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          # Build exactly what is being released, not a branch tip that
-          # may have moved since.
-          ref: ${{ inputs.tag }}
-          # The upload authenticates via a separately-installed `gh`; nothing
-          # in this job shells out to `git push`.
-          persist-credentials: false
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
-
-      # `cross` is only needed on the Linux legs, so it is installed
-      # conditionally here rather than added to mise.toml, which would pull it
-      # onto every runner in the matrix. It also supplies the cross C toolchain
-      # that any vendored C dependency needs.
-      - uses: taiki-e/install-action@cross
-        if: matrix.cross
-
-      # Without this a standalone MSVC binary can fail to start on a machine
-      # that lacks the matching Visual C++ Redistributable — exactly the
-      # machine a downloaded release binary targets. Static linking trades a
-      # few hundred KB for not depending on that being installed.
-      - name: Statically link the MSVC C runtime
-        if: endsWith(matrix.target, 'windows-msvc')
-        shell: bash
-        run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "${GITHUB_ENV}"
-
-      - name: Build
-        shell: bash
-        run: |
-          if [ "${{ matrix.cross }}" = "true" ]; then
-            cross build --release --locked --target ${{ matrix.target }}
-          else
-            cargo build --release --locked --target ${{ matrix.target }}
-          fi
-
-      - name: Stage the asset
-        shell: bash
-        run: |
-          mkdir -p dist
-{%- endraw %}
-          cp "target/${{ '{{' }} matrix.target {{ '}}' }}/release/{{ bin_name }}${{ '{{' }} matrix.ext {{ '}}' }}" \
-             "dist/{{ crate }}_${{ '{{' }} inputs.tag {{ '}}' }}_${{ '{{' }} matrix.asset {{ '}}' }}${{ '{{' }} matrix.ext {{ '}}' }}"
-{%- raw %}
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: asset-${{ matrix.asset }}
-          path: dist/*
-          if-no-files-found: error
+    name: 🏗️ Build
+    uses: ./.github/workflows/release-builds.yaml
+    with:
+      revision: refs/tags/${{ inputs.tag }}
+      label: ${{ inputs.tag }}
 
   publish:
     name: 🚀 Publish

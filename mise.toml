@@ -50,7 +50,7 @@ description = "Run the template's own test cases"
 # `tests/*.toml`: `[expect]`, `snapshot`, and each case's own `[commands]`,
 # which renders it, then runs `mise test`/`build`, `prek -a` and
 # `gh ship validate` against it.
-run = "git tpl test"
+run = ["git tpl test", "python3 -m unittest discover -s tests -p 'test_*.py'"]
 
 [tasks."test:write"]
 description = "Re-record every case's snapshot"

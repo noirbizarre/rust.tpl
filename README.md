@@ -23,7 +23,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
 | **Hooks** | `prek.toml`: fmt, clippy, actionlint, typos, commitlint |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
-| **CI** | `ci.yaml` (hooks, 3-OS test matrix, `gh ship validate`, optional MSRV check) |
+| **CI** | `ci.yaml` (hooks, 3-OS tests, shared release-target Build matrix, `gh ship validate`, optional MSRV check) |
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
 | **Release** | gh-ship: `ship.yaml`, `prepare-release.yaml`, `publish-release.yaml` |
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
@@ -58,7 +58,7 @@ Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 Only asked when the shape contains a binary (`binary`, `library-and-binary`):
 `bin_name`, `man_pages`, `archive`, `service`, `targets`, `homebrew`,
-`homebrew_tap`, `aur`.
+`homebrew_tap`, `aur`, `rolling_prerelease`.
 
 Projects rendered before `kind` existed carry `workspace = true|false` in
 `.config/git.tpl.toml`; `git tpl update` shows a migration note explaining how
@@ -71,7 +71,25 @@ Two of these deserve a note:
   and a copyright notice records the year of first publication anyway.
 - **`targets`** is a `multi_choice` over `data/targets.toml`, which also carries
   the runner, asset name, `cross` flag and executable extension each target
-  needs in the publish matrix.
+  needs in the shared CI/publication matrix.
+
+### Rolling main prereleases
+
+Opt in with `rolling_prerelease = true`. Successful main-push CI publishes its
+already-built raw binaries at `releases/download/main/<crate>_main_<asset>`
+(with `.exe` for Windows), plus `build.json` and `SHA256SUMS`. This channel
+does not include the optional stable-release tarballs. PRs build every selected
+target without publication credentials; superseded PR runs are cancelled.
+
+The `main` tag moves to the built commit. The release is a prerelease and never
+becomes Latest; Homebrew/AUR accept only public stable releases. Publishing uses
+the CI token with `contents: write`, not the stable release App or crates.io.
+Repository policy must permit this token to update the channel tag/release.
+
+Downloads are mutable and asset replacement is not atomic. Verify checksums,
+retry mismatches during updates, and record the commit from `build.json`.
+Pin a stable release for immutable downloads. A binary's package version still
+comes from Cargo.toml; the build manifest identifies its exact source commit.
 
 ## What it does not render
 

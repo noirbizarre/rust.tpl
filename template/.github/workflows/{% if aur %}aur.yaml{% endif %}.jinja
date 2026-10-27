@@ -27,7 +27,22 @@ permissions:
   contents: read
 
 jobs:
+  # Validate manual dispatch as well as release events before entering the write environment.
+  stable:
+    if: ${{ '{{' }} github.event_name != 'release' || !github.event.release.prerelease {{ '}}' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a stable public release
+        env:
+          GH_TOKEN: ${{ '{{' }} github.token {{ '}}' }}
+          TAG: ${{ '{{' }} inputs.tag || github.event.release.tag_name {{ '}}' }}
+        run: |
+          test "$TAG" != main
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease \
+            --jq 'if .isDraft or .isPrerelease then error("Only stable public releases may update packages") else true end'
+
   aur:
+    needs: stable
     name: 📦 {{ aur_package_name }}
     runs-on: ubuntu-latest
 
