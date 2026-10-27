@@ -5,8 +5,10 @@
 # assets, and the result is pushed to the AUR. Edit this template, never the
 # PKGBUILD in the AUR repository: that one is regenerated at every release.
 
-pkgname={{ crate }}-bin
+pkgname={{ aur_package_name }}
+{%- if aur_package_name == crate ~ '-bin' %}
 _pkgname={{ crate }}
+{%- endif %}
 pkgver=@VERSION@
 pkgrel=1
 pkgdesc="{{ description }} (prebuilt binary)"
@@ -14,9 +16,11 @@ arch=({% if "x86_64-unknown-linux-gnu" in targets %}'x86_64'{% endif %}{% if "aa
 url="{{ repo_url }}"
 license=('MIT')
 
+{% if aur_package_name == crate ~ '-bin' -%}
 provides=("$_pkgname=$pkgver")
 conflicts=("$_pkgname")
 
+{% endif -%}
 # !strip because the release profile already sets `strip = true`, and !debug
 # for the same reason: there is no debug data left to split into a -debug
 # package, so building one would produce an empty package and a namcap

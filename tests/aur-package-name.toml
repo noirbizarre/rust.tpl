@@ -1,0 +1,38 @@
+# AUR identity must not rename the executable or claim an unrelated package.
+[answers]
+crate = "bee"
+description = "A headless agent"
+owner = "noirbizarre"
+author = "Axel H. <noirbizarre@gmail.com>"
+kind = "binary"
+bin_name = "bee"
+aur = true
+aur_package_name = "bee-agent"
+archive = false
+targets = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]
+
+[expect]
+files = ["packaging/aur/bee-agent/PKGBUILD"]
+absent = ["packaging/aur/bee-bin/PKGBUILD"]
+
+[expect.contains]
+"packaging/aur/bee-agent/PKGBUILD" = [
+  "pkgname=bee-agent",
+  '/usr/bin/bee"',
+  'bee_${pkgver}_linux-amd64',
+]
+".github/workflows/aur.yaml" = [
+  "packages/bee-agent",
+  "packaging/aur/bee-agent/PKGBUILD",
+  "ssh://aur@aur.archlinux.org/bee-agent.git",
+  "bee --version",
+]
+"README.md" = ["paru -S bee-agent "]
+"CONTRIBUTING.md" = ["owns the `bee-agent` package"]
+
+[expect.lacks]
+"packaging/aur/bee-agent/PKGBUILD" = ["provides=", "conflicts=", "_pkgname="]
+".github/workflows/aur.yaml" = ["bee-bin", "bee-agent-bin"]
+
+[commands]
+rendered = ["actionlint .github/workflows/aur.yaml", "bash -n packaging/aur/bee-agent/PKGBUILD"]

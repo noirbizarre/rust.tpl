@@ -92,6 +92,15 @@ questions render a formula/PKGBUILD skeleton and the workflow that keeps it
 current on every release, but creating and owning the tap repository or the
 AUR account itself is still the project's own work.
 
+`aur_package_name` sets the complete AUR package name, defaulting to
+`{{ crate }}-bin`. Override it when the crate name is already occupied on AUR;
+this leaves the executable and release asset names unchanged. The default
+package provides and conflicts with the crate-named source package. Overrides
+infer neither relationship: add any required dependencies or file conflicts
+below the PKGBUILD's project-specific marker. Changing the answer also changes
+the PKGBUILD directory; preserve project-specific additions when integrating
+that rename into an existing project.
+
 ## Project-specific additions
 
 `mise.toml`, `prek.toml` and `Cargo.toml` end with a
