@@ -19,19 +19,20 @@ targets = [
 ]
 
 [expect]
-files = [".github/scripts/publish-main.py", ".github/workflows/publish-main.yaml"]
+files = [".github/workflows/build-release.yaml", ".github/workflows/publish-release.yaml"]
+absent = [".github/workflows/release-builds.yaml", ".github/workflows/publish-main.yaml", ".github/scripts/publish-main.py"]
 
 [expect.contains]
-".github/workflows/ci.yaml" = ["needs: [lint, test, ship, build]", "release-builds.yaml", "publish-main.yaml"]
-".github/workflows/release-builds.yaml" = ['ext: ".exe"', "windows-latest", "target-feature=+crt-static", 'release/agent${EXT}']
-".github/scripts/publish-main.py" = ["rolling-example_main_windows-amd64.exe", "SHA256SUMS", "build.json"]
+".github/workflows/ci.yaml" = ["needs: [lint, test, ship, build]", "build-release.yaml", "publish-release.yaml", "tag: development", "build: false", "prerelease: true"]
+".github/workflows/build-release.yaml" = ['ext: ".exe"', "windows-latest", "target-feature=+crt-static", 'release/agent${EXT}']
+".github/workflows/publish-release.yaml" = ["rolling-example_development_windows-amd64.exe", "SHA256SUMS", "--latest=false", "!cancelled()", "needs.build.result == 'success'", "!inputs.build && needs.build.result == 'skipped'", "github.event_name == 'workflow_dispatch' || inputs.build", "default: true", "default: false"]
 ".github/workflows/homebrew.yaml" = ["needs: stable", "!github.event.release.prerelease", "--json isDraft,isPrerelease"]
 ".github/workflows/aur.yaml" = ["needs: stable", "!github.event.release.prerelease", "--json isDraft,isPrerelease"]
 "Cargo.toml" = ["publish = false", "[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]"]
 
 [expect.lacks]
 ".github/workflows/publish-release.yaml" = ["cargo publish", "matrix:"]
-".github/workflows/publish-main.yaml" = ["workflow_dispatch", "cargo build", "secrets.APP_PRIVATE_KEY"]
+".github/workflows/ci.yaml" = ["contents: write", "publish-main.yaml"]
 
 [commands]
 rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]

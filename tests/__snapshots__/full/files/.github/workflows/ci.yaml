@@ -187,15 +187,21 @@ jobs:
   # Validate the same sysroots, flags and targets that stable publication uses.
   build:
     name: 🏗️ Build
-    uses: ./.github/workflows/release-builds.yaml
+    uses: ./.github/workflows/build-release.yaml
     with:
       revision: ${{ github.sha }}
-      label: main
+      label: development
 
-  rolling:
-    name: 🚀 Main prerelease
+  development:
+    name: 🚀 Development prerelease
     needs: [lint, test, ship, build, msrv]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'noirbizarre/full-example' }}
+    # Reusable-workflow permission validation includes the skipped stable crates.io job.
     permissions:
-      contents: write
-    uses: ./.github/workflows/publish-main.yaml
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish-release.yaml
+    with:
+      tag: development
+      build: false
+      prerelease: true

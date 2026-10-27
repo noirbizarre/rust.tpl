@@ -37,7 +37,7 @@ jobs:
           GH_TOKEN: ${{ '{{' }} github.token {{ '}}' }}
           TAG: ${{ '{{' }} inputs.tag || github.event.release.tag_name {{ '}}' }}
         run: |
-          test "$TAG" != main
+          test "$TAG" != development
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease \
             --jq 'if .isDraft or .isPrerelease then error("Only stable public releases may update packages") else true end'
 

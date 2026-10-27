@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       label:
-        description: Asset version label (main for CI)
+        description: Asset version label (development for CI)
         required: true
         type: string
 

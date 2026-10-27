@@ -19,6 +19,14 @@ on:
       tag:
         required: true
         type: string
+      build:
+        description: Build binaries, or reuse artifacts from this CI run
+        type: boolean
+        default: true
+      prerelease:
+        description: Refresh the development channel instead of a stable draft
+        type: boolean
+        default: false
 
 # The upload authenticates as a GitHub App and carries its own permissions.
 # These cover `actions/checkout` alone, which only reads.

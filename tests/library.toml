@@ -24,6 +24,9 @@ publish = true
 
 [expect]
 absent = [
+  ".github/workflows/build-release.yaml",
+  ".github/workflows/publish-main.yaml",
+  ".github/scripts/publish-main.py",
   "src/main.rs",
   "src/cli.rs",
   "build.rs",
@@ -69,6 +72,7 @@ files = [
 "AGENTS.md" = ["main.rs", "cli.rs"]
 "CONTRIBUTING.md" = ["mise run cli", "attach the binaries"]
 "README.md" = ["--help", "cargo install", "Or download a binary"]
+".github/workflows/ci.yaml" = ["tag: development", "build-release.yaml"]
 
 [commands]
 rendered = [

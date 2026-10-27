@@ -156,7 +156,7 @@ jobs:
   # Validate the same sysroots, flags and targets that stable publication uses.
   build:
     name: 🏗️ Build
-    uses: ./.github/workflows/release-builds.yaml
+    uses: ./.github/workflows/build-release.yaml
     with:
       revision: ${{ github.sha }}
-      label: main
+      label: development

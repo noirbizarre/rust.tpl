@@ -27,7 +27,7 @@ categories = ["command-line-utilities"]
 # target, so this list never drifts from the publish matrix.
 #
 # `pkg-fmt = "bin"`: the publish workflow uploads the raw executable, not an
-# archive — see release-builds.yaml's "Stage the asset" step.
+# archive — see build-release.yaml's "Stage the asset" step.
 [package.metadata.binstall]
 pkg-fmt = "bin"
 

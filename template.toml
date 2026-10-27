@@ -200,8 +200,8 @@ default_when_skipped = true
 
 [questions.rolling_prerelease]
 type = "boolean"
-prompt = "Publish successful main CI binaries as a rolling prerelease?"
-help = "Maintains a main prerelease with raw binaries, checksums and source metadata; stable releases stay separate."
+prompt = "Publish successful main CI binaries as a development prerelease?"
+help = "Maintains a development prerelease with raw binaries, checksums and source SHA labels; stable releases stay separate."
 default = false
 when = "{{ has_bin }}"
 default_when_skipped = true

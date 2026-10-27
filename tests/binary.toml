@@ -48,14 +48,15 @@ files = [
 # The binary does not depend on a library crate that does not exist.
 "src/main.rs" = ["mod error;", "fn run()"]
 "mise.toml" = ["[tasks.cli]", "[tasks.man]"]
-".github/workflows/publish-release.yaml" = ["release-builds.yaml", "📦 crates.io"]
-".github/workflows/release-builds.yaml" = ["Stage the asset", 'release/bx${EXT}']
+".github/workflows/publish-release.yaml" = ["build-release.yaml", "📦 crates.io", "if: ${{ !inputs.prerelease }}"]
+".github/workflows/build-release.yaml" = ["Stage the asset", 'release/bx${EXT}']
 
 [expect.lacks]
 "Cargo.toml" = ["[lib]"]
 "src/main.rs" = ["binary_example::"]
 "AGENTS.md" = ["├── lib.rs"]
 "README.md" = ["cargo add"]
+".github/workflows/ci.yaml" = ["tag: development", "prerelease: true"]
 
 [commands]
 rendered = [

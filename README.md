@@ -73,23 +73,25 @@ Two of these deserve a note:
   the runner, asset name, `cross` flag and executable extension each target
   needs in the shared CI/publication matrix.
 
-### Rolling main prereleases
+### Development prereleases
 
 Opt in with `rolling_prerelease = true`. Successful main-push CI publishes its
-already-built raw binaries at `releases/download/main/<crate>_main_<asset>`
-(with `.exe` for Windows), plus `build.json` and `SHA256SUMS`. This channel
+already-built raw binaries at `releases/download/development/<crate>_development_<asset>`
+(with `.exe` for Windows), plus `SHA256SUMS`. This channel
 does not include the optional stable-release tarballs. PRs build every selected
 target without publication credentials; superseded PR runs are cancelled.
 
-The `main` tag moves to the built commit. The release is a prerelease and never
-becomes Latest; Homebrew/AUR accept only public stable releases. Publishing uses
-the CI token with `contents: write`, not the stable release App or crates.io.
-Repository policy must permit this token to update the channel tag/release.
+CI and stable publication use `build-release.yaml`. After its checks pass, main CI
+calls `publish-release.yaml` with `tag: development`, `build: false` and
+`prerelease: true`, reusing that run's binaries. Stable callers keep the default
+`build: true` and `prerelease: false`; gh-ship owns their draft-release lifecycle.
+Both channels use the release environment's GitHub App. The development release
+never becomes Latest or publishes to crates.io; Homebrew/AUR accept only stable releases.
 
 Downloads are mutable and asset replacement is not atomic. Verify checksums,
-retry mismatches during updates, and record the commit from `build.json`.
+retry mismatches during updates, and record the source SHA from release notes and binary asset labels.
 Pin a stable release for immutable downloads. A binary's package version still
-comes from Cargo.toml; the build manifest identifies its exact source commit.
+comes from Cargo.toml; the development tag is a channel marker, not each refreshed build's source SHA.
 
 ## What it does not render
 

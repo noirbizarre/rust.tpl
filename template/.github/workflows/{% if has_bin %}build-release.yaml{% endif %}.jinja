@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       label:
-        description: Asset version label (main for CI)
+        description: Asset version label (development for CI)
         required: true
         type: string
 
@@ -30,26 +30,30 @@ defaults:
 
 jobs:
   build:
-    name: 🏗️ ${{ matrix.target }}
-    runs-on: ${{ matrix.runner }}
+    name: 🏗️ ${{ '{{' }} matrix.target {{ '}}' }}
+    runs-on: ${{ '{{' }} matrix.runner {{ '}}' }}
     strategy:
       fail-fast: false
       matrix:
         # Explicit empty extensions keep the matrix type valid for actionlint.
         include:
-          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, asset: linux-amd64, cross: true, ext: "" }
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+          - { target: {{ entry.target }}, runner: {{ entry.runner }}, asset: {{ entry.asset }}, cross: {{ entry.cross | lower }}, ext: "{{ entry.ext }}" }
+{%- endif %}
+{%- endfor %}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.revision }}
+          ref: ${{ '{{' }} inputs.revision {{ '}}' }}
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ '{{' }} matrix.target {{ '}}' }}
       - uses: Swatinem/rust-cache@v2
         with:
           # Separate cross sysroots and host builds instead of sharing incompatible outputs.
-          key: release-${{ matrix.target }}
+          key: release-${{ '{{' }} matrix.target {{ '}}' }}
       - uses: taiki-e/install-action@cross
         if: matrix.cross
 
@@ -60,8 +64,8 @@ jobs:
 
       - name: Build
         env:
-          TARGET: ${{ matrix.target }}
-          CROSS: ${{ matrix.cross }}
+          TARGET: ${{ '{{' }} matrix.target {{ '}}' }}
+          CROSS: ${{ '{{' }} matrix.cross {{ '}}' }}
         run: |
           if [ "$CROSS" = "true" ]; then
             cross build --release --locked --target "$TARGET"
@@ -71,17 +75,17 @@ jobs:
 
       - name: Stage the asset
         env:
-          TARGET: ${{ matrix.target }}
-          ASSET: ${{ matrix.asset }}
-          EXT: ${{ matrix.ext }}
-          LABEL: ${{ inputs.label }}
+          TARGET: ${{ '{{' }} matrix.target {{ '}}' }}
+          ASSET: ${{ '{{' }} matrix.asset {{ '}}' }}
+          EXT: ${{ '{{' }} matrix.ext {{ '}}' }}
+          LABEL: ${{ '{{' }} inputs.label {{ '}}' }}
         run: |
           mkdir -p dist
-          cp "target/${TARGET}/release/bx${EXT}" "dist/binary-example_${LABEL}_${ASSET}${EXT}"
+          cp "target/${TARGET}/release/{{ bin_name }}${EXT}" "dist/{{ crate }}_${LABEL}_${ASSET}${EXT}"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: asset-${{ matrix.asset }}
+          name: asset-${{ '{{' }} matrix.asset {{ '}}' }}
           path: dist/*
           if-no-files-found: error
           retention-days: 7
