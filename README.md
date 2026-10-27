@@ -86,12 +86,14 @@ Main skips CI's PR-only Build matrix. After its normal checks pass, it calls
 owns the optimized release matrix for both channels. Stable callers keep the default
 `prerelease: false`; gh-ship owns their draft-release lifecycle.
 Both channels use the release environment's GitHub App. The development release
-never becomes Latest or publishes to crates.io; Homebrew/AUR accept only stable releases.
+never becomes Latest or publishes to crates.io. Homebrew/AUR automatically run on stable
+`released` events, with manual tag-based reruns available to maintainers.
 
 Downloads are mutable and asset replacement is not atomic. Verify checksums,
 retry mismatches during updates, and record the source SHA from release notes and binary asset labels.
 Pin a stable release for immutable downloads. A binary's package version still
-comes from Cargo.toml; the development tag is a channel marker, not each refreshed build's source SHA.
+comes from Cargo.toml. After upload verification, the rolling `development` tag moves
+to the published binaries' source SHA.
 
 This draft proposal is being trialled independently in Bee before upstream acceptance.
 Bee uses its existing reduced-debug `ci` profile for PR builds; the template uses

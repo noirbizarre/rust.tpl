@@ -1,15 +1,12 @@
 name: 🍺 Homebrew
 
-# Updates the formula in the tap once a release is public. The trigger is
-# `release: published` rather than the completion of 📦 Publish Release,
-# because gh-ship only undrafts the release after that workflow succeeds — so
-# waiting for `published` means the URLs baked into the formula already
-# resolve when it lands in the tap.
+# `released` selects stable publication, excluding development prereleases.
+# gh-ship undrafts only after uploads succeed, so the formula's URLs already resolve.
 run-name: 🍺 Homebrew ${{ inputs.tag || github.event.release.tag_name }}
 
 on:
   release:
-    types: [published]
+    types: [released]
 
   workflow_dispatch:
     inputs:
@@ -24,22 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  # Validate manual dispatch as well as release events before entering the write environment.
-  stable:
-    if: ${{ github.event_name != 'release' || !github.event.release.prerelease }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require a stable public release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || github.event.release.tag_name }}
-        run: |
-          test "$TAG" != development
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease \
-            --jq 'if .isDraft or .isPrerelease then error("Only stable public releases may update packages") else true end'
-
   homebrew:
-    needs: stable
     name: 🍺 Formula
     runs-on: ubuntu-latest
 

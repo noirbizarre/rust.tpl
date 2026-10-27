@@ -24,14 +24,16 @@ absent = [".github/workflows/build-release.yaml", ".github/workflows/release-bui
 
 [expect.contains]
 ".github/workflows/ci.yaml" = ["needs: [lint, test, ship]", "if: github.event_name == 'pull_request'", "publish-release.yaml", "tag: development", "prerelease: true", "cargo build --locked", "cross build --locked", 'RUSTC_WRAPPER: ""', "windows-latest", "target-feature=+crt-static"]
-".github/workflows/publish-release.yaml" = ["rolling-example_development_windows-amd64.exe", "SHA256SUMS", "--latest=false", "needs: build", "default: false", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT}']
-".github/workflows/homebrew.yaml" = ["needs: stable", "!github.event.release.prerelease", "--json isDraft,isPrerelease"]
-".github/workflows/aur.yaml" = ["needs: stable", "!github.event.release.prerelease", "--json isDraft,isPrerelease"]
+".github/workflows/publish-release.yaml" = ["rolling-example_development_windows-amd64.exe", "SHA256SUMS", "--latest=false", "needs: build", "default: false", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT}', "git/matching-refs/tags/development", "git/refs/tags/development", '-f sha="$SHA" -F force=true', "-f ref=refs/tags/development"]
+".github/workflows/homebrew.yaml" = ["types: [released]", "workflow_dispatch:"]
+".github/workflows/aur.yaml" = ["types: [released]", "workflow_dispatch:"]
 "Cargo.toml" = ["publish = false", "[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]"]
 
 [expect.lacks]
 ".github/workflows/publish-release.yaml" = ["cargo publish", "inputs.build", "skipped", "build-release.yaml"]
 ".github/workflows/ci.yaml" = ["contents: write", "publish-main.yaml", "--release", "build: false", "needs: [lint, test, ship, build", "actions/upload-artifact"]
+".github/workflows/homebrew.yaml" = ["types: [published]", "  stable:", "needs: stable", "--json isDraft,isPrerelease"]
+".github/workflows/aur.yaml" = ["types: [published]", "  stable:", "needs: stable", "--json isDraft,isPrerelease"]
 
 [commands]
 rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]

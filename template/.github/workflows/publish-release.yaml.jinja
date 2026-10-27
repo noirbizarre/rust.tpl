@@ -287,7 +287,16 @@ jobs:
           done
           jq -e '[.[][] | select(.name == "SHA256SUMS" and .size > 0)] | length == 1' \
             <<< "$uploaded" >/dev/null
-          # Advertise the revision only after every binary and the checksum file have landed.
+          # Move only the development ref, after every replacement asset has been verified.
+          refs=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/development")
+          if jq -e 'any(.[]; .ref == "refs/tags/development")' <<< "$refs" >/dev/null; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/development" \
+              -f sha="$SHA" -F force=true --silent
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref=refs/tags/development -f sha="$SHA" --silent
+          fi
+          # Advertise the revision only after assets and their rolling source tag agree.
           gh release edit development --title development --prerelease --draft=false --latest=false \
             --notes "Main SHA: ${SHA}. CI: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           expected=$(printf '%s\n' "${assets[@]}" SHA256SUMS | jq -R . | jq -s .)
