@@ -57,11 +57,29 @@ derives the version from the commit history, `prepare-release` applies it, and
 
 ## Before you push
 
-```sh
-mise run ci
-```
+Choose checks based on the files changed and the risk. Run relevant tasks
+individually rather than launching every check in parallel by default.
 
-Formatting, Clippy, spelling, workflow and Markdown linting, tests. Same as CI.
+- **Rust code:** run `mise run lint` (Clippy) and the relevant tests through
+  `mise run test`, which accepts nextest selectors. Target affected packages
+  and tests instead of running the whole suite by default. For example,
+  replacing the placeholders with the affected package and test name:
+
+  ```sh
+  mise run test -- -p <package> -E 'test(<test_name>)'
+  ```
+
+- **Documentation, workflows or tooling:** run the relevant checks, such as
+  `mise run lint:md`, `mise run spell` or `mise run lint:actions`.
+  Documentation-only changes do not require Rust lint or tests.
+
+Broaden validation when the change warrants it. `mise run ci` is available as
+an optional comprehensive check, not a prerequisite for committing, pushing or
+opening a PR.
+
+If a local check is unavailable or prohibitively expensive, proceed with the
+commit or PR and report which checks ran, which were skipped and why in the
+handoff or PR description. CI provides full validation.
 
 ## This repository is generated from a template
 

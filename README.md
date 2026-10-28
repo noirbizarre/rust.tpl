@@ -21,7 +21,8 @@ new or existing — and keeps them updatable with `git tpl update`.
 | | |
 |---|---|
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
-| **Hooks** | `prek.toml`: fmt, clippy, actionlint, typos, commitlint |
+| **Hooks** | `prek.toml`: fmt, actionlint, typos, commitlint |
+| **Rust lint** | Clippy through `mise run lint` and CI, separate from commit hooks |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
 | **CI** | `ci.yaml` (hooks, 3-OS tests, PR-only debug Build matrix, `gh ship validate`, optional MSRV check) |
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
@@ -205,9 +206,9 @@ snapshot read-back — see
 A recorded snapshot is a full rendered project, so it carries its own
 `prek.toml`. prek's workspace mode auto-discovers *any* `prek.toml` in the
 tree and runs it as an independent nested project (`prek list` shows one per
-case) — which means, left unchecked, `prek run --all-files` would compile the
-recorded `src/*.rs` with a real `cargo clippy`, using this repository's own
-toolchain, against a frozen recording that isn't a project to lint.
+case) — which means, left unchecked, `prek run --all-files` would run generated
+project hooks against frozen recordings that aren't projects to lint or
+rewrite.
 `.prekignore` at the repository root stops that, and also keeps these files
 out of this repository's own hooks — no per-hook `exclude` needed. See
 [prek's workspace mode docs](https://prek.j178.dev/workspace/) if a hook ever

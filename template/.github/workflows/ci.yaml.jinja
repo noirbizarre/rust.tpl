@@ -63,11 +63,13 @@ jobs:
         with:
           cache: true
 
-      # The hooks, not the mise tasks: this is the same command a developer's
-      # `git commit` runs, so a green CI means the hooks are actually passing
-      # rather than a parallel set of checks that happens to agree.
+      # Run the same hooks as `git commit`, then the heavier Rust lint task
+      # separately so committing does not require a Clippy compilation.
       - name: Run hooks
         run: prek run --all-files --show-diff-on-failure
+
+      - name: Lint Rust
+        run: mise run lint
 
   test:
     name: 🧪 Tests (${{ matrix.os.name }})

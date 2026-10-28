@@ -9,12 +9,16 @@ versions.
 ```bash
 mise install          # the tools
 prek install          # the Git hooks
-mise run ci           # everything CI runs
 ```
 
 Rust itself is not managed by mise: `rust-toolchain.toml` pins the channel, and
 rustup installs it. CI uses `dtolnay/rust-toolchain` because it needs per-job
 components and cross-compilation targets.
+
+Before committing or opening a PR, choose checks relevant to your changes;
+see [AGENTS.md](AGENTS.md#before-you-push) for guidance. Clippy runs through
+`mise run lint` and in CI, rather than in the commit hooks. `mise run ci` is an
+optional comprehensive check.
 
 ## Tasks
 
