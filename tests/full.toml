@@ -94,7 +94,13 @@ files = [
 # is unfiltered by `commit_parsers`, so without this every bot with a merged
 # PR — dependabot, the release bot — would be credited as a first-timer.
 "cliff.toml" = ['is ending_with("[bot]")']
-"prek.toml" = ['docs/.*\\.md']
+"prek.toml" = [
+  'docs/.*\\.md',
+  'repo = "https://github.com/crate-ci/typos"',
+  'alias = "typos-commit-msg"',
+  'args = ["--force-exclude"]',
+  'stages = ["commit-msg"]',
+]
 "packaging/homebrew/full-example.rb" = [
   "class FullExample",
   "@SHA256_DARWIN_ARM64@",
