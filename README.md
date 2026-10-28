@@ -54,7 +54,7 @@ Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 `crate`, `description`, `owner`, `author`, `copyright_holder`, `copyright_year`,
 `kind`, `keywords`, `categories`, `msrv`, `msrv_version`, `publish`, `docs`,
-`docs_accent`.
+`docs_accent`, `mbx`.
 
 Only asked when the shape contains a binary (`binary`, `library-and-binary`):
 `bin_name`, `man_pages`, `archive`, `service`, `targets`, `homebrew`,
@@ -72,6 +72,27 @@ Two of these deserve a note:
 - **`targets`** is a `multi_choice` over `data/targets.toml`, which also carries
   the runner, asset name, `cross` flag and executable extension each target
   needs in the PR and publication matrices.
+
+### Mr Boxington (optional)
+
+Answer `mbx = true` to enable [Mr Boxington](https://mr-boxington.jdx.dev/)
+through mise's native Rust `mr_boxington` option (mise 2026.9.2+). The default is
+off; all project shapes can opt in. Mise installs a separately pinned prebuilt
+mbx, retaining the template's stable Rust channel, rustfmt and clippy. Existing
+consumers must preserve their own Rust version and tool options when merging.
+
+Use `mise exec -- cargo build`, `mise exec -- cargo nextest run`, or existing
+mise tasks. Activated shells and mise shims also wrap Cargo; installing mbx
+alone does not. Explicit toolchain selections and dtolnay's GitHub Actions
+rustup default are preserved at runtime while the install request stays stable
+and lockable. Mise may install stable and its declared components if missing.
+
+The feature adds caching and compilation scheduling without editing workflow
+YAML or migrating existing CI cache backends. Existing compiler wrappers keep
+precedence; inspect them before enabling a project override. Remote sharing and
+editor setup require separate configuration. Managed target placement and
+automatic collection are disabled to preserve outputs and caches. Generated
+CONTRIBUTING.md covers cache-hit verification, optional test scheduling and undo.
 
 ### Development prereleases
 

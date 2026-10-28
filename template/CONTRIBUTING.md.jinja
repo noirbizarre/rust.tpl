@@ -12,9 +12,59 @@ prek install          # the Git hooks
 mise run ci           # everything CI runs
 ```
 
+{% if mbx -%}
+### Mr Boxington build caching
+
+[Mr Boxington](https://mr-boxington.jdx.dev/setup) is enabled through mise's
+native Rust option (requires mise 2026.9.2+). Rustup provides the stable channel
+declared in `rust-toolchain.toml`; keep that channel and the mise Rust version
+in sync when changing a pin, preserving existing components and other options.
+Explicit `RUSTUP_TOOLCHAIN` selections win. In GitHub Actions, the runtime
+preserves the rustup default selected by `dtolnay/rust-toolchain`, including
+MSRV jobs. Mise still ensures its stable install and declared components exist;
+the install request stays stable so locked installs remain valid.
+
+```bash
+mise exec -- cargo build --locked
+mise exec -- cargo nextest run
+mise exec -- mbx doctor
+```
+
+The existing mise tasks also use mbx. Plain terminal `cargo` requires effective
+mise activation or shims; a direct rustup Cargo proxy bypasses it. Coding agents
+should use `mise exec` rather than assume the terminal's PATH. Native integration
+does not require `mbx setup` or configure rust-analyzer. Doctor can warn about a
+missing standalone shim even when wrapping works; verify real build summaries.
+
+An existing compiler wrapper makes mbx delegate rather than cache. Inspect
+Cargo configuration and `RUSTC_WRAPPER` before changing one; an authorized
+project-only `[build] rustc-wrapper = ""` override can clear an inherited wrapper.
+Environment-selected wrappers still take precedence. CI workflows retain their
+existing toolchain actions and cache backends; this feature does not configure
+remote cache sharing or replace sccache.
+
+Local compiler actions, eligible links, build scripts and C/C++ compilations
+are cached by default. Compilation scheduling, in-flight deduplication and
+learned private incremental reuse are also enabled. For concurrent agents or
+test suites, optionally add `[scheduler] tests = true` in workspace `.mbx.toml`;
+it schedules tests, not their outcomes. Review nextest timeouts if tests queue.
+
+This feature disables automatic collection and managed target placement through
+`MBX_GC_AUTO=0` and `MBX_TARGET_VIEWS=0`, preserving existing outputs and caches.
+To demonstrate reuse, run equivalent builds in two fresh temporary target
+directories using `--target-dir` and `MBX_SUMMARY=full`. Require positive mbx hits
+on the second build; Cargo freshness is not a hit. Diagnose with
+`mise exec -- mbx explain --last` and remove only your temporary targets.
+
+To undo, remove or disable `mr_boxington` first and run `mise reshim`, then remove
+the mbx tool/lock entry and introduced environment settings. Restore rustup-only
+ownership by removing the added mise Rust entry, preserving unrelated pins and
+options. Remove any wrapper/scheduler overrides you added; keep the shared cache.
+{%- else -%}
 Rust itself is not managed by mise: `rust-toolchain.toml` pins the channel, and
 rustup installs it. CI uses `dtolnay/rust-toolchain` because it needs per-job
 components and cross-compilation targets.
+{%- endif %}
 
 ## Tasks
 

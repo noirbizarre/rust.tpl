@@ -14,6 +14,7 @@ categories = "command-line-utilities, development-tools"
 bin_name = "full-example"
 kind = "library-and-binary"
 msrv = true
+mbx = true
 msrv_version = "1.88"
 man_pages = true
 archive = true
@@ -104,7 +105,7 @@ files = [
   "vars.PRERELEASE_NAME || 'development'",
 ]
 "zensical.toml" = ['accent = "deep orange"']
-"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
+"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "1.28.0"', 'version = "stable"']
 # Regression tripwire for the bot-contributor filter: `github.contributors`
 # is unfiltered by `commit_parsers`, so without this every bot with a merged
 # PR — dependabot, the release bot — would be credited as a first-timer.

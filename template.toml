@@ -115,6 +115,12 @@ default_when_skipped = true
 
 # --- Optional slots ---------------------------------------------------------
 
+[questions.mbx]
+type = "boolean"
+prompt = "Use Mr Boxington (mbx) for Cargo builds?"
+help = "Native mise integration requires mise 2026.9.2+. Adds local caching and compilation scheduling without migrating CI cache backends."
+default = false
+
 [questions.msrv]
 type = "boolean"
 prompt = "Declare and enforce an MSRV?"

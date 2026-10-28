@@ -18,6 +18,7 @@ categories = "command-line-utilities"
 bin_name = "minimal-example"
 kind = "library-and-binary"
 msrv = false
+mbx = false
 publish = false
 docs = false
 targets = ["x86_64-unknown-linux-gnu"]
@@ -72,6 +73,7 @@ files = [
 "prek.toml" = ['README\\.md)$']
 
 [expect.lacks]
+"mise.toml" = ["mr_boxington", "mr-boxington", "RUSTUP_TOOLCHAIN", "MBX_GC_AUTO", "MBX_TARGET_VIEWS"]
 # Cargo's automatic targets are enough when the binary is named after the
 # crate, so neither explicit section is emitted.
 "Cargo.toml" = ["[lib]", "[[bin]]"]

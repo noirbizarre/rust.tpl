@@ -10,23 +10,22 @@
 # cargo-binstall has no prebuilt artifact for some cargo tools, so a global
 # entry would make every CI job compile them from source.
 #
-# Rust itself is intentionally not managed here: CI needs per-job components
-# (rustfmt, clippy, llvm-tools-preview) and cross-compilation targets, which
-# `dtolnay/rust-toolchain` handles better. `rust-toolchain.toml` pins the
-# channel for both.
+# Rustup still owns toolchains. Native mbx integration needs a Rust tool entry;
+# the environment below preserves explicit and CI-selected runtime toolchains.
 
 [settings]
 # Resolve tools through mise.lock and keep it updated. Without this, the
 # lockfile is ignored and `latest` really means latest.
 lockfile = true
 
-# Do not let mise adopt `rust-toolchain.toml`. Rust is installed by rustup
-# locally and by `dtolnay/rust-toolchain` in CI, which handle per-job
-# components and cross-compilation targets that mise does not. Leaving both
-# in charge would have mise shadow the toolchain CI just installed.
+# The explicit Rust entry supplies native wrapping. Avoid a second request
+# from the version file; runtime selection below preserves CI's toolchain.
 idiomatic_version_file_enable_tools = []
 
 [tools]
+# Keep the install request stable and lockable; runtime selection lives in env.
+rust = { version = "stable", components = ["rustfmt", "clippy"], mr_boxington = true }
+mr-boxington = "1.28.0"
 actionlint = "latest"
 # actionlint silently skips its shellcheck integration when the binary is
 # absent, so without this a local run is NOT the CI run. Runners ship it.
@@ -59,6 +58,22 @@ cargo-binstall = "latest"
 uv = "latest"
 # cargo-insta is declared on the task that uses it instead of here — see the
 # note in the header.
+
+[env]
+# dtolnay selects a rustup default, not RUSTUP_TOOLCHAIN. Explicit selections
+# win; otherwise retain that default in Actions and the project's channel locally.
+RUSTUP_TOOLCHAIN = """
+{%- if env.RUSTUP_TOOLCHAIN | default(value='', boolean=true) -%}
+{{ env.RUSTUP_TOOLCHAIN }}
+{%- elif env.GITHUB_ACTIONS | default(value='') == 'true' -%}
+{{ exec(command='rustup default') | trim | split(pat=' ') | first }}
+{%- else -%}
+stable
+{%- endif -%}
+"""
+# Opting into caching must not collect caches or adopt existing target outputs.
+MBX_GC_AUTO = "0"
+MBX_TARGET_VIEWS = "0"
 
 # --- Everyday ---------------------------------------------------------------
 #
