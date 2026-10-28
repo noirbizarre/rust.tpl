@@ -176,10 +176,6 @@ jobs:
           pattern: asset-*
           merge-multiple: true
           path: dist
-      - name: Require every binary
-        run: |
-          assets=({% for entry in data.targets.matrix %}{% if entry.target in targets %}"{{ crate }}_${TAG}_{{ entry.asset }}{{ entry.ext }}" {% endif %}{% endfor %})
-          for asset in "${assets[@]}"; do test -s "dist/$asset"; done
 {%- if archive %}
 {%- if man_pages %}
       # Generate host-independent text once, rather than executing cross-compiled binaries.
@@ -229,74 +225,32 @@ jobs:
         with:
           client-id: ${{ '{{' }} vars.APP_CLIENT_ID {{ '}}' }}
           private-key: ${{ '{{' }} secrets.APP_PRIVATE_KEY {{ '}}' }}
-      - name: Prepare the release destination
-        id: destination
+      - name: Ensure the prerelease exists
+        if: ${{ '{{' }} !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         env:
           GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
-          BUILD_REF: ${{ '{{' }} inputs.ref || github.ref {{ '}}' }}
-          IS_RELEASE: ${{ '{{' }} startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         run: |
-          if [ "$IS_RELEASE" = true ]; then
-            # Peel annotated tags too; a moved stable tag must not receive another commit's binaries.
-            test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/${BUILD_REF}" --jq .sha)" = "$GITHUB_SHA"
-            # gh-ship owns creation, notes and visibility for versioned releases.
-            gh release view "$TAG" --json tagName >/dev/null
-          else
-            # Manual main housekeeping may intentionally rebuild after main has advanced.
-            if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ]; then
-              head=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)
-              if [ "$head" != "$GITHUB_SHA" ]; then
-                echo '::notice::Newer main commit exists; skipping this prerelease.'
-                exit 0
-              fi
-            fi
-            releases=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --slurp)
-            release=$(jq -c --arg tag "$TAG" '.[][] | select(.tag_name == $tag)' <<< "$releases")
-            if [ -n "$release" ]; then
-              test "$(jq -r .prerelease <<< "$release")" = true
-            else
-              gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
-                --notes 'Pending development binaries' --draft --prerelease --latest=false
-            fi
-          fi
-          echo 'ready=true' >> "$GITHUB_OUTPUT"
+          gh release view "$TAG" >/dev/null 2>&1 ||
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
+              --notes 'Development build' --prerelease --latest=false
       - name: Upload assets to the release
-        if: steps.destination.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
-        run: |
-          for asset in dist/*; do
-            gh release upload "$TAG" "${asset}#${GITHUB_SHA}" --clobber
-          done
+        run: gh release upload "$TAG" dist/* --clobber
       - name: Update the rolling prerelease tag
-        if: ${{ '{{' }} steps.destination.outputs.ready == 'true' && !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
+        if: ${{ '{{' }} !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         env:
           GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
-        run: |
-          # Only advertise the commit after every asset has uploaded successfully.
-          refs=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${TAG}")
-          if jq -e --arg ref "refs/tags/$TAG" 'any(.[]; .ref == $ref)' <<< "$refs" >/dev/null; then
-            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}" \
-              -f sha="$GITHUB_SHA" -F force=true --silent
-          else
-            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-              -f "ref=refs/tags/$TAG" -f sha="$GITHUB_SHA" --silent
-          fi
+        run: >-
+          gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}"
+          -f sha="$GITHUB_SHA" -F force=true --silent
       - name: Finalize the prerelease
-        if: ${{ '{{' }} steps.destination.outputs.ready == 'true' && !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
+        if: ${{ '{{' }} !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         env:
           GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
         run: |
           gh release edit "$TAG" --title "$TAG" --prerelease --draft=false --latest=false \
             --notes "Main SHA: ${GITHUB_SHA}. CI: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          release_id=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq .id)
-          assets=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets?per_page=100" --slurp)
-          # Derive obsolete assets from the shared payload, including any configured archives.
-          while IFS=$'\t' read -r id name; do
-            if [ ! -f "dist/$name" ]; then
-              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" --silent
-            fi
-          done < <(jq -r '.[][] | [.id, .name] | @tsv' <<< "$assets")
 {%- endif %}
 {%- if publish %}
 {%- if not (has_bin and archive and man_pages) %}

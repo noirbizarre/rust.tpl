@@ -90,7 +90,7 @@ Every checkout uses the recorded run SHA. Stable inputs (`refs/tags/0.1.2`) must
 the tag on which gh-ship dispatched the run; automatic development inputs must equal
 the invoking main CI SHA. Arbitrary branches/SHAs and the rolling channel tag are rejected.
 For manual housekeeping, select main in Run workflow and leave ref blank: the run's
-recorded SHA is rebuilt even if main advances. Automatic runs skip stale commits.
+recorded SHA is rebuilt even if main advances.
 
 Set the optional repository variable `PRERELEASE_NAME` to change the rolling channel's
 tag, release name and filename label; it defaults to `development`. Use a single
@@ -99,13 +99,14 @@ be used as a stable release input. The URLs above show the default.
 
 Both workflow entry points accept only `ref`. `.github/ship.yml` opts into gh-ship 0.6's
 `release.publish_input: ref`, which dispatches stable releases with a qualified tag ref.
-gh-ship owns the stable draft-release lifecycle.
+gh-ship owns the stable draft-release lifecycle. Prereleases use `gh release view` or
+`gh release create`; both channels upload with `gh release upload "$TAG" dist/* --clobber`.
 Both channels use the release environment's GitHub App. The development release
 never becomes Latest or publishes to crates.io. Homebrew/AUR automatically run on stable
 `released` events, with manual tag-based reruns available to maintainers.
 
 Downloads are mutable and asset replacement is not atomic. Verify checksums,
-retry mismatches during updates, and record the source SHA from release notes and binary asset labels.
+retry mismatches during updates, and record the source SHA from release notes and the rolling tag.
 Pin a stable release for immutable downloads. A binary's package version still
 comes from Cargo.toml. After all uploads succeed, a conditional step moves the rolling channel tag
 to the published binaries' source SHA.
