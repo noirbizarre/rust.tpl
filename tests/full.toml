@@ -69,6 +69,13 @@ files = [
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version"]
+".github/workflows/prepare-release.yaml" = [
+  "cargo update --workspace",
+  "gh ship sign",
+  "name: ship-release",
+  "path: ship.release.json",
+  "if-no-files-found: error",
+]
 ".github/workflows/publish-release.yaml" = [
   "crates.io",
   "aarch64-pc-windows-msvc",
@@ -111,6 +118,14 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
+# Historical spelling must not make git-cliff silently drop release commits.
+"cliff.toml" = ["typos --write-changes"]
+# PR CI builds the release; the orchestrator validates the uploaded artifact.
+".github/workflows/prepare-release.yaml" = [
+  "cargo build",
+  "Swatinem/rust-cache",
+  "gh ship validate ship.release.json",
+]
 # archive = true: the licence and unit come out of the tarball, so the AUR
 # workflow must not also fetch and hash them from the tag.
 ".github/workflows/aur.yaml" = ["SHA256_LICENSE", "SHA256_SERVICE"]
