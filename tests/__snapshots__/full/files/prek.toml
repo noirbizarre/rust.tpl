@@ -86,14 +86,6 @@ entry = "cargo fmt --all -- --check"
 files = "\\.rs$"
 pass_filenames = false
 
-[[repos.hooks]]
-id = "clippy"
-name = "cargo clippy"
-language = "system"
-entry = "cargo clippy --all-targets --all-features -- -D warnings"
-files = "\\.rs$"
-pass_filenames = false
-
 # --- project-specific hooks --------------------------------------------------
 #
 # Add architecture guards and other project-only hooks below this line. The

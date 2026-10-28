@@ -71,6 +71,7 @@ files = [
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/ci.yaml" = [
+  "jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets", "mbx build --locked",
   "🧓 MSRV", "rust-version", "id-token: write", "  prerelease:", "name: 🚀 Development prerelease", "ref: ${{ github.sha }}", "if: github.event_name == 'pull_request'",
   "    uses: ./.github/workflows/publish-release.yaml\n    # Environment secrets also require forwarding across workflow_call.\n    secrets: inherit\n    with:",
   "      matrix:\n        build:\n          - { label: linux-amd64, target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }",
@@ -85,6 +86,7 @@ files = [
   "if-no-files-found: error",
 ]
 ".github/workflows/publish-release.yaml" = [
+  "jdx/mr-boxington-action@", "backend: local", "mbx build --release --locked",
   "    environment:\n      name: release",
   "          client-id: ${{ vars.APP_CLIENT_ID }}\n          private-key: ${{ secrets.APP_PRIVATE_KEY }}",
   "crates.io",
@@ -140,8 +142,8 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
-".github/workflows/ci.yaml" = ["--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
-".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml"]
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
+".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]
 # PR CI builds the release; the orchestrator validates the uploaded artifact.

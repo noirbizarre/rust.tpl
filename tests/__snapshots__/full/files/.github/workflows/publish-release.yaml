@@ -59,9 +59,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.build.target }}
-      - uses: Swatinem/rust-cache@v2
+      # Published binaries must not depend on shared compiler-output caches.
+      - uses: jdx/mr-boxington-action@v1
         with:
-          key: release-${{ matrix.build.target }}
+          version: 1.28.0
+          backend: local
       - uses: taiki-e/install-action@cross
         if: matrix.build.cross
       # Standalone Windows binaries must start without a separately installed redistributable.
@@ -78,7 +80,7 @@ jobs:
           if [ "${CROSS:-}" = true ]; then
             cross build --release --locked --target "$TARGET"
           else
-            cargo build --release --locked --target "$TARGET"
+            mbx build --release --locked --target "$TARGET"
           fi
           mkdir -p dist
           cp "target/${TARGET}/release/full-example${EXT:-}" "dist/full-example_${TAG}_${LABEL}${EXT:-}"
@@ -115,10 +117,13 @@ jobs:
           path: dist
       # Generate host-independent text once, rather than executing cross-compiled binaries.
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: jdx/mr-boxington-action@v1
+        with:
+          version: 1.28.0
+          backend: local
       - name: Generate man pages and completions
         run: |
-          out=$(cargo build --locked --message-format=json 2>/dev/null \
+          out=$(mbx build --locked --message-format=json 2>/dev/null \
             | jq -r 'select(.reason == "build-script-executed") | select(.package_id | test("full-example")) | .out_dir' \
             | tail -n 1)
           test -n "$out" || { echo 'could not locate OUT_DIR' >&2; exit 1; }
@@ -199,6 +204,6 @@ jobs:
         if: startsWith(inputs.ref || github.ref, 'refs/tags/') && steps.existing.outputs.published == 'false'
       - name: Publish to crates.io
         if: startsWith(inputs.ref || github.ref, 'refs/tags/') && steps.existing.outputs.published == 'false'
-        run: cargo publish --locked
+        run: mbx publish --locked
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}

@@ -9,7 +9,6 @@ versions.
 ```bash
 mise install          # the tools
 prek install          # the Git hooks
-mise run ci           # everything CI runs
 ```
 
 ### Mr Boxington build caching
@@ -29,18 +28,30 @@ mise exec -- cargo nextest run
 mise exec -- mbx doctor
 ```
 
-The existing mise tasks also use mbx. Plain terminal `cargo` requires effective
+**Mise tasks have mbx built in:** `mise build`, `mise test`, and their explicit
+forms `mise run build` and `mise run test` already route Cargo through mbx; no
+extra `mbx` prefix is needed. Plain terminal `cargo` requires effective
 mise activation or shims; a direct rustup Cargo proxy bypasses it. Coding agents
 should use `mise exec` rather than assume the terminal's PATH. Native integration
 does not require `mbx setup` or configure rust-analyzer. Doctor can warn about a
 missing standalone shim even when wrapping works; verify real build summaries.
+If personal environment paths shadow the wrapper in task shells, enable
+`[settings] activate_aggressive = true` in ignored `mise.local.toml` or use the
+explicit `mise exec -- cargo ...` route.
 
 An existing compiler wrapper makes mbx delegate rather than cache. Inspect
 Cargo configuration and `RUSTC_WRAPPER` before changing one; an authorized
 project-only `[build] rustc-wrapper = ""` override can clear an inherited wrapper.
-Environment-selected wrappers still take precedence. CI workflows retain their
-existing toolchain actions and cache backends; this feature does not configure
-remote cache sharing or replace sccache.
+Environment-selected wrappers still take precedence and prevent mbx caching.
+
+CI uses `jdx/mr-boxington-action` instead of sccache and rust-cache. Its default
+GitHub `target` payload includes Cargo outputs and registry/git downloads, so
+an additional rust-cache action is unnecessary. Successful main pushes populate
+the cache; same-repository pull requests also save in their own PR scope.
+Fork pull requests only restore. Cross-build jobs retain their container-produced
+target outputs through that payload; native builds also use compiler caching.
+Publication jobs use `backend: local` without shared compiler-output restores
+or saves. No separate remote cache service or local-to-CI connection is configured.
 
 Local compiler actions, eligible links, build scripts and C/C++ compilations
 are cached by default. Compilation scheduling, in-flight deduplication and
@@ -58,36 +69,70 @@ on the second build; Cargo freshness is not a hit. Diagnose with
 To undo, remove or disable `mr_boxington` first and run `mise reshim`, then remove
 the mbx tool/lock entry and introduced environment settings. Restore rustup-only
 ownership by removing the added mise Rust entry, preserving unrelated pins and
-options. Remove any wrapper/scheduler overrides you added; keep the shared cache.
+options. Remove any wrapper/scheduler and local activation overrides you added;
+keep the shared cache. Set the template answer `mbx = false` and review the
+rendered update to restore the original CI cache actions too.
+
+Before committing or opening a PR, choose checks relevant to your changes;
+see [Before you push](#before-you-push) for guidance. Clippy runs through
+`mise lint` and in CI, rather than in the commit hooks. `mise ci` is an
+optional comprehensive check.
 
 ## Tasks
 
 | Command | What it does |
 |---|---|
-| `mise run build` | Build the project |
-| `mise run cli` | Run `full-example` from source (passes flags through) |
-| `mise run man` | Collect the generated man page and shell completions into `dist/` |
-| `mise run test` | Run the tests (accepts nextest selectors) |
-| `mise run cover` | Run the tests with coverage |
-| `mise run format` | Format |
-| `mise run lint` | Clippy, warnings denied |
-| `mise run lint:actions` | actionlint over the workflows |
-| `mise run lint:md` | markdownlint over AGENTS.md, CONTRIBUTING.md, README.md and docs/ |
-| `mise run spell` | typos |
-| `mise run snapshots` | Review pending insta snapshots |
-| `mise run check` | Everything that does not modify the working tree |
-| `mise run ci` | `check` plus the documentation build |
-| `mise run docs` | Serve the documentation locally |
-| `mise run changelog` | Preview the changelog for unreleased commits |
-| `mise run release` | Show the version the next release would take |
-| `mise run tpl:update` | Bring the rendered template ref up to date |
-| `mise run tpl:diff` | Show what merging the template would change |
+| `mise build` | Build the project |
+| `mise cli` | Run `full-example` from source (passes flags through) |
+| `mise man` | Collect the generated man page and shell completions into `dist/` |
+| `mise test` | Run the tests (accepts nextest selectors) |
+| `mise cover` | Run the tests with coverage |
+| `mise format` | Format |
+| `mise lint` | Clippy, warnings denied |
+| `mise lint:actions` | actionlint over the workflows |
+| `mise lint:md` | markdownlint over AGENTS.md, CONTRIBUTING.md, README.md and docs/ |
+| `mise spell` | typos |
+| `mise snapshots` | Review pending insta snapshots |
+| `mise check` | Everything that does not modify the working tree |
+| `mise ci` | `check` plus the documentation build |
+| `mise docs` | Serve the documentation locally |
+| `mise changelog` | Preview the changelog for unreleased commits |
+| `mise release` | Show the version the next release would take |
+| `mise tpl:update` | Bring the rendered template ref up to date |
+| `mise tpl:diff` | Show what merging the template would change |
 
 `mise <task>` is a shorthand for `mise run <task>`, but a builtin subcommand of
 the same name wins it silently — which is why the format task is `format` and
 not `fmt` (`mise fmt` formats `mise.toml`), and why running the binary is
 `mise cli` and not `mise run` (`mise run` runs a task). Prefer the explicit
 `mise run <task>` in scripts: mise can claim a new name in any release.
+
+## Before you push
+
+Choose checks based on the files changed and the risk. Run relevant tasks
+individually rather than launching every check in parallel by default.
+
+- **Rust code:** run `mise lint` (Clippy) and the relevant tests through
+  `mise test`, which accepts nextest selectors. Target affected packages
+  and tests instead of running the whole suite by default. For example,
+  replacing the placeholders with the affected package and test name:
+
+  ```sh
+  mise test -p <package> -E 'test(<test_name>)'
+  ```
+
+- **Documentation, workflows or tooling:** run the relevant checks, such as
+  `mise lint:md`, `mise spell` or `mise lint:actions`, and
+  `mise docs:build` when documentation changes warrant a build.
+  Documentation-only changes do not require Rust lint or tests.
+
+Broaden validation when the change warrants it. `mise ci` is available as
+an optional comprehensive check, not a prerequisite for committing, pushing or
+opening a PR.
+
+If a local check is unavailable or prohibitively expensive, proceed with the
+commit or PR and report which checks ran, which were skipped and why in the
+handoff or PR description. CI provides full validation.
 
 ## Commits
 
@@ -150,8 +195,8 @@ The toolchain, hooks, CI and release workflows come from
 
 ```bash
 git tpl status         # is there a template update pending?
-mise run tpl:update    # advance refs/tpl/<id> — HEAD, index and worktree untouched
-mise run tpl:diff      # read what merging it would change
+mise tpl:update    # advance refs/tpl/<id> — HEAD, index and worktree untouched
+mise tpl:diff      # read what merging it would change
 git tpl merge          # take it
 ```
 

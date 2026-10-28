@@ -18,14 +18,19 @@ docs = false
   'idiomatic_version_file_enable_tools = []',
 ]
 "CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo"]
+".github/workflows/ci.yaml" = ["jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets"]
+".github/workflows/publish-release.yaml" = ["jdx/mr-boxington-action@", "backend: local", "mbx publish --locked"]
 
 [expect.lacks]
 "mise.toml" = ["[wrappers.cargo]", "mbx setup", "postinstall", "mbx build", "mbx clean"]
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER"]
+".github/workflows/publish-release.yaml" = ["Swatinem/rust-cache", "save-on-pull-request:"]
 
 [commands]
 rendered = [
   # Some developer environments resolve python3 through a mise shim too.
   "mise trust mise.toml",
+  "actionlint .github/workflows/ci.yaml .github/workflows/publish-release.yaml",
   # Evaluate the rendered expression with mise, not a second Jinja interpreter.
   # A fake rustup default models dtolnay without installing/changing toolchains.
   '''python3 - <<'PY'
