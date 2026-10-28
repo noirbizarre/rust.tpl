@@ -21,14 +21,15 @@ new or existing — and keeps them updatable with `git tpl update`.
 | | |
 |---|---|
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
-| **Hooks** | `prek.toml`: fmt, clippy, actionlint, typos, commitlint |
+| **Hooks** | `prek.toml`: fmt, actionlint, typos, commitlint |
+| **Rust lint** | Clippy through `mise lint` and CI, separate from commit hooks |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
 | **CI** | `ci.yaml` (hooks, 3-OS tests, PR-only debug Build matrix, `gh ship validate`, optional MSRV check) |
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
 | **Release** | gh-ship: `ship.yaml`, `prepare-release.yaml`, `publish-release.yaml` |
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
 | **Crate** | `Cargo.toml` metadata, `[profile.release]`, a `thiserror`/`miette` skeleton, optional `cargo-binstall` metadata |
-| **Man pages** | optional `build.rs` (clap_mangen + clap_complete) and a `mise run man` task |
+| **Man pages** | optional `build.rs` (clap_mangen + clap_complete) and a `mise man` task |
 | **Archive** | optional `<crate>_<tag>_<asset>.tar.gz` per Unix target in the native package layout (`bin/`, `share/doc`, man pages, completions, `lib/systemd/user`), built reproducibly, and a systemd user unit skeleton |
 | **Packaging** | optional Homebrew formula / AUR `-bin` PKGBUILD, each with its own release-triggered workflow |
 
@@ -155,12 +156,12 @@ propagated its own versions would conflict with every one of those PRs.
 ## Working on the template
 
 ```bash
-mise run lint             # git tpl lint -D warnings, actionlint, typos
-mise run test             # git tpl test: every case, in full — see below
-mise run test:write       # re-record every case's snapshot
-mise run render minimal   # render one case into a scratch directory, for a look
-mise run render full
-mise run check:tasks DIR  # are any task names shadowed by a mise builtin? (manual use)
+mise lint             # git tpl lint -D warnings, actionlint, typos
+mise test             # git tpl test: every case, in full — see below
+mise test:write       # re-record every case's snapshot
+mise render minimal   # render one case into a scratch directory, for a look
+mise render full
+mise check:tasks DIR  # are any task names shadowed by a mise builtin? (manual use)
 ```
 
 Two layers, cheapest first.
@@ -188,7 +189,7 @@ tasks cannot drift onto different inputs.
 ### Updating a snapshot
 
 ```bash
-mise run test:write              # re-record every case's snapshot
+mise test:write                  # re-record every case's snapshot
 git diff tests/__snapshots__      # review it — a generated project's own diff
 ```
 
@@ -205,9 +206,9 @@ snapshot read-back — see
 A recorded snapshot is a full rendered project, so it carries its own
 `prek.toml`. prek's workspace mode auto-discovers *any* `prek.toml` in the
 tree and runs it as an independent nested project (`prek list` shows one per
-case) — which means, left unchecked, `prek run --all-files` would compile the
-recorded `src/*.rs` with a real `cargo clippy`, using this repository's own
-toolchain, against a frozen recording that isn't a project to lint.
+case) — which means, left unchecked, `prek run --all-files` would run generated
+project hooks against frozen recordings that aren't projects to lint or
+rewrite.
 `.prekignore` at the repository root stops that, and also keeps these files
 out of this repository's own hooks — no per-hook `exclude` needed. See
 [prek's workspace mode docs](https://prek.j178.dev/workspace/) if a hook ever
@@ -221,10 +222,10 @@ nothing about the task it shadowed. That is why the rendered tasks are `format`
 rather than `fmt`, and `cli` rather than `run`.
 
 mise's own documentation warns that new subcommands can claim a name in any
-release, so `mise run check:tasks DIR` asks the installed mise which names are
+release, so `mise check:tasks DIR` asks the installed mise which names are
 taken (`mise help <name>` exits 0 only for a builtin or an alias) rather than
 comparing against a list written down here that would go stale. Manual use,
-against a `mise run render` output.
+against a `mise render` output.
 
 ### Conditional files
 
