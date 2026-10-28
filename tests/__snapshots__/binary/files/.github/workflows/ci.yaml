@@ -188,7 +188,7 @@ jobs:
           TARGET: ${{ matrix.build.target }}
           CROSS: ${{ matrix.build.cross }}
         run: |
-          if [ "$CROSS" = "true" ]; then
+          if [ "${CROSS:-}" = "true" ]; then
             cross build --locked --target "$TARGET"
           else
             cargo build --locked --target "$TARGET"

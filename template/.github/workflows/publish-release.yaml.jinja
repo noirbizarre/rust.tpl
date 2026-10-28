@@ -59,6 +59,14 @@ env:
 jobs:
 {%- endraw %}
 {%- if has_bin %}
+{# Only reference an optional property if at least one selected object defines it (actionlint). #}
+{%- set fields = namespace(cross=false, ext=false) %}
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+{%- set fields.cross = fields.cross or entry.cross %}
+{%- set fields.ext = fields.ext or entry.ext != '' %}
+{%- endif %}
+{%- endfor %}
   build:
     name: 🏗️ Build (${{ '{{' }} matrix.build.label {{ '}}' }})
     runs-on: ${{ '{{' }} matrix.build.runner {{ '}}' }}
@@ -85,8 +93,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: release-${{ matrix.build.target }}
+{%- endraw %}
+{%- if fields.cross %}
+{%- raw %}
       - uses: taiki-e/install-action@cross
         if: matrix.build.cross
+{%- endraw %}
+{%- endif %}
+{%- raw %}
       # Standalone Windows binaries must start without a separately installed redistributable.
       - name: Statically link the MSVC C runtime
         if: endsWith(matrix.build.target, 'windows-msvc')
@@ -95,17 +109,27 @@ jobs:
         env:
           TARGET: ${{ matrix.build.target }}
           LABEL: ${{ matrix.build.label }}
+{%- endraw %}
+{%- if fields.cross %}
+{%- raw %}
           CROSS: ${{ matrix.build.cross }}
+{%- endraw %}
+{%- endif %}
+{%- if fields.ext %}
+{%- raw %}
           EXT: ${{ matrix.build.ext }}
+{%- endraw %}
+{%- endif %}
+{%- raw %}
         run: |
-          if [ "$CROSS" = true ]; then
+          if [ "${CROSS:-}" = true ]; then
             cross build --release --locked --target "$TARGET"
           else
             cargo build --release --locked --target "$TARGET"
           fi
           mkdir -p dist
 {%- endraw %}
-          cp "target/${TARGET}/release/{{ bin_name }}${EXT}" "dist/{{ crate }}_${TAG}_${LABEL}${EXT}"
+          cp "target/${TARGET}/release/{{ bin_name }}${EXT:-}" "dist/{{ crate }}_${TAG}_${LABEL}${EXT:-}"
 {%- raw %}
       - uses: actions/upload-artifact@v7
         with:

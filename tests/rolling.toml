@@ -24,7 +24,7 @@ absent = [".github/workflows/build-release.yaml", ".github/workflows/release-bui
 
 [expect.contains]
 ".github/workflows/ci.yaml" = ["needs: [lint, test, ship]", "if: github.event_name == 'pull_request'", "publish-release.yaml", "ref: ${{ github.sha }}", "cargo build --locked", "cross build --locked", 'RUSTC_WRAPPER: ""', "windows-latest", "target-feature=+crt-static", "matrix.build.label"]
-".github/workflows/publish-release.yaml" = ["SHA256SUMS", "--latest=false", "needs: build", "required: false", "vars.PRERELEASE_NAME || 'development'", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT}', "matrix.build.label", "ref: ${{ github.sha }}", "Upload assets to the release", "Update the rolling prerelease tag", "steps.destination.outputs.ready == 'true'", '-f sha="$GITHUB_SHA" -F force=true']
+".github/workflows/publish-release.yaml" = ["SHA256SUMS", "--latest=false", "needs: build", "required: false", "vars.PRERELEASE_NAME || 'development'", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT:-}', "matrix.build.label", "ref: ${{ github.sha }}", "Upload assets to the release", "Update the rolling prerelease tag", "steps.destination.outputs.ready == 'true'", '-f sha="$GITHUB_SHA" -F force=true']
 ".github/ship.yml" = ["publish_input: ref"]
 ".github/workflows/homebrew.yaml" = ["types: [released]", "workflow_dispatch:"]
 ".github/workflows/aur.yaml" = ["types: [released]", "workflow_dispatch:"]

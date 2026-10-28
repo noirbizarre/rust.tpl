@@ -48,7 +48,7 @@ files = [
 # The binary does not depend on a library crate that does not exist.
 "src/main.rs" = ["mod error;", "fn run()"]
 "mise.toml" = ["[tasks.cli]", "[tasks.man]"]
-".github/workflows/publish-release.yaml" = ["Build and stage the asset", 'release/bx${EXT}', "Publish to crates.io", "if: startsWith(inputs.ref || github.ref, 'refs/tags/')"]
+".github/workflows/publish-release.yaml" = ["Build and stage the asset", 'release/bx${EXT:-}', "Publish to crates.io", "if: startsWith(inputs.ref || github.ref, 'refs/tags/')"]
 ".github/workflows/ci.yaml" = ["if: github.event_name == 'pull_request'", "cargo build --locked"]
 
 [expect.lacks]

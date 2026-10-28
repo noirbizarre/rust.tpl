@@ -190,6 +190,12 @@ jobs:
 {%- endraw %}
 {%- endif %}
 {%- if has_bin %}
+{%- set fields = namespace(cross=false) %}
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+{%- set fields.cross = fields.cross or entry.cross %}
+{%- endif %}
+{%- endfor %}
 
   # Link every target on PRs without paying release optimization/LTO costs.
   build:
@@ -219,8 +225,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: pr-build-${{ '{{' }} matrix.build.target {{ '}}' }}
+{%- if fields.cross %}
       - uses: taiki-e/install-action@cross
         if: matrix.build.cross
+{%- endif %}
       # Exercise the same CRT choice as downloaded Windows release binaries.
       - name: Statically link the MSVC C runtime
         if: endsWith(matrix.build.target, 'windows-msvc')
@@ -228,9 +236,11 @@ jobs:
       - name: Build
         env:
           TARGET: ${{ '{{' }} matrix.build.target {{ '}}' }}
+{%- if fields.cross %}
           CROSS: ${{ '{{' }} matrix.build.cross {{ '}}' }}
+{%- endif %}
         run: |
-          if [ "$CROSS" = "true" ]; then
+          if [ "${CROSS:-}" = "true" ]; then
             cross build --locked --target "$TARGET"
           else
             cargo build --locked --target "$TARGET"
