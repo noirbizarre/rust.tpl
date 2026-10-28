@@ -47,7 +47,7 @@ files = [
 "Cargo.toml" = ['name = "library-example"', 'rust-version = "1.88"', "thiserror", "[dev-dependencies]"]
 "README.md" = ["cargo add library-example"]
 # crates.io is the whole release: no build matrix to wait for.
-".github/workflows/publish-release.yaml" = ["Publish to crates.io", "Validate publication source"]
+".github/workflows/publish-release.yaml" = ["Publish to crates.io"]
 
 [expect.lacks]
 "Cargo.toml" = [

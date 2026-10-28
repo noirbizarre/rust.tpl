@@ -29,7 +29,7 @@ env:
   CARGO_NET_RETRY: "10"
   RUSTUP_MAX_RETRIES: "10"
   RUSTFLAGS: -D warnings
-  # A tag input must match the run tag; other accepted inputs publish to the rolling channel.
+  # gh-ship runs on the version tag; main CI publishes to the rolling channel.
   TAG: ${{ startsWith(inputs.ref || github.ref, 'refs/tags/') && github.ref_name || vars.PRERELEASE_NAME || 'development' }}
 
 jobs:
@@ -48,24 +48,6 @@ jobs:
       contents: read
       id-token: write
     steps:
-
-      - name: Validate publication source
-        env:
-          BUILD_REF: ${{ inputs.ref || github.ref }}
-          CHANNEL_TAG: ${{ github.ref_name == (vars.PRERELEASE_NAME || 'development') }}
-        run: |
-          fail() { echo '::error::Publish the run tag, the main CI SHA, or manually run on main with ref blank.'; exit 1; }
-          # Names enter filenames and gh's file#label syntax, so Git validity alone is insufficient.
-          [[ "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || fail
-          git check-ref-format "refs/tags/$TAG" || fail
-          case "$BUILD_REF" in
-            refs/tags/*)
-              [[ "$BUILD_REF" == "$GITHUB_REF" && "$CHANNEL_TAG" != true ]] || fail
-              ;;
-            *)
-              fail
-              ;;
-          esac
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}

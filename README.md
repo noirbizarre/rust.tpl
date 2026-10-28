@@ -87,16 +87,14 @@ It has two jobs: an optimized build matrix
 that stages final filenames, then one publisher with shared packaging, checksums and uploads.
 Both matrices use `matrix.build` objects and short platform labels such as `linux-amd64`.
 
-Every checkout uses the recorded run SHA. Stable inputs (`refs/tags/0.1.2`) must match
-the tag on which gh-ship dispatched the run; automatic development inputs must equal
-the invoking main CI SHA. Arbitrary branches/SHAs and the rolling channel tag are rejected.
+Every checkout uses the recorded run SHA. gh-ship dispatches on the version tag with
+a qualified ref such as `refs/tags/0.1.2`; main CI passes its run SHA for prereleases.
 For manual housekeeping, select main in Run workflow and leave ref blank: the run's
 recorded SHA is rebuilt even if main advances.
 
 Set the optional repository variable `PRERELEASE_NAME` to change the rolling channel's
 tag, release name and filename label; it defaults to `development`. Use a single
-Git-valid tag/filename component without spaces, slashes or `#`. That channel tag cannot
-be used as a stable release input. The URLs above show the default.
+Git-valid tag/filename component without spaces, slashes or `#`. The URLs above show the default.
 
 Both workflow entry points accept only `ref`. `.github/ship.yml` opts into gh-ship 0.6's
 `release.publish_input: ref`, which dispatches stable releases with a qualified tag ref.

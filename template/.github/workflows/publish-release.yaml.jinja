@@ -1,27 +1,3 @@
-{%- macro validate_source() %}
-      - name: Validate publication source
-        env:
-          BUILD_REF: ${{ '{{' }} inputs.ref || github.ref {{ '}}' }}
-          CHANNEL_TAG: ${{ '{{' }} github.ref_name == (vars.PRERELEASE_NAME || 'development') {{ '}}' }}
-        run: |
-          fail() { echo '::error::Publish the run tag, the main CI SHA, or manually run on main with ref blank.'; exit 1; }
-          # Names enter filenames and gh's file#label syntax, so Git validity alone is insufficient.
-          [[ "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || fail
-          git check-ref-format "refs/tags/$TAG" || fail
-          case "$BUILD_REF" in
-            refs/tags/*)
-              [[ "$BUILD_REF" == "$GITHUB_REF" && "$CHANNEL_TAG" != true ]] || fail
-              ;;
-            *)
-{%- if rolling_prerelease and has_bin %}
-              [[ "$GITHUB_REPOSITORY" == '{{ owner }}/{{ crate }}' && "$GITHUB_REF" == refs/heads/main ]] || fail
-              [[ "$BUILD_REF" == "$GITHUB_SHA" || ("$GITHUB_EVENT_NAME" == workflow_dispatch && "$BUILD_REF" == refs/heads/main) ]] || fail
-{%- else %}
-              fail
-{%- endif %}
-              ;;
-          esac
-{%- endmacro %}
 {%- raw %}
 name: 📦 Publish Release
 run-name: 📦 Publish Release ${{ inputs.ref || github.ref }}
@@ -53,7 +29,7 @@ env:
   CARGO_NET_RETRY: "10"
   RUSTUP_MAX_RETRIES: "10"
   RUSTFLAGS: -D warnings
-  # A tag input must match the run tag; other accepted inputs publish to the rolling channel.
+  # gh-ship runs on the version tag; main CI publishes to the rolling channel.
   TAG: ${{ startsWith(inputs.ref || github.ref, 'refs/tags/') && github.ref_name || vars.PRERELEASE_NAME || 'development' }}
 
 jobs:
@@ -80,7 +56,6 @@ jobs:
 {%- endif %}
 {%- endfor %}
     steps:
-{{ validate_source() }}
 {%- raw %}
       - uses: actions/checkout@v7
         with:
@@ -161,9 +136,6 @@ jobs:
       id-token: write
 {%- endif %}
     steps:
-{%- if not has_bin %}
-{{ validate_source() }}
-{%- endif %}
 {%- if has_bin or publish %}
       - uses: actions/checkout@v7
         with:
