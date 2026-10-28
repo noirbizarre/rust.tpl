@@ -71,7 +71,7 @@ files = [
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/ci.yaml" = [
-  "jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets", "mbx build --locked",
+  "jdx/mr-boxington-action@v1", "save-on-pull-request: true", "run: mbx check --all-targets", "mbx build --locked", "cache-generation: lint-v1", "cache-generation: pr-build-${{ matrix.build.target }}-v1",
   "🧓 MSRV", "rust-version", "id-token: write", "  prerelease:", "name: 🚀 Development prerelease", "ref: ${{ github.sha }}", "if: github.event_name == 'pull_request'",
   "    uses: ./.github/workflows/publish-release.yaml\n    # Environment secrets also require forwarding across workflow_call.\n    secrets: inherit\n    with:",
   "      matrix:\n        build:\n          - { label: linux-amd64, target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }",

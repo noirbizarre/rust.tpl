@@ -86,9 +86,10 @@ jobs:
 {%- if mbx %}
 
       # Includes Cargo downloads and target outputs; do not duplicate rust-cache.
+      # Workload generations scope fallback restores too, unlike key suffixes.
       - uses: jdx/mr-boxington-action@v1
         with:
-          cache-key-suffix: lint
+          cache-generation: lint-v1
           save-on-pull-request: true
 {%- endif %}
 {%- raw %}
@@ -150,7 +151,7 @@ jobs:
 
       - uses: jdx/mr-boxington-action@v1
         with:
-          cache-key-suffix: tests-${{ '{{' }} matrix.os.flag {{ '}}' }}
+          cache-generation: tests-${{ '{{' }} matrix.os.flag {{ '}}' }}-v1
           save-on-pull-request: true
 {%- endif %}
 {%- raw %}
@@ -239,7 +240,7 @@ jobs:
       - uses: jdx/mr-boxington-action@v1
         with:
           version: 1.28.0
-          cache-key-suffix: msrv
+          cache-generation: msrv-v1
           save-on-pull-request: true
 {%- else %}
 
@@ -296,7 +297,7 @@ jobs:
       - uses: jdx/mr-boxington-action@v1
         with:
           version: 1.28.0
-          cache-key-suffix: pr-build-${{ '{{' }} matrix.build.target {{ '}}' }}
+          cache-generation: pr-build-${{ '{{' }} matrix.build.target {{ '}}' }}-v1
           save-on-pull-request: true
 {%- else %}
       - uses: Swatinem/rust-cache@v2
