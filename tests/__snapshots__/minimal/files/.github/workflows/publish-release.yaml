@@ -1,258 +1,201 @@
 
 name: 📦 Publish Release
-
-# Dispatched by `gh ship release` on the tag it just created — naming the run
-# after it tells the two apart in the Actions run list, where "Publish
-# Release" alone would not.
-run-name: 📦 Publish Release ${{ inputs.ref }}
+run-name: 📦 Publish Release ${{ inputs.ref || github.ref }}
 
 on:
   workflow_dispatch:
     inputs:
       ref:
-        description: Qualified tag/branch ref or commit SHA to publish
-        required: true
+        description: Run tag or commit SHA; leave blank for a manual main rebuild
+        required: false
         type: string
-
   workflow_call:
     inputs:
       ref:
         required: true
         type: string
 
-# The upload authenticates as a GitHub App and carries its own permissions.
-# These cover `actions/checkout` alone, which only reads.
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 env:
   CARGO_TERM_COLOR: always
-  # Retries against a flaky registry/network rather than failing a release
-  # build outright, and no incremental cache — this is a one-shot build, so
-  # there is nothing later to reuse it.
   CARGO_INCREMENTAL: "0"
   CARGO_NET_GIT_FETCH_WITH_CLI: "true"
   CARGO_NET_RETRY: "10"
   RUSTUP_MAX_RETRIES: "10"
-  # Same bar CI's clippy job already holds the code to; a release binary
-  # should not ship a warning CI would have failed on for anyone else.
   RUSTFLAGS: -D warnings
+  # A tag input must match the run tag; other accepted inputs publish to the rolling channel.
+  TAG: ${{ startsWith(inputs.ref || github.ref, 'refs/tags/') && github.ref_name || vars.PRERELEASE_NAME || 'development' }}
 
 jobs:
-  resolve:
-    name: 🔎 Resolve source
-    runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ steps.source.outputs.sha }}
-      tag: ${{ steps.kind.outputs.tag }}
-      prerelease: ${{ steps.kind.outputs.prerelease }}
-    steps:
-      - name: Classify the source ref
-        id: kind
-        env:
-          BUILD_REF: ${{ inputs.ref }}
-        shell: bash
-        run: |
-          # Qualified names avoid guessing when a branch and tag share a name.
-          case "$BUILD_REF" in
-            refs/tags/*|refs/heads/*) git check-ref-format "$BUILD_REF" ;;
-            *)
-              if [[ ! "$BUILD_REF" =~ ^[0-9a-fA-F]{40}$ ]]; then
-                echo '::error::Use refs/tags/<tag>, refs/heads/<branch> or a full commit SHA.'
-                exit 1
-              fi
-              ;;
-          esac
-          case "$BUILD_REF" in
-            refs/tags/development) tag=development; prerelease=true ;;
-            refs/tags/*) tag="${BUILD_REF#refs/tags/}"; prerelease=false ;;
-            *) tag=development; prerelease=true ;;
-          esac
-          {
-            echo "tag=$tag"
-            echo "prerelease=$prerelease"
-          } >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ inputs.ref }}
-          persist-credentials: false
-      - name: Freeze the source commit
-        id: source
-        shell: bash
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   build:
-    needs: resolve
-    name: 🏗️ ${{ matrix.target }}
-    runs-on: ${{ matrix.runner }}
+    name: 🏗️ Build (${{ matrix.build.label }})
+    runs-on: ${{ matrix.build.runner }}
     strategy:
       fail-fast: false
       matrix:
-        # Explicit empty extensions keep the matrix type valid for actionlint.
-        include:
-          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, asset: linux-amd64, cross: true, ext: "" }
-    defaults:
-      run:
-        shell: bash
+        build:
+          - { label: linux-amd64, target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }
     steps:
+
+      - name: Validate publication source
+        env:
+          BUILD_REF: ${{ inputs.ref || github.ref }}
+          CHANNEL_TAG: ${{ github.ref_name == (vars.PRERELEASE_NAME || 'development') }}
+        run: |
+          fail() { echo '::error::Publish the run tag, the main CI SHA, or manually run on main with ref blank.'; exit 1; }
+          # Names enter filenames and gh's file#label syntax, so Git validity alone is insufficient.
+          [[ "$TAG" =~ ^[a-zA-Z0-9][a-zA-Z0-9._+-]*$ ]] || fail
+          git check-ref-format "refs/tags/$TAG" || fail
+          case "$BUILD_REF" in
+            refs/tags/*)
+              [[ "$BUILD_REF" == "$GITHUB_REF" && "$CHANNEL_TAG" != true ]] || fail
+              ;;
+            *)
+              fail
+              ;;
+          esac
       - uses: actions/checkout@v7
         with:
-          # Freeze development to the tested main commit, and stable releases to their tag.
-          ref: ${{ needs.resolve.outputs.sha }}
+          # Every matrix leg uses the immutable run commit, even if a tag or main moves later.
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.build.target }}
       - uses: Swatinem/rust-cache@v2
         with:
-          key: release-${{ matrix.target }}
+          key: release-${{ matrix.build.target }}
       - uses: taiki-e/install-action@cross
-        if: matrix.cross
-      # Downloaded MSVC binaries must start without the VC++ redistributable.
+        if: matrix.build.cross
+      # Standalone Windows binaries must start without a separately installed redistributable.
       - name: Statically link the MSVC C runtime
-        if: endsWith(matrix.target, 'windows-msvc')
+        if: endsWith(matrix.build.target, 'windows-msvc')
         run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
-      - name: Build
+      - name: Build and stage the asset
         env:
-          TARGET: ${{ matrix.target }}
-          CROSS: ${{ matrix.cross }}
+          TARGET: ${{ matrix.build.target }}
+          LABEL: ${{ matrix.build.label }}
+          CROSS: ${{ matrix.build.cross }}
+          EXT: ${{ matrix.build.ext }}
         run: |
-          if [ "$CROSS" = "true" ]; then
+          if [ "$CROSS" = true ]; then
             cross build --release --locked --target "$TARGET"
           else
             cargo build --release --locked --target "$TARGET"
           fi
-      - name: Stage the asset
-        env:
-          TARGET: ${{ matrix.target }}
-          ASSET: ${{ matrix.asset }}
-          EXT: ${{ matrix.ext }}
-          TAG: ${{ needs.resolve.outputs.tag }}
-        run: |
           mkdir -p dist
-          cp "target/${TARGET}/release/minimal-example${EXT}" "dist/minimal-example_${TAG}_${ASSET}${EXT}"
+          cp "target/${TARGET}/release/minimal-example${EXT}" "dist/minimal-example_${TAG}_${LABEL}${EXT}"
       - uses: actions/upload-artifact@v7
         with:
-          name: asset-${{ matrix.asset }}
+          name: asset-${{ matrix.build.label }}
           path: dist/*
           if-no-files-found: error
           retention-days: 7
 
   publish:
     name: 🚀 Publish
-    needs: [resolve, build]
-    if: >-
-      ${{ needs.resolve.outputs.prerelease == 'false' ||
-        (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-          github.repository == 'noirbizarre/minimal-example') }}
+    needs: build
     runs-on: ubuntu-latest
-    # Finish uploads before another run can replace the same channel's assets.
+    # Only uploads serialize; builds remain parallel and no partial upload is cancelled.
     concurrency:
-      group: publish-${{ needs.resolve.outputs.tag }}
+      group: publish-release
       cancel-in-progress: false
-
-    # This is the deployment. Declaring a `url:` registers it in the
-    # repository's deployment list and links straight to what shipped.
-    # The environment is `release` because that is where the release
-    # secrets live.
     environment:
       name: release
-      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.resolve.outputs.tag }}
-
-    env:
-      TAG: ${{ needs.resolve.outputs.tag }}
-
+      url: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.TAG }}
     steps:
-      # An installation token, revoked when this job ends. It cannot live in
-      # the job's `env:` — a step output is not resolvable there — so the one
-      # `gh` step below sets it itself.
-      - uses: actions/create-github-app-token@v3
-        id: app-token
-        with:
-          client-id: ${{ vars.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.resolve.outputs.sha }}
-          # The upload below authenticates with the App token, not a
-          # persisted checkout credential.
+          ref: ${{ github.sha }}
           persist-credentials: false
-
       - uses: actions/download-artifact@v8
         with:
           pattern: asset-*
           merge-multiple: true
           path: dist
-
-      - name: Checksums
-        if: ${{ needs.resolve.outputs.prerelease == 'false' }}
-        working-directory: dist
-        # `--` so an asset whose name begins with a dash is treated as a
-        # file rather than an option (shellcheck SC2035).
-        run: sha256sum -- * > SHA256SUMS
-
-      # The release already exists as a DRAFT: gh-ship created it before
-      # dispatching this workflow, and will undraft it once we succeed.
-      # That ordering is what lets assets land before anyone is notified.
-      - name: Upload assets to the draft release
-        if: ${{ needs.resolve.outputs.prerelease == 'false' }}
-        run: gh release upload "$TAG" dist/* --clobber
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-
-      - name: Publish development binaries
-        if: ${{ needs.resolve.outputs.prerelease == 'true' }}
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          SHA: ${{ needs.resolve.outputs.sha }}
+      - name: Require every binary
         run: |
-          set -euo pipefail
-          # The source branch may have advanced while this run waited for CI or the upload lock.
-          head=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)
-          if [[ "$head" != "$SHA" ]]; then
-            echo '::notice::Newer main commit exists; skipping this development build.'
-            exit 0
-          fi
-          assets=(minimal-example_development_linux-amd64 )
+          assets=("minimal-example_${TAG}_linux-amd64" )
           for asset in "${assets[@]}"; do test -s "dist/$asset"; done
-          (cd dist && sha256sum -- "${assets[@]}" > SHA256SUMS)
-          # Listing releases distinguishes an absent channel from an API/authentication failure.
-          releases=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --slurp)
-          release=$(jq -c '.[][] | select(.tag_name == "development")' <<< "$releases")
-          if [[ -n "$release" ]]; then
-            test "$(jq -r .prerelease <<< "$release")" = true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum -- * > SHA256SUMS
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Prepare the release destination
+        id: destination
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BUILD_REF: ${{ inputs.ref || github.ref }}
+          IS_RELEASE: ${{ startsWith(inputs.ref || github.ref, 'refs/tags/') }}
+        run: |
+          if [ "$IS_RELEASE" = true ]; then
+            # Peel annotated tags too; a moved stable tag must not receive another commit's binaries.
+            test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/${BUILD_REF}" --jq .sha)" = "$GITHUB_SHA"
+            # gh-ship owns creation, notes and visibility for versioned releases.
+            gh release view "$TAG" --json tagName >/dev/null
           else
-            gh release create development --target "$SHA" --title development \
-              --notes 'Pending development binaries' --draft --prerelease --latest=false
+            # Manual main housekeeping may intentionally rebuild after main has advanced.
+            if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ]; then
+              head=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)
+              if [ "$head" != "$GITHUB_SHA" ]; then
+                echo '::notice::Newer main commit exists; skipping this prerelease.'
+                exit 0
+              fi
+            fi
+            releases=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" --slurp)
+            release=$(jq -c --arg tag "$TAG" '.[][] | select(.tag_name == $tag)' <<< "$releases")
+            if [ -n "$release" ]; then
+              test "$(jq -r .prerelease <<< "$release")" = true
+            else
+              gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
+                --notes 'Pending development binaries' --draft --prerelease --latest=false
+            fi
           fi
-          for asset in "${assets[@]}"; do
-            gh release upload development "dist/${asset}#${SHA}" --clobber
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+      - name: Upload assets to the release
+        if: steps.destination.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for asset in dist/*; do
+            gh release upload "$TAG" "${asset}#${GITHUB_SHA}" --clobber
           done
-          gh release upload development dist/SHA256SUMS --clobber
-          release_id=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/development" --jq .id)
-          uploaded=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets?per_page=100" --slurp)
-          for asset in "${assets[@]}"; do
-            jq -e --arg name "$asset" --arg sha "$SHA" \
-              '[.[][] | select(.name == $name and .label == $sha and .size > 0)] | length == 1' \
-              <<< "$uploaded" >/dev/null
-          done
-          jq -e '[.[][] | select(.name == "SHA256SUMS" and .size > 0)] | length == 1' \
-            <<< "$uploaded" >/dev/null
-          # Move only the development ref, after every replacement asset has been verified.
-          refs=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/development")
-          if jq -e 'any(.[]; .ref == "refs/tags/development")' <<< "$refs" >/dev/null; then
-            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/development" \
-              -f sha="$SHA" -F force=true --silent
+      - name: Update the rolling prerelease tag
+        if: ${{ steps.destination.outputs.ready == 'true' && !startsWith(inputs.ref || github.ref, 'refs/tags/') }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Only advertise the commit after every asset has uploaded successfully.
+          refs=$(gh api "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${TAG}")
+          if jq -e --arg ref "refs/tags/$TAG" 'any(.[]; .ref == $ref)' <<< "$refs" >/dev/null; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}" \
+              -f sha="$GITHUB_SHA" -F force=true --silent
           else
             gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-              -f ref=refs/tags/development -f sha="$SHA" --silent
+              -f "ref=refs/tags/$TAG" -f sha="$GITHUB_SHA" --silent
           fi
-          # Advertise the revision only after assets and their rolling source tag agree.
-          gh release edit development --title development --prerelease --draft=false --latest=false \
-            --notes "Main SHA: ${SHA}. CI: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          expected=$(printf '%s\n' "${assets[@]}" SHA256SUMS | jq -R . | jq -s .)
-          jq -r --argjson expected "$expected" \
-            '.[][] | select(.name as $name | $expected | index($name) | not) | .id' \
-            <<< "$uploaded" | while IFS= read -r id; do
+      - name: Finalize the prerelease
+        if: ${{ steps.destination.outputs.ready == 'true' && !startsWith(inputs.ref || github.ref, 'refs/tags/') }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh release edit "$TAG" --title "$TAG" --prerelease --draft=false --latest=false \
+            --notes "Main SHA: ${GITHUB_SHA}. CI: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          release_id=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq .id)
+          assets=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets?per_page=100" --slurp)
+          # Derive obsolete assets from the shared payload, including any configured archives.
+          while IFS=$'\t' read -r id name; do
+            if [ ! -f "dist/$name" ]; then
               gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" --silent
-            done
+            fi
+          done < <(jq -r '.[][] | [.id, .name] | @tsv' <<< "$assets")

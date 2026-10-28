@@ -155,9 +155,9 @@ jobs:
 
   # Link every target on PRs without paying release optimization/LTO costs.
   build:
-    name: 🏗️ Build (${{ matrix.target }})
+    name: 🏗️ Build (${{ matrix.build.label }})
     if: github.event_name == 'pull_request'
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.build.runner }}
     env:
       # cross's containers do not contain the caller's sccache executable.
       RUSTC_WRAPPER: ""
@@ -165,28 +165,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }
+        build:
+          - { label: linux-amd64, target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.build.target }}
       - uses: Swatinem/rust-cache@v2
         with:
-          key: pr-build-${{ matrix.target }}
+          key: pr-build-${{ matrix.build.target }}
       - uses: taiki-e/install-action@cross
-        if: matrix.cross
+        if: matrix.build.cross
       # Exercise the same CRT choice as downloaded Windows release binaries.
       - name: Statically link the MSVC C runtime
-        if: endsWith(matrix.target, 'windows-msvc')
+        if: endsWith(matrix.build.target, 'windows-msvc')
         run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
       - name: Build
         env:
-          TARGET: ${{ matrix.target }}
-          CROSS: ${{ matrix.cross }}
+          TARGET: ${{ matrix.build.target }}
+          CROSS: ${{ matrix.build.cross }}
         run: |
           if [ "$CROSS" = "true" ]; then
             cross build --locked --target "$TARGET"

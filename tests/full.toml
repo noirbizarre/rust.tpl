@@ -87,12 +87,13 @@ files = [
   "gzip -n -9",
   "cancel-in-progress: false",
   "actions/download-artifact",
-  "if: ${{ needs.resolve.outputs.prerelease == 'false' }}",
-  "name: 📦 crates.io\n    if: ${{ needs.resolve.outputs.prerelease == 'false' }}",
+  "name: Publish to crates.io\n        if: startsWith(inputs.ref || github.ref, 'refs/tags/')",
   "aarch64-pc-windows-msvc",
   "x86_64-unknown-freebsd",
   "target-feature=+crt-static",
-  "Stage the asset",
+  "Build and stage the asset",
+  "matrix.build.label",
+  "vars.PRERELEASE_NAME || 'development'",
 ]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]"]
@@ -131,7 +132,7 @@ files = [
 
 [expect.lacks]
 ".github/workflows/ci.yaml" = ["--release", "build: false", "needs: [lint, test, ship, build", "actions/upload-artifact"]
-".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "build-release.yaml"]
+".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]
 # PR CI builds the release; the orchestrator validates the uploaded artifact.

@@ -77,15 +77,25 @@ Two of these deserve a note:
 
 Opt in with `rolling_prerelease = true`. Successful main-push CI builds and publishes
 raw release binaries at `releases/download/development/<crate>_development_<asset>`
-(with `.exe` for Windows), plus `SHA256SUMS`. This channel
-does not include the optional stable-release tarballs. PRs build every selected
+(with `.exe` for Windows), plus `SHA256SUMS` and the same configured Unix archives/man pages as stable releases.
+PRs build every selected
 target in debug mode without publication credentials or artifact uploads; superseded PR runs are cancelled.
 
 Main skips CI's PR-only Build matrix. After its normal checks pass, it calls
-`publish-release.yaml` with `ref: github.sha`. That workflow resolves the source once
-and owns the optimized release matrix for both channels. Qualified version tag refs
-(`refs/tags/0.1.2`) select stable publication; branch refs and full commit SHAs select
-development. The reserved `refs/tags/development` always stays a prerelease.
+`publish-release.yaml` with `ref: github.sha`. It has two jobs: an optimized build matrix
+that stages final filenames, then one publisher with shared packaging, checksums and uploads.
+Both matrices use `matrix.build` objects and short platform labels such as `linux-amd64`.
+
+Every checkout uses the recorded run SHA. Stable inputs (`refs/tags/0.1.2`) must match
+the tag on which gh-ship dispatched the run; automatic development inputs must equal
+the invoking main CI SHA. Arbitrary branches/SHAs and the rolling channel tag are rejected.
+For manual housekeeping, select main in Run workflow and leave ref blank: the run's
+recorded SHA is rebuilt even if main advances. Automatic runs skip stale commits.
+
+Set the optional repository variable `PRERELEASE_NAME` to change the rolling channel's
+tag, release name and filename label; it defaults to `development`. Use a single
+Git-valid tag/filename component without spaces, slashes or `#`. That channel tag cannot
+be used as a stable release input. The URLs above show the default.
 
 Both workflow entry points accept only `ref`. `.github/ship.yml` opts into gh-ship 0.6's
 `release.publish_input: ref`, which dispatches stable releases with a qualified tag ref.
@@ -97,7 +107,7 @@ never becomes Latest or publishes to crates.io. Homebrew/AUR automatically run o
 Downloads are mutable and asset replacement is not atomic. Verify checksums,
 retry mismatches during updates, and record the source SHA from release notes and binary asset labels.
 Pin a stable release for immutable downloads. A binary's package version still
-comes from Cargo.toml. After upload verification, the rolling `development` tag moves
+comes from Cargo.toml. After all uploads succeed, a conditional step moves the rolling channel tag
 to the published binaries' source SHA.
 
 This draft proposal is being trialled independently in Bee before upstream acceptance.
