@@ -23,9 +23,21 @@ files = [".github/workflows/ci.yaml", ".github/workflows/publish-release.yaml"]
 absent = [".github/workflows/build-release.yaml", ".github/workflows/release-builds.yaml", ".github/workflows/publish-main.yaml", ".github/scripts/publish-main.py"]
 
 [expect.contains]
-".github/workflows/ci.yaml" = ["  prerelease:", "name: 🚀 Development prerelease", "if: github.event_name == 'pull_request'", "publish-release.yaml", "ref: ${{ github.sha }}", "cargo build --locked", "cross build --locked", 'RUSTC_WRAPPER: ""', "windows-latest", "target-feature=+crt-static", "matrix.build.label"]
-".github/workflows/publish-release.yaml" = ["SHA256SUMS", "--latest=false", "needs: build", "required: false", "vars.PRERELEASE_NAME || 'development'", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT:-}', "matrix.build.label", "ref: ${{ github.sha }}", "Upload assets to the release", "Update the rolling prerelease tag", 'gh release view "$TAG" >/dev/null 2>&1 ||', 'gh release upload "$TAG" dist/* --clobber', '-f sha="$GITHUB_SHA" -F force=true']
+# Keep forwarding attached to this call: environment-only secrets otherwise resolve empty.
+".github/workflows/ci.yaml" = [
+  "    uses: ./.github/workflows/publish-release.yaml\n    # Environment secrets also require forwarding across workflow_call.\n    secrets: inherit\n    with:",
+  "      matrix:\n        build:\n          - { label: linux-amd64, target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }",
+  "runs-on: ${{ matrix.build.runner }}",
+  "targets: ${{ matrix.build.target }}",
+  "  prerelease:", "name: 🚀 Development prerelease", "if: github.event_name == 'pull_request'", "publish-release.yaml", "ref: ${{ github.sha }}", "cargo build --locked", "cross build --locked", 'RUSTC_WRAPPER: ""', "windows-latest", "target-feature=+crt-static", "matrix.build.label",
+]
+".github/workflows/publish-release.yaml" = [
+  "    environment:\n      name: release",
+  "          client-id: ${{ vars.APP_CLIENT_ID }}\n          private-key: ${{ secrets.APP_PRIVATE_KEY }}",
+  "SHA256SUMS", "--latest=false", "needs: build", "required: false", "vars.PRERELEASE_NAME || 'development'", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT:-}', "matrix.build.label", "ref: ${{ github.sha }}", "Upload assets to the release", "Update the rolling prerelease tag", 'gh release view "$TAG" >/dev/null 2>&1 ||', 'gh release upload "$TAG" dist/* --clobber', '-f sha="$GITHUB_SHA" -F force=true',
+]
 ".github/ship.yml" = ["publish_input: ref"]
+"CONTRIBUTING.md" = ["caller uses `secrets: inherit`"]
 ".github/workflows/homebrew.yaml" = ["types: [released]", "workflow_dispatch:"]
 ".github/workflows/aur.yaml" = ["types: [released]", "workflow_dispatch:"]
 "Cargo.toml" = ["publish = false", "[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]"]

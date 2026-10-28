@@ -257,6 +257,8 @@ jobs:
       id-token: write
 {%- endif %}
     uses: ./.github/workflows/publish-release.yaml
+    # Environment secrets also require forwarding across workflow_call.
+    secrets: inherit
     with:
       ref: ${{ '{{' }} github.sha {{ '}}' }}
 {%- endif %}
