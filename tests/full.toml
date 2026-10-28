@@ -69,7 +69,7 @@ files = [
 ]
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
-".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "id-token: write", "needs: [lint, test, ship, msrv]", "ref: ${{ github.sha }}", "if: github.event_name == 'pull_request'"]
+".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "id-token: write", "  prerelease:", "name: 🚀 Development prerelease", "ref: ${{ github.sha }}", "if: github.event_name == 'pull_request'"]
 ".github/workflows/prepare-release.yaml" = [
   "cargo update --workspace",
   "gh ship sign",
@@ -131,7 +131,7 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
-".github/workflows/ci.yaml" = ["--release", "build: false", "needs: [lint, test, ship, build", "actions/upload-artifact"]
+".github/workflows/ci.yaml" = ["--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]

@@ -233,10 +233,8 @@ jobs:
             cargo build --locked --target "$TARGET"
           fi
 
-  development:
+  prerelease:
     name: 🚀 Development prerelease
-    # The PR-only Build job is deliberately skipped on main, so it is not a dependency.
-    needs: [lint, test, ship, msrv]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'noirbizarre/full-example' }}
     # The publisher's stable-only crates.io steps require this caller permission too.
     permissions:

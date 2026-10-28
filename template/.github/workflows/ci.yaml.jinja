@@ -247,10 +247,8 @@ jobs:
           fi
 {%- if rolling_prerelease %}
 
-  development:
+  prerelease:
     name: 🚀 Development prerelease
-    # The PR-only Build job is deliberately skipped on main, so it is not a dependency.
-    needs: [lint, test, ship{{ ', msrv' if msrv }}]
     if: ${{ '{{' }} github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == '{{ owner }}/{{ crate }}' {{ '}}' }}
 {%- if publish %}
     # The publisher's stable-only crates.io steps require this caller permission too.

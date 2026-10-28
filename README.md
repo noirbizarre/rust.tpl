@@ -81,8 +81,9 @@ raw release binaries at `releases/download/development/<crate>_development_<asse
 PRs build every selected
 target in debug mode without publication credentials or artifact uploads; superseded PR runs are cancelled.
 
-Main skips CI's PR-only Build matrix. After its normal checks pass, it calls
-`publish-release.yaml` with `ref: github.sha`. It has two jobs: an optimized build matrix
+Main skips CI's PR-only Build matrix. The `prerelease` job calls
+`publish-release.yaml` with `ref: github.sha`; publication depends only on its release build.
+It has two jobs: an optimized build matrix
 that stages final filenames, then one publisher with shared packaging, checksums and uploads.
 Both matrices use `matrix.build` objects and short platform labels such as `linux-amd64`.
 
