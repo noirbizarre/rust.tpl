@@ -94,6 +94,11 @@ no CI results. That means the repository needs:
 - an `aur` environment holding the secret `AUR_SSH_PRIVATE_KEY`, for the AUR
   account that owns the `full-example-bin` package.
 
+The development prerelease caller uses `secrets: inherit` so the reusable
+publisher can access `APP_PRIVATE_KEY`. GitHub requires secret forwarding
+across `workflow_call` even when the secret exists only in the publisher's
+`release` environment.
+
 ## This repository is generated from a template
 
 The toolchain, hooks, CI and release workflows come from
