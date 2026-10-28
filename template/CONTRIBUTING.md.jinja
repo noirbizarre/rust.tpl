@@ -16,7 +16,7 @@ rustup installs it. CI uses `dtolnay/rust-toolchain` because it needs per-job
 components and cross-compilation targets.
 
 Before committing or opening a PR, choose checks relevant to your changes;
-see [AGENTS.md](AGENTS.md#before-you-push) for guidance. Clippy runs through
+see [Before you push](#before-you-push) for guidance. Clippy runs through
 `mise run lint` and in CI, rather than in the commit hooks. `mise run ci` is an
 optional comprehensive check.
 
@@ -54,6 +54,33 @@ the same name wins it silently — which is why the format task is `format` and
 not `fmt` (`mise fmt` formats `mise.toml`){% if has_bin %}, and why running the binary is
 `mise cli` and not `mise run` (`mise run` runs a task){% endif %}. Prefer the explicit
 `mise run <task>` in scripts: mise can claim a new name in any release.
+
+## Before you push
+
+Choose checks based on the files changed and the risk. Run relevant tasks
+individually rather than launching every check in parallel by default.
+
+- **Rust code:** run `mise run lint` (Clippy) and the relevant tests through
+  `mise run test`, which accepts nextest selectors. Target affected packages
+  and tests instead of running the whole suite by default. For example,
+  replacing the placeholders with the affected package and test name:
+
+  ```sh
+  mise run test -- -p <package> -E 'test(<test_name>)'
+  ```
+
+- **Documentation, workflows or tooling:** run the relevant checks, such as
+  `mise run lint:md`, `mise run spell` or `mise run lint:actions`{% if docs %}, and
+  `mise run docs:build` when documentation changes warrant a build{% endif %}.
+  Documentation-only changes do not require Rust lint or tests.
+
+Broaden validation when the change warrants it. `mise run ci` is available as
+an optional comprehensive check, not a prerequisite for committing, pushing or
+opening a PR.
+
+If a local check is unavailable or prohibitively expensive, proceed with the
+commit or PR and report which checks ran, which were skipped and why in the
+handoff or PR description. CI provides full validation.
 
 ## Commits
 
