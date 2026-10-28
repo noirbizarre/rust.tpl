@@ -32,6 +32,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 # actually skipped what it should, not merely rendered something harmless.
 [expect]
 absent = [
+  ".github/workflows/build-release.yaml",
+  ".github/workflows/publish-main.yaml",
+  ".github/scripts/publish-main.py",
   "src/main.rs",
   "src/lib.rs",
   "src/cli.rs",
@@ -91,6 +94,7 @@ files = [
   "📦 crates.io",
 ]
 "mise.toml" = ["[tasks.cli]", "[tasks.setup]", "[tasks.man]"]
+".github/workflows/ci.yaml" = ["tag: development", "build-release.yaml"]
 
 [commands]
 before = ["cargo new crates/example --name example --vcs none"]

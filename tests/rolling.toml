@@ -1,0 +1,40 @@
+# Bee-shaped raw-binary distribution, including a renamed executable.
+[answers]
+crate = "rolling-example"
+bin_name = "agent"
+description = "Rolling release policy fixture"
+kind = "library-and-binary"
+publish = false
+archive = false
+docs = false
+msrv = false
+rolling_prerelease = true
+homebrew = true
+aur = true
+aur_package_name = "rolling-agent"
+targets = [
+  "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl", "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin", "aarch64-apple-darwin", "x86_64-pc-windows-msvc",
+]
+
+[expect]
+files = [".github/workflows/ci.yaml", ".github/workflows/publish-release.yaml"]
+absent = [".github/workflows/build-release.yaml", ".github/workflows/release-builds.yaml", ".github/workflows/publish-main.yaml", ".github/scripts/publish-main.py"]
+
+[expect.contains]
+".github/workflows/ci.yaml" = ["  prerelease:", "name: 🚀 Development prerelease", "if: github.event_name == 'pull_request'", "publish-release.yaml", "ref: ${{ github.sha }}", "cargo build --locked", "cross build --locked", 'RUSTC_WRAPPER: ""', "windows-latest", "target-feature=+crt-static", "matrix.build.label"]
+".github/workflows/publish-release.yaml" = ["SHA256SUMS", "--latest=false", "needs: build", "required: false", "vars.PRERELEASE_NAME || 'development'", "cargo build --release --locked", "cross build --release --locked", 'ext: ".exe"', 'release/agent${EXT:-}', "matrix.build.label", "ref: ${{ github.sha }}", "Upload assets to the release", "Update the rolling prerelease tag", 'gh release view "$TAG" >/dev/null 2>&1 ||', 'gh release upload "$TAG" dist/* --clobber', '-f sha="$GITHUB_SHA" -F force=true']
+".github/ship.yml" = ["publish_input: ref"]
+".github/workflows/homebrew.yaml" = ["types: [released]", "workflow_dispatch:"]
+".github/workflows/aur.yaml" = ["types: [released]", "workflow_dispatch:"]
+"Cargo.toml" = ["publish = false", "[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]"]
+
+[expect.lacks]
+".github/workflows/publish-release.yaml" = ["cargo publish", "inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "Publish development binaries", 'ext: ""', "include:", "build-release.yaml", "--paginate", "--slurp", "destination.outputs", "matching-refs", "for asset", "Require every binary"]
+".github/workflows/ci.yaml" = ["contents: write", "publish-main.yaml", "--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
+".github/workflows/homebrew.yaml" = ["types: [published]", "  stable:", "needs: stable", "--json isDraft,isPrerelease"]
+".github/workflows/aur.yaml" = ["types: [published]", "  stable:", "needs: stable", "--json isDraft,isPrerelease"]
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]

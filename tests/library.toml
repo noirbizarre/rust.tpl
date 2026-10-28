@@ -24,6 +24,9 @@ publish = true
 
 [expect]
 absent = [
+  ".github/workflows/build-release.yaml",
+  ".github/workflows/publish-main.yaml",
+  ".github/scripts/publish-main.py",
   "src/main.rs",
   "src/cli.rs",
   "build.rs",
@@ -44,7 +47,7 @@ files = [
 "Cargo.toml" = ['name = "library-example"', 'rust-version = "1.88"', "thiserror", "[dev-dependencies]"]
 "README.md" = ["cargo add library-example"]
 # crates.io is the whole release: no build matrix to wait for.
-".github/workflows/publish-release.yaml" = ["📦 crates.io"]
+".github/workflows/publish-release.yaml" = ["Publish to crates.io"]
 
 [expect.lacks]
 "Cargo.toml" = [
@@ -65,10 +68,13 @@ files = [
   "Package the Unix binaries",
   "Stage the asset",
   "needs: [build",
+  "  resolve:",
+  "  crates:",
 ]
 "AGENTS.md" = ["main.rs", "cli.rs"]
 "CONTRIBUTING.md" = ["mise run cli", "attach the binaries"]
 "README.md" = ["--help", "cargo install", "Or download a binary"]
+".github/workflows/ci.yaml" = ["tag: development", "build-release.yaml"]
 
 [commands]
 rendered = [

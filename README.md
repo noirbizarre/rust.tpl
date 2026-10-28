@@ -23,7 +23,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
 | **Hooks** | `prek.toml`: fmt, clippy, actionlint, typos, commitlint |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
-| **CI** | `ci.yaml` (hooks, 3-OS test matrix, `gh ship validate`, optional MSRV check) |
+| **CI** | `ci.yaml` (hooks, 3-OS tests, PR-only debug Build matrix, `gh ship validate`, optional MSRV check) |
 | **Changelog** | `cliff.toml` — Conventional Commits, emoji sections, no `v` tag prefix |
 | **Release** | gh-ship: `ship.yaml`, `prepare-release.yaml`, `publish-release.yaml` |
 | **Docs** | optional Zensical site + `docs.yaml` deploying to GitHub Pages |
@@ -58,7 +58,7 @@ Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 Only asked when the shape contains a binary (`binary`, `library-and-binary`):
 `bin_name`, `man_pages`, `archive`, `service`, `targets`, `homebrew`,
-`homebrew_tap`, `aur`.
+`homebrew_tap`, `aur`, `rolling_prerelease`.
 
 Projects rendered before `kind` existed carry `workspace = true|false` in
 `.config/git.tpl.toml`; `git tpl update` shows a migration note explaining how
@@ -71,7 +71,48 @@ Two of these deserve a note:
   and a copyright notice records the year of first publication anyway.
 - **`targets`** is a `multi_choice` over `data/targets.toml`, which also carries
   the runner, asset name, `cross` flag and executable extension each target
-  needs in the publish matrix.
+  needs in the PR and publication matrices.
+
+### Development prereleases
+
+Opt in with `rolling_prerelease = true`. Successful main-push CI builds and publishes
+raw release binaries at `releases/download/development/<crate>_development_<asset>`
+(with `.exe` for Windows), plus `SHA256SUMS` and the same configured Unix archives/man pages as stable releases.
+PRs build every selected
+target in debug mode without publication credentials or artifact uploads; superseded PR runs are cancelled.
+
+Main skips CI's PR-only Build matrix. The `prerelease` job calls
+`publish-release.yaml` with `ref: github.sha`; publication depends only on its release build.
+It has two jobs: an optimized build matrix
+that stages final filenames, then one publisher with shared packaging, checksums and uploads.
+Both matrices use `matrix.build` objects and short platform labels such as `linux-amd64`.
+
+Every checkout uses the recorded run SHA. gh-ship dispatches on the version tag with
+a qualified ref such as `refs/tags/0.1.2`; main CI passes its run SHA for prereleases.
+For manual housekeeping, select main in Run workflow and leave ref blank: the run's
+recorded SHA is rebuilt even if main advances.
+
+Set the optional repository variable `PRERELEASE_NAME` to change the rolling channel's
+tag, release name and filename label; it defaults to `development`. Use a single
+Git-valid tag/filename component without spaces, slashes or `#`. The URLs above show the default.
+
+Both workflow entry points accept only `ref`. `.github/ship.yml` opts into gh-ship 0.6's
+`release.publish_input: ref`, which dispatches stable releases with a qualified tag ref.
+gh-ship owns the stable draft-release lifecycle. Prereleases use `gh release view` or
+`gh release create`; both channels upload with `gh release upload "$TAG" dist/* --clobber`.
+Both channels use the release environment's GitHub App. The development release
+never becomes Latest or publishes to crates.io. Homebrew/AUR automatically run on stable
+`released` events, with manual tag-based reruns available to maintainers.
+
+Downloads are mutable and asset replacement is not atomic. Verify checksums,
+retry mismatches during updates, and record the source SHA from release notes and the rolling tag.
+Pin a stable release for immutable downloads. A binary's package version still
+comes from Cargo.toml. After all uploads succeed, a conditional step moves the rolling channel tag
+to the published binaries' source SHA.
+
+This draft proposal is being trialled independently in Bee before upstream acceptance.
+Bee uses its existing reduced-debug `ci` profile for PR builds; the template uses
+Cargo's default debug profile. Main release builds use the same optimized settings.
 
 ## What it does not render
 

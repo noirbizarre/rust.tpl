@@ -189,3 +189,75 @@ jobs:
         run: cargo check --all-targets
 {%- endraw %}
 {%- endif %}
+{%- if has_bin %}
+{%- set fields = namespace(cross=false) %}
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+{%- set fields.cross = fields.cross or entry.cross %}
+{%- endif %}
+{%- endfor %}
+
+  # Link every target on PRs without paying release optimization/LTO costs.
+  build:
+    name: 🏗️ Build (${{ '{{' }} matrix.build.label {{ '}}' }})
+    if: github.event_name == 'pull_request'
+    runs-on: ${{ '{{' }} matrix.build.runner {{ '}}' }}
+    env:
+      # cross's containers do not contain the caller's sccache executable.
+      RUSTC_WRAPPER: ""
+      RUSTFLAGS: -D warnings
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+{%- for entry in data.targets.matrix %}
+{%- if entry.target in targets %}
+          - { label: {{ entry.asset }}, target: {{ entry.target }}, runner: {{ entry.runner }}{% if entry.cross %}, cross: true{% endif %} }
+{%- endif %}
+{%- endfor %}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ '{{' }} matrix.build.target {{ '}}' }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: pr-build-${{ '{{' }} matrix.build.target {{ '}}' }}
+{%- if fields.cross %}
+      - uses: taiki-e/install-action@cross
+        if: matrix.build.cross
+{%- endif %}
+      # Exercise the same CRT choice as downloaded Windows release binaries.
+      - name: Statically link the MSVC C runtime
+        if: endsWith(matrix.build.target, 'windows-msvc')
+        run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
+      - name: Build
+        env:
+          TARGET: ${{ '{{' }} matrix.build.target {{ '}}' }}
+{%- if fields.cross %}
+          CROSS: ${{ '{{' }} matrix.build.cross {{ '}}' }}
+{%- endif %}
+        run: |
+          if [ "${CROSS:-}" = "true" ]; then
+            cross build --locked --target "$TARGET"
+          else
+            cargo build --locked --target "$TARGET"
+          fi
+{%- if rolling_prerelease %}
+
+  prerelease:
+    name: 🚀 Development prerelease
+    if: ${{ '{{' }} github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == '{{ owner }}/{{ crate }}' {{ '}}' }}
+{%- if publish %}
+    # The publisher's stable-only crates.io steps require this caller permission too.
+    permissions:
+      contents: read
+      id-token: write
+{%- endif %}
+    uses: ./.github/workflows/publish-release.yaml
+    with:
+      ref: ${{ '{{' }} github.sha {{ '}}' }}
+{%- endif %}
+{%- endif %}

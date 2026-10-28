@@ -1,50 +1,45 @@
 
 name: 📦 Publish Release
-
-# Dispatched by `gh ship release` on the tag it just created — naming the run
-# after it tells the two apart in the Actions run list, where "Publish
-# Release" alone would not.
-run-name: 📦 Publish Release ${{ inputs.tag }}
+run-name: 📦 Publish Release ${{ inputs.ref || github.ref }}
 
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: The tag being released
-        required: true
+      ref:
+        description: Run tag or commit SHA; leave blank for a manual main rebuild
+        required: false
         type: string
-
   workflow_call:
     inputs:
-      tag:
+      ref:
         required: true
         type: string
 
-# The upload authenticates as a GitHub App and carries its own permissions.
-# These cover `actions/checkout` alone, which only reads.
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 env:
   CARGO_TERM_COLOR: always
-  # Retries against a flaky registry/network rather than failing a release
-  # build outright, and no incremental cache — this is a one-shot build, so
-  # there is nothing later to reuse it.
   CARGO_INCREMENTAL: "0"
   CARGO_NET_GIT_FETCH_WITH_CLI: "true"
   CARGO_NET_RETRY: "10"
   RUSTUP_MAX_RETRIES: "10"
-  # Same bar CI's clippy job already holds the code to; a release binary
-  # should not ship a warning CI would have failed on for anyone else.
   RUSTFLAGS: -D warnings
+  # gh-ship runs on the version tag; main CI publishes to the rolling channel.
+  TAG: ${{ startsWith(inputs.ref || github.ref, 'refs/tags/') && github.ref_name || vars.PRERELEASE_NAME || 'development' }}
 
 jobs:
-  # Nothing to attach and nothing to publish: this project builds no binary and
-  # is not published to crates.io, so a release is the tag and its notes alone.
-  # gh-ship still dispatches this workflow and waits on it, so it has to exist
-  # and succeed.
+
   publish:
     name: 🚀 Publish
     runs-on: ubuntu-latest
+    # Only uploads serialize; builds remain parallel and no partial upload is cancelled.
+    concurrency:
+      group: publish-release
+      cancel-in-progress: false
     steps:
-      - run: echo "Nothing to publish."
+      - run: echo 'Nothing to publish.'

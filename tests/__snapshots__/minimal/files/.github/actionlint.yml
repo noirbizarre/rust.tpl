@@ -11,6 +11,7 @@
 # inside a release.
 config-variables:
   - APP_CLIENT_ID
+  - PRERELEASE_NAME
 
 paths:
   .github/workflows/**/*.{yml,yaml}:

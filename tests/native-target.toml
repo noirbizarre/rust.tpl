@@ -1,0 +1,20 @@
+# Without cross or Windows entries, optional matrix properties do not exist at all.
+[answers]
+crate = "native-example"
+description = "Native-only matrix typing fixture"
+kind = "binary"
+docs = false
+msrv = false
+publish = false
+targets = ["aarch64-apple-darwin"]
+
+[expect.contains]
+".github/workflows/ci.yaml" = ["matrix.build.label", "label: darwin-arm64"]
+".github/workflows/publish-release.yaml" = ["matrix.build.label", "label: darwin-arm64", 'release/native-example${EXT:-}']
+
+[expect.lacks]
+".github/workflows/ci.yaml" = ["matrix.build.cross", "cross: true"]
+".github/workflows/publish-release.yaml" = ["matrix.build.cross", "matrix.build.ext", "cross: true", 'ext: ""']
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]
