@@ -69,7 +69,7 @@ files = [
 ]
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
-".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "id-token: write", "needs: [lint, test, ship, msrv]", "prerelease: true", "if: github.event_name == 'pull_request'"]
+".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "id-token: write", "needs: [lint, test, ship, msrv]", "ref: ${{ github.sha }}", "if: github.event_name == 'pull_request'"]
 ".github/workflows/prepare-release.yaml" = [
   "cargo update --workspace",
   "gh ship sign",
@@ -87,8 +87,8 @@ files = [
   "gzip -n -9",
   "cancel-in-progress: false",
   "actions/download-artifact",
-  "if: ${{ !inputs.prerelease }}",
-  "name: 📦 crates.io\n    if: ${{ !inputs.prerelease }}",
+  "if: ${{ needs.resolve.outputs.prerelease == 'false' }}",
+  "name: 📦 crates.io\n    if: ${{ needs.resolve.outputs.prerelease == 'false' }}",
   "aarch64-pc-windows-msvc",
   "x86_64-unknown-freebsd",
   "target-feature=+crt-static",
@@ -131,7 +131,7 @@ files = [
 
 [expect.lacks]
 ".github/workflows/ci.yaml" = ["--release", "build: false", "needs: [lint, test, ship, build", "actions/upload-artifact"]
-".github/workflows/publish-release.yaml" = ["inputs.build", "build-release.yaml"]
+".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "build-release.yaml"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]
 # PR CI builds the release; the orchestrator validates the uploaded artifact.

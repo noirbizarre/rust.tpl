@@ -244,5 +244,4 @@ jobs:
       id-token: write
     uses: ./.github/workflows/publish-release.yaml
     with:
-      tag: development
-      prerelease: true
+      ref: ${{ github.sha }}

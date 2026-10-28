@@ -4,25 +4,21 @@ name: 📦 Publish Release
 # Dispatched by `gh ship release` on the tag it just created — naming the run
 # after it tells the two apart in the Actions run list, where "Publish
 # Release" alone would not.
-run-name: 📦 Publish Release ${{ inputs.tag }}
+run-name: 📦 Publish Release ${{ inputs.ref }}
 
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: The tag being released
+      ref:
+        description: Qualified tag/branch ref or commit SHA to publish
         required: true
         type: string
 
   workflow_call:
     inputs:
-      tag:
+      ref:
         required: true
         type: string
-      prerelease:
-        description: Refresh the development channel instead of a stable draft
-        type: boolean
-        default: false
 
 # The upload authenticates as a GitHub App and carries its own permissions.
 # These cover `actions/checkout` alone, which only reads.
@@ -43,6 +39,47 @@ env:
   RUSTFLAGS: -D warnings
 
 jobs:
+  resolve:
+    name: 🔎 Resolve source
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      tag: ${{ steps.kind.outputs.tag }}
+      prerelease: ${{ steps.kind.outputs.prerelease }}
+    steps:
+      - name: Classify the source ref
+        id: kind
+        env:
+          BUILD_REF: ${{ inputs.ref }}
+        shell: bash
+        run: |
+          # Qualified names avoid guessing when a branch and tag share a name.
+          case "$BUILD_REF" in
+            refs/tags/*|refs/heads/*) git check-ref-format "$BUILD_REF" ;;
+            *)
+              if [[ ! "$BUILD_REF" =~ ^[0-9a-fA-F]{40}$ ]]; then
+                echo '::error::Use refs/tags/<tag>, refs/heads/<branch> or a full commit SHA.'
+                exit 1
+              fi
+              ;;
+          esac
+          case "$BUILD_REF" in
+            refs/tags/development) tag=development; prerelease=true ;;
+            refs/tags/*) tag="${BUILD_REF#refs/tags/}"; prerelease=false ;;
+            *) tag=development; prerelease=true ;;
+          esac
+          {
+            echo "tag=$tag"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - name: Freeze the source commit
+        id: source
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   # The whole release: this project builds no binary, so there are no assets to
   # attach and crates.io is the only place it is published. Publishing cannot be
   # undone — `cargo yank` hides a version from resolution but never removes it,
@@ -50,7 +87,8 @@ jobs:
   # the "already published" check below.
   crates:
     name: 📦 crates.io
-    if: ${{ !inputs.prerelease }}
+    if: ${{ needs.resolve.outputs.prerelease == 'false' }}
+    needs: resolve
     runs-on: ubuntu-latest
 
     # Must match the Environment configured under
@@ -72,7 +110,7 @@ jobs:
         with:
           # The tag, not the branch tip. `cargo publish` packages the working
           # tree, so this is what decides which code reaches crates.io.
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.resolve.outputs.sha }}
           # `cargo publish` authenticates via Trusted Publishing's OIDC
           # token, not a persisted checkout credential.
           persist-credentials: false
@@ -86,16 +124,16 @@ jobs:
       # A version can be uploaded and the job still fail afterwards, so this
       # makes the re-run a no-op rather than an error.
       #
-      # `inputs.tag` is the version: this project tags without a `v` prefix, and
+      # The resolved tag is the version: this project tags without a `v` prefix, and
       # prepare-release derives both from one string.
       - name: Check whether this version is already published
         id: existing
         run: |
           set -euo pipefail
-          url="https://crates.io/api/v1/crates/library-example/${{ inputs.tag }}"
+          url="https://crates.io/api/v1/crates/library-example/${{ needs.resolve.outputs.tag }}"
           if curl -sfL --retry 3 -H "User-Agent: library-example-release" "$url" > /dev/null; then
             echo "published=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::library-example ${{ inputs.tag }} is already on crates.io; skipping."
+            echo "::notice::library-example ${{ needs.resolve.outputs.tag }} is already on crates.io; skipping."
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi

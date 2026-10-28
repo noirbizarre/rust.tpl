@@ -250,7 +250,6 @@ jobs:
 {%- endif %}
     uses: ./.github/workflows/publish-release.yaml
     with:
-      tag: development
-      prerelease: true
+      ref: ${{ '{{' }} github.sha {{ '}}' }}
 {%- endif %}
 {%- endif %}

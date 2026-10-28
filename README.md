@@ -82,9 +82,14 @@ does not include the optional stable-release tarballs. PRs build every selected
 target in debug mode without publication credentials or artifact uploads; superseded PR runs are cancelled.
 
 Main skips CI's PR-only Build matrix. After its normal checks pass, it calls
-`publish-release.yaml` with `tag: development` and `prerelease: true`. That workflow
-owns the optimized release matrix for both channels. Stable callers keep the default
-`prerelease: false`; gh-ship owns their draft-release lifecycle.
+`publish-release.yaml` with `ref: github.sha`. That workflow resolves the source once
+and owns the optimized release matrix for both channels. Qualified version tag refs
+(`refs/tags/0.1.2`) select stable publication; branch refs and full commit SHAs select
+development. The reserved `refs/tags/development` always stays a prerelease.
+
+Both workflow entry points accept only `ref`. `.github/ship.yml` opts into gh-ship 0.6's
+`release.publish_input: ref`, which dispatches stable releases with a qualified tag ref.
+gh-ship owns the stable draft-release lifecycle.
 Both channels use the release environment's GitHub App. The development release
 never becomes Latest or publishes to crates.io. Homebrew/AUR automatically run on stable
 `released` events, with manual tag-based reruns available to maintainers.

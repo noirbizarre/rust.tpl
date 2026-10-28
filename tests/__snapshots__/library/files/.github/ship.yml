@@ -39,3 +39,5 @@ pull_request:
 
 release:
   draft: true
+  # The publisher also accepts branch refs/SHAs from development CI.
+  publish_input: ref
