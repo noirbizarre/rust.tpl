@@ -17,28 +17,28 @@ components and cross-compilation targets.
 
 Before committing or opening a PR, choose checks relevant to your changes;
 see [Before you push](#before-you-push) for guidance. Clippy runs through
-`mise run lint` and in CI, rather than in the commit hooks. `mise run ci` is an
+`mise lint` and in CI, rather than in the commit hooks. `mise ci` is an
 optional comprehensive check.
 
 ## Tasks
 
 | Command | What it does |
 |---|---|
-| `mise run build` | Build the project |
-| `mise run test` | Run the tests (accepts nextest selectors) |
-| `mise run cover` | Run the tests with coverage |
-| `mise run format` | Format |
-| `mise run lint` | Clippy, warnings denied |
-| `mise run lint:actions` | actionlint over the workflows |
-| `mise run lint:md` | markdownlint over AGENTS.md, CONTRIBUTING.md, README.md |
-| `mise run spell` | typos |
-| `mise run snapshots` | Review pending insta snapshots |
-| `mise run check` | Everything that does not modify the working tree |
-| `mise run ci` | `check` |
-| `mise run changelog` | Preview the changelog for unreleased commits |
-| `mise run release` | Show the version the next release would take |
-| `mise run tpl:update` | Bring the rendered template ref up to date |
-| `mise run tpl:diff` | Show what merging the template would change |
+| `mise build` | Build the project |
+| `mise test` | Run the tests (accepts nextest selectors) |
+| `mise cover` | Run the tests with coverage |
+| `mise format` | Format |
+| `mise lint` | Clippy, warnings denied |
+| `mise lint:actions` | actionlint over the workflows |
+| `mise lint:md` | markdownlint over AGENTS.md, CONTRIBUTING.md, README.md |
+| `mise spell` | typos |
+| `mise snapshots` | Review pending insta snapshots |
+| `mise check` | Everything that does not modify the working tree |
+| `mise ci` | `check` |
+| `mise changelog` | Preview the changelog for unreleased commits |
+| `mise release` | Show the version the next release would take |
+| `mise tpl:update` | Bring the rendered template ref up to date |
+| `mise tpl:diff` | Show what merging the template would change |
 
 `mise <task>` is a shorthand for `mise run <task>`, but a builtin subcommand of
 the same name wins it silently — which is why the format task is `format` and
@@ -50,20 +50,20 @@ not `fmt` (`mise fmt` formats `mise.toml`). Prefer the explicit
 Choose checks based on the files changed and the risk. Run relevant tasks
 individually rather than launching every check in parallel by default.
 
-- **Rust code:** run `mise run lint` (Clippy) and the relevant tests through
-  `mise run test`, which accepts nextest selectors. Target affected packages
+- **Rust code:** run `mise lint` (Clippy) and the relevant tests through
+  `mise test`, which accepts nextest selectors. Target affected packages
   and tests instead of running the whole suite by default. For example,
   replacing the placeholders with the affected package and test name:
 
   ```sh
-  mise run test -- -p <package> -E 'test(<test_name>)'
+  mise test -p <package> -E 'test(<test_name>)'
   ```
 
 - **Documentation, workflows or tooling:** run the relevant checks, such as
-  `mise run lint:md`, `mise run spell` or `mise run lint:actions`.
+  `mise lint:md`, `mise spell` or `mise lint:actions`.
   Documentation-only changes do not require Rust lint or tests.
 
-Broaden validation when the change warrants it. `mise run ci` is available as
+Broaden validation when the change warrants it. `mise ci` is available as
 an optional comprehensive check, not a prerequisite for committing, pushing or
 opening a PR.
 
@@ -123,8 +123,8 @@ The toolchain, hooks, CI and release workflows come from
 
 ```bash
 git tpl status         # is there a template update pending?
-mise run tpl:update    # advance refs/tpl/<id> — HEAD, index and worktree untouched
-mise run tpl:diff      # read what merging it would change
+mise tpl:update    # advance refs/tpl/<id> — HEAD, index and worktree untouched
+mise tpl:diff      # read what merging it would change
 git tpl merge          # take it
 ```
 
