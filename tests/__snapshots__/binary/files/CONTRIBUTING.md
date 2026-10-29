@@ -139,9 +139,7 @@ no CI results. That means the repository needs:
 
 ### Documentation and coverage services
 
-Onboard `noirbizarre/binary-example` to Codecov. For a private repository, add its
-upload token as the repository secret `CODECOV_TOKEN`; both coverage and test
-results uploads use it. Public repositories can upload without this secret.
+Onboard `noirbizarre/binary-example` to Codecov for coverage and test results.
 
 ## This repository is generated from a template
 

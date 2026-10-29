@@ -231,9 +231,7 @@ across `workflow_call` even when the secret exists only in the publisher's
 In GitHub Settings → Pages, set Source to **GitHub Actions** before the first
 documentation deployment. The workflow uses the `github-pages` environment.
 
-Onboard `noirbizarre/full-example` to Codecov. For a private repository, add its
-upload token as the repository secret `CODECOV_TOKEN`; both coverage and test
-results uploads use it. Public repositories can upload without this secret.
+Onboard `noirbizarre/full-example` to Codecov for coverage and test results.
 
 ## This repository is generated from a template
 

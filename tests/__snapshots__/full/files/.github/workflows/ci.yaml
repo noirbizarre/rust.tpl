@@ -140,7 +140,6 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
           # Flagging each leg keeps the three reports distinguishable, so a
           # partial upload is visible rather than looking like a coverage drop.
           flags: ${{ matrix.os.flag }}
@@ -150,7 +149,6 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           directory: target/nextest/ci
-          token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
 
   # `rust-version` in Cargo.toml is a promise. Without a job that keeps it, it

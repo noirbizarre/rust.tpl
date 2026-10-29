@@ -16,7 +16,7 @@
 - Create a GitHub `release` environment with variable `APP_CLIENT_ID` and secret `APP_PRIVATE_KEY`.
   Install that GitHub App on `{{ owner }}/{{ crate }}` with Contents and Pull requests read/write permissions.
 - Configure squash merges with `squash_merge_commit_title: PR_TITLE` and `squash_merge_commit_message: BLANK`.
-- Onboard `{{ owner }}/{{ crate }}` to Codecov. For a private repository, add the repository secret `CODECOV_TOKEN`.
+- Onboard `{{ owner }}/{{ crate }}` to Codecov.
 {% if docs -%}
 - In GitHub Settings → Pages, set Source to **GitHub Actions** before deploying the documentation.
 {% endif -%}
