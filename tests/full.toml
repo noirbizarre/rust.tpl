@@ -108,7 +108,7 @@ files = [
   "vars.PRERELEASE_NAME || 'development'",
 ]
 "zensical.toml" = ['accent = "deep orange"']
-"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "1.28.0"', 'version = "stable"']
+"mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"']
 "CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "Settings → Pages", "**GitHub Actions**", "Onboard `noirbizarre/full-example` to Codecov", "Trusted Publishing", "owner `noirbizarre`, repository `full-example`", "`publish-release.yaml`, and environment `release`"]
 # Regression tripwire for the bot-contributor filter: `github.contributors`
 # is unfiltered by `commit_parsers`, so without this every bot with a merged
