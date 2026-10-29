@@ -15,6 +15,18 @@ Rust itself is not managed by mise: `rust-toolchain.toml` pins the channel, and
 rustup installs it. CI uses `dtolnay/rust-toolchain` because it needs per-job
 components and cross-compilation targets.
 
+Dev and test profiles use `debug = "line-tables-only"` to retain line-number
+backtraces with smaller outputs and less linker IO. Full debugger variable
+information requires rebuilding with `CARGO_PROFILE_DEV_DEBUG=2` and/or
+`CARGO_PROFILE_TEST_DEBUG=2`. Changing profiles causes a one-time rebuild;
+old artifacts do not shrink in place.
+
+Check/Clippy produces metadata, whereas nextest needs linked test executables.
+Some compilation between them is expected. Features, compiler versions, coverage
+instrumentation and release profiles also change build inputs. Keep these stable
+within an edit loop and select Cargo packages/targets for focused checks; a
+nextest runtime filter alone does not necessarily reduce compiled targets.
+
 Before committing or opening a PR, choose checks relevant to your changes;
 see [Before you push](#before-you-push) for guidance. Clippy runs through
 `mise lint` and in CI, rather than in the commit hooks. `mise ci` is an

@@ -95,6 +95,14 @@ path = "src/main.rs"
 {%- endif %}
 {%- endif %}
 
+# Keep line-number backtraces without full debugger information, reducing
+# compilation IO, link time and the size of dev/test outputs.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.test]
+debug = "line-tables-only"
+
 [profile.release]
 # Release binaries are cross-compiled once per tag and downloaded many times, so
 # the build cost is paid once and the size saving is paid forward.

@@ -95,9 +95,17 @@ main pushes and same-repository PRs can save, with PR entries scoped to the PR.
 Cross jobs retain container-produced outputs through that payload. Publication
 uses the action's local backend without shared compiler outputs. Existing local
 compiler wrappers keep precedence; inspect them before enabling an override.
-Remote services and editor setup require separate configuration. Managed target placement and
-automatic collection are disabled to preserve outputs and caches. Generated
-CONTRIBUTING.md covers cache-hit verification, optional test scheduling and undo.
+Remote services and editor setup require separate configuration. Automatic cache
+collection follows the developer's global mbx policy or mbx's bounded defaults;
+machine-specific budgets belong in `~/.config/mbx/config.toml`. Managed target
+placement stays disabled, so ordinary worktree targets are outside those budgets.
+Generated CONTRIBUTING.md covers retention, cache-hit verification, private-state
+cleanup, optional test scheduling and undo.
+
+Dev and test profiles use `debug = "line-tables-only"` to reduce artifact storage,
+link time and build IO while keeping line-number backtraces. Check/Clippy and
+nextest need different compiler outputs; unchanged repeats can reuse their own
+outputs, but switching between them can still require compilation.
 
 ### Development prereleases
 
@@ -138,7 +146,8 @@ to the published binaries' source SHA.
 
 This draft proposal is being trialled independently in Bee before upstream acceptance.
 Bee uses its existing reduced-debug `ci` profile for PR builds; the template uses
-Cargo's default debug profile. Main release builds use the same optimized settings.
+the dev profile with line-table debug information. Main release builds use the
+same optimized settings.
 
 ## What it does not render
 

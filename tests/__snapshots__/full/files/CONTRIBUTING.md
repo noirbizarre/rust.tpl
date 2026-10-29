@@ -59,8 +59,28 @@ learned private incremental reuse are also enabled. For concurrent agents or
 test suites, optionally add `[scheduler] tests = true` in workspace `.mbx.toml`;
 it schedules tests, not their outcomes. Review nextest timeouts if tests queue.
 
-This feature disables automatic collection and managed target placement through
-`MBX_GC_AUTO=0` and `MBX_TARGET_VIEWS=0`, preserving existing outputs and caches.
+Automatic cache collection follows your global mbx policy or mbx's bounded
+defaults. Configure machine-specific budgets in `~/.config/mbx/config.toml`,
+not in the project. For example, to cap the combined cache at 60 GiB:
+
+```toml
+[gc]
+max_total_size = "60GiB"
+max_size = "45GiB"
+incremental_max_size = "15GiB"
+```
+
+The incremental allowance includes generated sources. Low disk space can trigger
+collection below these limits; active state is protected. `MBX_GC_AUTO=0` in your
+environment disables automatic collection, including low-disk collection.
+Preview cleanup with `mise exec -- mbx gc --dry-run`.
+
+Managed target placement stays disabled through `MBX_TARGET_VIEWS=0`: ordinary
+worktree `target/` directories are outside these cache budgets. Private incremental
+state lives in the mbx cache and survives worktree deletion and `cargo clean`.
+Use `mise exec -- mbx clean /absolute/retired/worktree` to remove a retired
+checkout's private state while keeping shared compiler outputs.
+
 To demonstrate reuse, run equivalent builds in two fresh temporary target
 directories using `--target-dir` and `MBX_SUMMARY=full`. Require positive mbx hits
 on the second build; Cargo freshness is not a hit. Diagnose with
@@ -72,6 +92,18 @@ ownership by removing the added mise Rust entry, preserving unrelated pins and
 options. Remove any wrapper/scheduler and local activation overrides you added;
 keep the shared cache. Set the template answer `mbx = false` and review the
 rendered update to restore the original CI cache actions too.
+
+Dev and test profiles use `debug = "line-tables-only"` to retain line-number
+backtraces with smaller outputs and less linker IO. Full debugger variable
+information requires rebuilding with `CARGO_PROFILE_DEV_DEBUG=2` and/or
+`CARGO_PROFILE_TEST_DEBUG=2`. Changing profiles causes a one-time rebuild;
+old artifacts do not shrink in place.
+
+Check/Clippy produces metadata, whereas nextest needs linked test executables.
+Some compilation between them is expected. Features, compiler versions, coverage
+instrumentation and release profiles also change build inputs. Keep these stable
+within an edit loop and select Cargo packages/targets for focused checks; a
+nextest runtime filter alone does not necessarily reduce compiled targets.
 
 Before committing or opening a PR, choose checks relevant to your changes;
 see [Before you push](#before-you-push) for guidance. Clippy runs through
