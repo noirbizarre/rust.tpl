@@ -75,6 +75,10 @@ stable
 # the developer's global mbx policy (or mbx's bounded defaults).
 MBX_TARGET_VIEWS = "0"
 
+[hooks]
+# prek.toml declares both pre-commit and commit-msg as default hook types.
+postinstall = "prek install"
+
 # --- Everyday ---------------------------------------------------------------
 #
 # `mise <task>` is shorthand for `mise tasks run <task>`, and a builtin

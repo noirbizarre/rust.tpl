@@ -7,9 +7,11 @@ to an exact build in `mise.lock`, so a local run and a CI run use the same
 versions.
 
 ```bash
-mise install          # the tools
-prek install          # the Git hooks
+mise install          # the tools and Git hooks
 ```
+
+Mise's postinstall hook installs both `pre-commit` and `commit-msg` hooks.
+Ensure Node.js and npm are on your PATH at commit time for commitlint.
 
 ### Mr Boxington build caching
 
@@ -206,10 +208,14 @@ no CI results. That means the repository needs:
 
 - a `release` environment holding the variable `APP_CLIENT_ID` and the secret
   `APP_PRIVATE_KEY`.
+- the corresponding GitHub App installed on `noirbizarre/full-example` with
+  Contents and Pull requests read/write permissions.
 - squash-merge settings of `squash_merge_commit_title: PR_TITLE` and
   `squash_merge_commit_message: BLANK`, so the squash commit subject is the
   Conventional Commit title from `.github/ship.yml`.
-- Trusted Publishing configured on crates.io for the `release` environment.
+- ownership of the crate name `full-example` on crates.io, and Trusted Publishing
+  configured for owner `noirbizarre`, repository `full-example`, workflow
+  `publish-release.yaml`, and environment `release`.
 - a `homebrew` environment holding the secret `TAP_TOKEN`, scoped to push to
   `noirbizarre/homebrew-tap` only.
 - an `aur` environment holding the secret `AUR_SSH_PRIVATE_KEY`, for the AUR
@@ -219,6 +225,13 @@ The development prerelease caller uses `secrets: inherit` so the reusable
 publisher can access `APP_PRIVATE_KEY`. GitHub requires secret forwarding
 across `workflow_call` even when the secret exists only in the publisher's
 `release` environment.
+
+### Documentation and coverage services
+
+In GitHub Settings → Pages, set Source to **GitHub Actions** before the first
+documentation deployment. The workflow uses the `github-pages` environment.
+
+Onboard `noirbizarre/full-example` to Codecov for coverage and test results.
 
 ## This repository is generated from a template
 

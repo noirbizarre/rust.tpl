@@ -40,6 +40,8 @@ absent = [
   "packaging/homebrew/minimal-example.rb",
   "packaging/aur/minimal-example-bin/PKGBUILD",
   "packaging/systemd/minimal-example.service",
+  "NEXT-STEPS.md",
+  "NEXT-STEPS.md.jinja",
 ]
 files = [
   ".github/workflows/ci.yaml",
@@ -67,12 +69,14 @@ files = [
   "publish = false",
   "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
 ]
-"mise.toml" = ['tasks."tpl:check"', "lint:md"]
+"mise.toml" = ['tasks."tpl:check"', "lint:md", '[hooks]', 'postinstall = "prek install"']
 ".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning", "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache"]
+"CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "Node.js and npm", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents and Pull requests read/write permissions"]
 # docs = false, so the prek hook and mise task must not reach into docs/.
 "prek.toml" = ['README\\.md)$']
 
 [expect.lacks]
+"CONTRIBUTING.md" = ["Settings → Pages", "Trusted Publishing", "prek install"]
 ".github/workflows/publish-release.yaml" = ["crates.io", "Package the Unix binaries", "gzip -n", "jdx/mr-boxington-action@"]
 "mise.toml" = ["mr_boxington", "mr-boxington", "RUSTUP_TOOLCHAIN", "MBX_GC_AUTO", "MBX_TARGET_VIEWS"]
 # Cargo's automatic targets are enough when the binary is named after the

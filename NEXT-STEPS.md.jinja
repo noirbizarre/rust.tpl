@@ -1,0 +1,27 @@
+# Next steps for {{ crate }}
+
+## Before your first commit
+
+- Run `mise install` to install the tools and both Git hooks (`pre-commit` and `commit-msg`) automatically.
+{% if mbx -%}
+- Ensure rustup is available. Mise's Mr Boxington integration installs the declared Rust toolchain and components;
+  keep its Rust version aligned with `rust-toolchain.toml`.
+{%- else -%}
+- Install rustup and let it install the channel and components in `rust-toolchain.toml`; mise does not manage Rust.
+{%- endif %}
+- Ensure Node.js and npm are on your PATH at commit time for commitlint.
+
+## Before your first push
+
+- Create a GitHub `release` environment with variable `APP_CLIENT_ID` and secret `APP_PRIVATE_KEY`.
+  Install that GitHub App on `{{ owner }}/{{ crate }}` with Contents and Pull requests read/write permissions.
+- Configure squash merges with `squash_merge_commit_title: PR_TITLE` and `squash_merge_commit_message: BLANK`.
+- Onboard `{{ owner }}/{{ crate }}` to Codecov.
+{% if docs -%}
+- In GitHub Settings → Pages, set Source to **GitHub Actions** before deploying the documentation.
+{% endif -%}
+{% if publish -%}
+- Secure ownership of the crate name `{{ crate }}` on crates.io. Configure Trusted Publishing for owner `{{ owner }}`,
+  repository `{{ crate }}`, workflow `publish-release.yaml`, and environment `release`.
+{% endif %}
+See `CONTRIBUTING.md` for development tasks, release requirements, and optional distribution setup.
