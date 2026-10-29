@@ -18,6 +18,7 @@ categories = "command-line-utilities"
 bin_name = "minimal-example"
 kind = "library-and-binary"
 msrv = false
+mbx = false
 publish = false
 docs = false
 targets = ["x86_64-unknown-linux-gnu"]
@@ -67,20 +68,21 @@ files = [
   "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
 ]
 "mise.toml" = ['tasks."tpl:check"', "lint:md"]
-".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning"]
+".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning", "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache"]
 # docs = false, so the prek hook and mise task must not reach into docs/.
 "prek.toml" = ['README\\.md)$']
 
 [expect.lacks]
+".github/workflows/publish-release.yaml" = ["crates.io", "Package the Unix binaries", "gzip -n", "jdx/mr-boxington-action@"]
+"mise.toml" = ["mr_boxington", "mr-boxington", "RUSTUP_TOOLCHAIN", "MBX_GC_AUTO", "MBX_TARGET_VIEWS"]
 # Cargo's automatic targets are enough when the binary is named after the
 # crate, so neither explicit section is emitted.
 "Cargo.toml" = ["[lib]", "[[bin]]"]
 # The mirror of full.toml's positive assertion (`"crates.io"` present at
 # publish-release.yaml:70): publish = false must drop the whole crates.io
 # steps, not merely leave them unexercised.
-".github/workflows/publish-release.yaml" = ["crates.io", "Package the Unix binaries", "gzip -n"]
 # msrv = false must drop the job from ci.yaml, not merely leave it unexercised.
-".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version"]
+".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "jdx/mr-boxington-action@"]
 
 [commands]
 rendered = [

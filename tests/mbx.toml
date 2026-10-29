@@ -1,0 +1,73 @@
+# A library must get the same native integration as a binary, with inner mise
+# expressions intact rather than evaluated by the outer template renderer.
+[answers]
+crate = "cached-library"
+description = "A library with optional build caching"
+kind = "library"
+mbx = true
+docs = false
+
+[expect.contains]
+"mise.toml" = [
+  'rust = { version = "stable", components = ["rustfmt", "clippy"], mr_boxington = true }',
+  'mr-boxington = "1.28.0"',
+  "{{ env.RUSTUP_TOOLCHAIN }}",
+  "{{ exec(command='rustup default') | trim | split(pat=' ') | first }}",
+  'MBX_GC_AUTO = "0"',
+  'MBX_TARGET_VIEWS = "0"',
+  'idiomatic_version_file_enable_tools = []',
+]
+"CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo"]
+".github/workflows/ci.yaml" = ["jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets"]
+".github/workflows/publish-release.yaml" = ["jdx/mr-boxington-action@", "backend: local", "mbx publish --locked"]
+
+[expect.lacks]
+"mise.toml" = ["[wrappers.cargo]", "mbx setup", "postinstall", "mbx build", "mbx clean"]
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER"]
+".github/workflows/publish-release.yaml" = ["Swatinem/rust-cache", "save-on-pull-request:"]
+
+[commands]
+rendered = [
+  # Some developer environments resolve python3 through a mise shim too.
+  "mise trust mise.toml",
+  "actionlint .github/workflows/ci.yaml .github/workflows/publish-release.yaml",
+  # Evaluate the rendered expression with mise, not a second Jinja interpreter.
+  # A fake rustup default models dtolnay without installing/changing toolchains.
+  '''python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import tomllib
+
+config = tomllib.loads(Path('mise.toml').read_text())
+mise = shutil.which('mise')
+with tempfile.TemporaryDirectory(prefix='mbx-env-') as directory:
+    root = Path(directory)
+    rustup = root / 'rustup'
+    rustup.write_text('#!/bin/sh\n[ "$1" = default ] || exit 1\nprintf "1.88.0-x86_64-unknown-linux-gnu (default)\\n"\n')
+    rustup.chmod(0o755)
+    # Only environment policy is needed: runtime parsing must not install tools.
+    (root / 'mise.toml').write_text('[env]\n' + '\n'.join(
+        f'{key} = {json.dumps(value)}' for key, value in config['env'].items()))
+    base = {key: os.environ[key] for key in ('HOME', 'PATH', 'TMPDIR') if key in os.environ}
+    base.update(PATH=str(root) + os.pathsep + os.environ['PATH'],
+                MISE_GLOBAL_CONFIG_FILE='/dev/null', MISE_SYSTEM_CONFIG_FILE='/dev/null',
+                MISE_ENV_FILE='', MISE_TRUSTED_CONFIG_PATHS=str(root))
+    for supplied, github, expected in [
+        (None, '', 'stable'), ('', '', 'stable'),
+        ('nightly-2025-12-05', '', 'nightly-2025-12-05'),
+        ('1.88.0-x86_64-unknown-linux-gnu', 'true', '1.88.0-x86_64-unknown-linux-gnu'),
+        (None, 'true', '1.88.0-x86_64-unknown-linux-gnu'),
+    ]:
+        env = dict(base, GITHUB_ACTIONS=github)
+        if supplied is not None:
+            env['RUSTUP_TOOLCHAIN'] = supplied
+        result = subprocess.run([mise, 'env', '--json'], cwd=root, env=env,
+                                check=True, capture_output=True, text=True)
+        actual = json.loads(result.stdout)['RUSTUP_TOOLCHAIN']
+        assert actual == expected, (supplied, github, actual, expected)
+PY''',
+]
