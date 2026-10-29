@@ -7,9 +7,11 @@ to an exact build in `mise.lock`, so a local run and a CI run use the same
 versions.
 
 ```bash
-mise install          # the tools
-prek install          # the Git hooks
+mise install          # the tools and Git hooks
 ```
+
+Mise's postinstall hook installs both `pre-commit` and `commit-msg` hooks.
+Ensure Node.js and npm are on your PATH at commit time for commitlint.
 
 Rust itself is not managed by mise: `rust-toolchain.toml` pins the channel, and
 rustup installs it. CI uses `dtolnay/rust-toolchain` because it needs per-job
@@ -123,10 +125,20 @@ no CI results. That means the repository needs:
 
 - a `release` environment holding the variable `APP_CLIENT_ID` and the secret
   `APP_PRIVATE_KEY`.
+- the corresponding GitHub App installed on `noirbizarre/library-example` with
+  Contents and Pull requests read/write permissions.
 - squash-merge settings of `squash_merge_commit_title: PR_TITLE` and
   `squash_merge_commit_message: BLANK`, so the squash commit subject is the
   Conventional Commit title from `.github/ship.yml`.
-- Trusted Publishing configured on crates.io for the `release` environment.
+- ownership of the crate name `library-example` on crates.io, and Trusted Publishing
+  configured for owner `noirbizarre`, repository `library-example`, workflow
+  `publish-release.yaml`, and environment `release`.
+
+### Documentation and coverage services
+
+Onboard `noirbizarre/library-example` to Codecov. For a private repository, add its
+upload token as the repository secret `CODECOV_TOKEN`; both coverage and test
+results uploads use it. Public repositories can upload without this secret.
 
 ## This repository is generated from a template
 

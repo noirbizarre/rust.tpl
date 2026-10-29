@@ -29,6 +29,9 @@ description = "Rust project base stack: mise, prek, git-cliff, gh-ship, CI and p
 # purpose, which is clearer than relying on leniency anyway.
 strict = true
 
+# Printed after initialization; keep this top-level, before any TOML table.
+note_file = "NEXT-STEPS.md.jinja"
+
 # --- Identity ---------------------------------------------------------------
 
 [questions.crate]

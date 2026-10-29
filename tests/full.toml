@@ -42,6 +42,7 @@ targets = [
 # absent, this asserts is present, so a slot that stopped rendering altogether
 # fails here rather than passing both cases quietly.
 [expect]
+absent = ["NEXT-STEPS.md", "NEXT-STEPS.md.jinja"]
 files = [
   ".github/workflows/docs.yaml",
   ".github/workflows/template.yaml",
@@ -108,6 +109,7 @@ files = [
 ]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build", "lint:md", 'docs/**/*.md', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "1.28.0"', 'version = "stable"']
+"CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "Settings → Pages", "**GitHub Actions**", "CODECOV_TOKEN", "Trusted Publishing", "owner `noirbizarre`, repository `full-example`", "`publish-release.yaml`, and environment `release`"]
 # Regression tripwire for the bot-contributor filter: `github.contributors`
 # is unfiltered by `commit_parsers`, so without this every bot with a merged
 # PR — dependabot, the release bot — would be credited as a first-timer.
@@ -142,6 +144,7 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
+"CONTRIBUTING.md" = ["prek install"]
 ".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.

@@ -58,6 +58,10 @@ cargo-binstall = "latest"
 # cargo-insta is declared on the task that uses it instead of here — see the
 # note in the header.
 
+[hooks]
+# prek.toml declares both pre-commit and commit-msg as default hook types.
+postinstall = "prek install"
+
 # --- Everyday ---------------------------------------------------------------
 #
 # `mise <task>` is shorthand for `mise tasks run <task>`, and a builtin
