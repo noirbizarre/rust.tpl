@@ -92,8 +92,8 @@ stable
 {%- endif -%}
 """
 {% endraw -%}
-# Opting into caching must not collect caches or adopt existing target outputs.
-MBX_GC_AUTO = "0"
+# Keep existing target outputs in place; automatic cache collection follows
+# the developer's global mbx policy (or mbx's bounded defaults).
 MBX_TARGET_VIEWS = "0"
 
 {% endif -%}
