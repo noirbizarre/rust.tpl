@@ -30,6 +30,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 # asserted under `lacks` below.)
 [expect]
 absent = [
+  "commitlint.config.mjs",
   ".github/workflows/docs.yaml",
   "zensical.toml",
   "docs/index.md",
@@ -44,6 +45,7 @@ absent = [
   "NEXT-STEPS.md.jinja",
 ]
 files = [
+  ".cz.toml",
   ".github/workflows/ci.yaml",
   ".github/workflows/ship.yaml",
   ".github/workflows/prepare-release.yaml",
@@ -71,12 +73,15 @@ files = [
 ]
 "mise.toml" = ['tasks."tpl:check"', "lint:md", '[hooks]', 'postinstall = "prek install"']
 ".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning", "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache"]
-"CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "Node.js and npm", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents and Pull requests read/write permissions"]
+"CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "isolated Python environment", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents and Pull requests read/write permissions"]
 # docs = false, so the prek hook and mise task must not reach into docs/.
-"prek.toml" = ['README\\.md)$']
+"prek.toml" = ['README\\.md)$', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
+".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']
 
 [expect.lacks]
-"CONTRIBUTING.md" = ["Settings → Pages", "Trusted Publishing", "prek install"]
+"CONTRIBUTING.md" = ["Settings → Pages", "Trusted Publishing", "prek install", "commitlint"]
+"prek.toml" = ["commitlint"]
+".gitignore" = ["commitlint", "node_modules/"]
 ".github/workflows/publish-release.yaml" = ["crates.io", "Package the Unix binaries", "gzip -n", "jdx/mr-boxington-action@"]
 "mise.toml" = ["mr_boxington", "mr-boxington", "RUSTUP_TOOLCHAIN", "MBX_GC_AUTO", "MBX_TARGET_VIEWS"]
 # Cargo's automatic targets are enough when the binary is named after the
@@ -95,5 +100,21 @@ rendered = [
   "git init -q",
   "git add .",
   "prek -a",
+  # All-files checks do not run commit-msg hooks. Exercise the actual isolated
+  # environment so a missing plugin/config cannot masquerade as validation.
+  '''bash -euo pipefail -c '
+    message=.git/COMMIT_EDITMSG
+    for subject in "feat: add feature" "fix(parser): handle input" "feat!: change interface" "feat(parser)!: change interface" "chore(release): 0.3.0"; do
+      printf "%s\n" "$subject" > "$message"
+      prek run commitizen --hook-stage commit-msg --commit-msg-filename "$message"
+    done
+    printf "%s\n" "Release 0.3.0" > "$message"
+    if output=$(prek run commitizen --hook-stage commit-msg --commit-msg-filename "$message" 2>&1); then
+      printf "%s\n" "Invalid commit message unexpectedly passed" >&2
+      exit 1
+    fi
+    printf "%s\n" "$output"
+    [[ "$output" == *"commit validation: failed!"* ]]
+  ' ''',
   "gh ship validate",
 ]

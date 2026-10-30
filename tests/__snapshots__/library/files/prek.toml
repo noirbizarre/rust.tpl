@@ -19,17 +19,17 @@ hooks = [
 ]
 
 [[repos]]
-repo = "https://github.com/alessandrojcm/commitlint-pre-commit-hook"
-rev = "v9.21.0"
+repo = "https://github.com/commitizen-tools/commitizen"
+rev = "v4.19.3"
 
 [[repos.hooks]]
-id = "commitlint"
+id = "commitizen"
 stages = ["commit-msg"]
-additional_dependencies = ["@commitlint/config-conventional"]
+additional_dependencies = ["emotional==0.6.1"]
 
 # actionlint publishes its own hook manifest, so this uses that instead of
 # hand-rolling a `repo = "local"` block: version bumps are then visible to
-# `prek update` the same way the commitlint hook above already is, and
+# `prek update` the same way the Commitizen hook above already is, and
 # `name`/`entry`/`files` come from the manifest — nothing to override. mise
 # is a requirement to work on this project at all, so its shims already put
 # the pinned `actionlint` on PATH; the `actionlint-system` hook's bare
