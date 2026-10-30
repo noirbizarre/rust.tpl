@@ -42,8 +42,9 @@ targets = [
 # absent, this asserts is present, so a slot that stopped rendering altogether
 # fails here rather than passing both cases quietly.
 [expect]
-absent = ["NEXT-STEPS.md", "NEXT-STEPS.md.jinja"]
+absent = ["NEXT-STEPS.md", "NEXT-STEPS.md.jinja", "commitlint.config.mjs"]
 files = [
+  ".cz.toml",
   ".github/workflows/docs.yaml",
   ".github/workflows/template.yaml",
   "zensical.toml",
@@ -115,12 +116,16 @@ files = [
 # PR — dependabot, the release bot — would be credited as a first-timer.
 "cliff.toml" = ['is ending_with("[bot]")']
 "prek.toml" = [
+  'repo = "https://github.com/commitizen-tools/commitizen"',
+  'id = "commitizen"',
+  'additional_dependencies = ["emotional==0.6.1"]',
   'docs/.*\\.md',
   'repo = "https://github.com/crate-ci/typos"',
   'alias = "typos-commit-msg"',
   'args = ["--force-exclude"]',
   'stages = ["commit-msg"]',
 ]
+".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']
 "packaging/homebrew/full-example.rb" = [
   "class FullExample",
   "@SHA256_DARWIN_ARM64@",
@@ -144,7 +149,9 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
-"CONTRIBUTING.md" = ["prek install"]
+"CONTRIBUTING.md" = ["prek install", "commitlint"]
+"prek.toml" = ["commitlint"]
+".gitignore" = ["commitlint", "node_modules/"]
 ".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.

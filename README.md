@@ -21,7 +21,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 | | |
 |---|---|
 | **Toolchain** | `mise.toml` + `rust-toolchain.toml`, every tool pinned by `mise.lock` |
-| **Hooks** | `prek.toml`: fmt, actionlint, typos, commitlint |
+| **Hooks** | `prek.toml`: fmt, actionlint, typos, Commitizen with Emotional |
 | **Rust lint** | Clippy through `mise lint` and CI, separate from commit hooks |
 | **Tests** | nextest + llvm-cov, `.config/nextest.toml`, Codecov with per-OS flags |
 | **CI** | `ci.yaml` (hooks, 3-OS tests, PR-only debug Build matrix, `gh ship validate`, optional MSRV check) |

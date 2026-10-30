@@ -1,6 +1,3 @@
-# Installed by the commitlint prek hook.
-node_modules/
-
 # --- mise ---------------------------------------------------------------
 #
 # A common global gitignore (`~/.config/git/ignore`) excludes `mise.toml`,

@@ -11,7 +11,8 @@ mise install          # the tools and Git hooks
 ```
 
 Mise's postinstall hook installs both `pre-commit` and `commit-msg` hooks.
-Ensure Node.js and npm are on your PATH at commit time for commitlint.
+Prek installs Commitizen and its Emotional plugin in an isolated Python environment
+for commit-message validation.
 
 Rust itself is not managed by mise: `rust-toolchain.toml` pins the channel, and
 rustup installs it. CI uses `dtolnay/rust-toolchain` because it needs per-job
@@ -91,7 +92,9 @@ handoff or PR description. CI provides full validation.
 ## Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/), enforced by
-commitlint on `commit-msg`. The type selects the changelog section, and a `!`
+Commitizen with [Emotional](https://github.com/noirbizarre/emotional) on `commit-msg`.
+The hook checks Emotional's Conventional Commit grammar; subject case and length
+remain authoring conventions. The type selects the changelog section, and a `!`
 or a `BREAKING CHANGE:` footer drives the version bump — so the message is part
 of the release, not paperwork around it.
 
