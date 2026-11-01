@@ -10,9 +10,6 @@ on:
       - .github/workflows/docs.yaml
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   build:
     name: 🏗️ Build
