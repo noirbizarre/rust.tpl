@@ -62,6 +62,14 @@ files = [
 ]
 
 [expect.contains]
+".github/workflows/docs.yaml" = [
+  "on:\n  pull_request:",
+  "run: mise run docs:build",
+  "uses: actions/upload-pages-artifact@v5\n        if: github.event_name != 'pull_request'",
+  "  deploy:\n    name: 🚀 Deploy\n    if: github.event_name != 'pull_request'",
+  "    permissions:\n      pages: write\n      id-token: write",
+  "    concurrency:\n      group: pages\n      cancel-in-progress: false",
+]
 "Cargo.toml" = [
   'name = "full-example"',
   'rust-version = "1.88"',
