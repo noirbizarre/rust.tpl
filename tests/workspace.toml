@@ -32,6 +32,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 # actually skipped what it should, not merely rendered something harmless.
 [expect]
 absent = [
+  ".markdownlint-cli2.yaml",
   ".github/workflows/build-release.yaml",
   ".github/workflows/publish-main.yaml",
   ".github/scripts/publish-main.py",
@@ -58,7 +59,7 @@ files = [
   ".github/workflows/ci.yaml",
   ".github/workflows/publish-release.yaml",
   ".editorconfig",
-  ".markdownlint-cli2.yaml",
+  ".config/rumdl.toml",
 ]
 
 [expect.contains]

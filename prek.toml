@@ -42,16 +42,12 @@ hooks = [{ id = "actionlint-system" }]
 # into every consumer — this repository's own README.md gets the same
 # treatment.
 [[repos]]
-repo = "https://github.com/DavidAnson/markdownlint-cli2"
-rev = "v0.23.2"
+repo = "https://github.com/rvben/rumdl-pre-commit"
+rev = "v0.3.2"
 
 [[repos.hooks]]
-id = "markdownlint-cli2"
+id = "rumdl-check"
 files = "^README\\.md$"
-# For the pretty output formatter .markdownlint-cli2.yaml configures — it
-# needs to resolve alongside markdownlint-cli2 itself, and this installs it
-# into the same node environment as the hook.
-additional_dependencies = ["markdownlint-cli2-formatter-pretty"]
 
 [[repos]]
 repo = "https://github.com/crate-ci/typos"

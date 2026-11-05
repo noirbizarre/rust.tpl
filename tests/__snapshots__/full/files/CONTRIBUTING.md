@@ -125,7 +125,7 @@ optional comprehensive check.
 | `mise format` | Format |
 | `mise lint` | Clippy, warnings denied |
 | `mise lint:actions` | actionlint over the workflows |
-| `mise lint:md` | markdownlint over AGENTS.md, CONTRIBUTING.md, README.md and docs/ |
+| `mise lint:md` | rumdl over AGENTS.md, CONTRIBUTING.md, README.md and docs/ |
 | `mise spell` | typos |
 | `mise snapshots` | Review pending insta snapshots |
 | `mise check` | Everything that does not modify the working tree |
