@@ -107,6 +107,16 @@ link time and build IO while keeping line-number backtraces. Check/Clippy and
 nextest need different compiler outputs; unchanged repeats can reuse their own
 outputs, but switching between them can still require compilation.
 
+### Windows build storage
+
+Generated CI tests, PR builds and release builds share a Windows-only composite action at `.github/actions/setup-windows/`.
+It disables Defender on the disposable runner, configures ReFS build storage and exports `TAR_OPTIONS` once for the job.
+An ordinary directory on the volume is linked at the checkout's `target/`, keeping coverage, test reports and release staging
+paths intact while excluding protected volume metadata from Cargo-cache traversal. Windows cache steps dereference that
+junction on save and preserve it on restore; a pre-build check rejects a restore that replaces it with an ordinary directory.
+The dynamically allocated volume has a 64 GB logical ceiling, but its actual growth still needs free space on the host disk.
+The template's own Windows smoke jobs exercise x64 and ARM runners with both cache backends, including archive round trips.
+
 ### Development prereleases
 
 Opt in with `rolling_prerelease = true`. Successful main-push CI builds and publishes

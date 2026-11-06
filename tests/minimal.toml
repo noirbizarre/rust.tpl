@@ -73,7 +73,20 @@ files = [
   "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
 ]
 "mise.toml" = ['tasks."tpl:check"', "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md"', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = "prek install"']
-".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning", "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache"]
+".github/workflows/ci.yaml" = [
+  "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
+  "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
+  "run: ./.github/actions/setup-windows/verify.ps1",
+]
+".github/actions/setup-windows/action.yaml" = [
+  "using: composite", "Disable Windows Defender real-time scanning", "samypr100/setup-dev-drive@v4",
+  "drive-size: 64GB", "drive-type: Dynamic", "drive-format: ReFS", "New-Item -ItemType Junction",
+  'mount-path: ${{ runner.temp }}/rust-build', '>> $env:GITHUB_ENV',
+  "--dereference --keep-directory-symlink",
+]
+".github/actions/setup-windows/verify.ps1" = [
+  "$target.LinkType -ne 'Junction'", "$volume.FileSystem -ne 'ReFS'",
+]
 "CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "isolated Python environment", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents and Pull requests read/write permissions"]
 # docs = false, so the prek hook and mise task must not reach into docs/.
 "prek.toml" = ['README\\.md)$', 'repo = "https://github.com/rvben/rumdl-pre-commit"', 'id = "rumdl-check"', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
@@ -92,7 +105,8 @@ files = [
 # publish-release.yaml:70): publish = false must drop the whole crates.io
 # steps, not merely leave them unexercised.
 # msrv = false must drop the job from ci.yaml, not merely leave it unexercised.
-".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "jdx/mr-boxington-action@"]
+".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "jdx/mr-boxington-action@", "runner.arch", "TAR_OPTIONS:", "Set-MpPreference"]
+".github/actions/setup-windows/action.yaml" = ["runner.arch"]
 
 [commands]
 rendered = [

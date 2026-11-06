@@ -18,7 +18,11 @@ docs = false
   'postinstall = "prek install"',
 ]
 "CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo"]
-".github/workflows/ci.yaml" = ["jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets"]
+".github/workflows/ci.yaml" = [
+  "jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets",
+  "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
+  "run: ./.github/actions/setup-windows/verify.ps1",
+]
 ".github/workflows/publish-release.yaml" = ["jdx/mr-boxington-action@", "backend: local", "mbx publish --locked"]
 
 [expect.lacks]
