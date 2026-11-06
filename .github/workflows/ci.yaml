@@ -99,7 +99,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # The action is static template content, so test the exact file consumers receive.
-      - uses: ./template/.github/actions/setup-windows
+      - name: Tune Windows runner
+        uses: ./template/.github/actions/setup-windows
         if: runner.os == 'Windows'
       - uses: dtolnay/rust-toolchain@stable
       - name: Create a small build workload
