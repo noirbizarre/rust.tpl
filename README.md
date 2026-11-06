@@ -36,6 +36,7 @@ new or existing — and keeps them updatable with `git tpl update`.
 Coverage reports and raw LLVM profiles are uploaded as per-OS `coverage` artifacts
 retained for seven days, including when tests or report generation fail, so the
 available coverage data can be downloaded for local diagnosis.
+Reruns replace that OS's artifact within the same workflow run.
 
 ## Project shapes
 

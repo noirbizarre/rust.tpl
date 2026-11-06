@@ -90,6 +90,7 @@ files = [
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
   "name: Upload coverage artifacts\n        if: always()", "retention-days: 7",
+  "name: coverage-${{ matrix.os.flag }}", "overwrite: true",
   "target/llvm-cov-target/*.profraw", "target/llvm-cov-target/*-profraw-list",
 ]
 ".github/workflows/prepare-release.yaml" = [
@@ -179,7 +180,7 @@ files = [
 "prek.toml" = ["commitlint", "markdownlint"]
 "mise.toml" = ["markdownlint", "npx"]
 ".gitignore" = ["commitlint", "node_modules/"]
-".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts"]
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "github.run_attempt"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]

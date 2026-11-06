@@ -140,7 +140,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-${{ matrix.os.flag }}-${{ github.run_attempt }}
+          name: coverage-${{ matrix.os.flag }}
+          # Reruns share the workflow run's artifact namespace.
+          overwrite: true
           path: |
             lcov.info
             target/llvm-cov-target/*.profraw
