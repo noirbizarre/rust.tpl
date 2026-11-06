@@ -107,8 +107,11 @@ class FailureDiagnostics(unittest.TestCase):
         program = (
             "import sys; "
             f"print('warning: ' + {str(profile)!r} + ': invalid instrumentation profile data'); "
-            "print('x' * 3000000); sys.exit(42)"
+            "print(('x' * 1000 + '\\n') * 3000); sys.exit(42)"
         )
+        # A script avoids Windows' extra native-to-MSYS command-line escaping.
+        producer = self.workspace / "produce-output.py"
+        producer.write_text(program, encoding="utf-8")
         helper = SCRIPT.with_name("capture-ci-output.sh")
         bash = "bash"
         if os.name == "nt":
@@ -118,7 +121,7 @@ class FailureDiagnostics(unittest.TestCase):
             bash = str(next(parent / "bin/bash.exe" for parent in git.parents
                             if (parent / "bin/bash.exe").is_file()))
         result = subprocess.run(
-            [bash, helper.as_posix(), log.as_posix(), sys.executable, "-c", program],
+            [bash, helper.as_posix(), log.as_posix(), Path(sys.executable).as_posix(), producer.as_posix()],
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=30,
         )
         self.assertEqual(result.returncode, 42, result.stderr[-4096:].decode("utf-8", errors="replace"))
