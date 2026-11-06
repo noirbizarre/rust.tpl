@@ -133,7 +133,10 @@ jobs:
 
       - name: Run tests (with coverage)
         run: |
-          cargo llvm-cov nextest --profile ci
+          # --no-report also disables automatic cleaning: discard cached workspace artifacts
+          # and profiles explicitly so earlier runs cannot contaminate this run's coverage.
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov nextest --profile ci --no-report
           cargo llvm-cov report --lcov --output-path lcov.info
 
       - name: Upload coverage to Codecov
