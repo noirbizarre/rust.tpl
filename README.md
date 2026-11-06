@@ -109,12 +109,13 @@ outputs, but switching between them can still require compilation.
 
 ### Windows build storage
 
-Generated CI tests, PR builds and release builds use a ReFS Dev Drive on x64 Windows runners to reduce build I/O latency.
+Generated CI tests, PR builds and release builds share a Windows-only composite action at `.github/actions/setup-windows/`.
+It disables Defender on the disposable runner, configures ReFS build storage and exports `TAR_OPTIONS` once for the job.
 An ordinary directory on the volume is linked at the checkout's `target/`, keeping coverage, test reports and release staging
 paths intact while excluding protected volume metadata from Cargo-cache traversal. Windows cache steps dereference that
 junction on save and preserve it on restore; a pre-build check rejects a restore that replaces it with an ordinary directory.
 The dynamically allocated volume has a 64 GB logical ceiling, but its actual growth still needs free space on the host disk.
-ARM Windows keeps its existing storage because setup-dev-drive does not document support for that runner.
+The template's own Windows smoke jobs exercise x64 and ARM runners with both cache backends, including archive round trips.
 
 ### Development prereleases
 

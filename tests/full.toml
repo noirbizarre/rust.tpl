@@ -87,9 +87,8 @@ files = [
   "      matrix:\n        build:\n          - { label: linux-amd64, target: x86_64-unknown-linux-gnu, runner: ubuntu-latest, cross: true }",
   "runs-on: ${{ matrix.build.runner }}",
   "targets: ${{ matrix.build.target }}",
-  "samypr100/setup-dev-drive@v4", "New-Item -ItemType Junction", "Verify Windows build storage",
-  "if: runner.os == 'Windows' && runner.arch == 'X64'",
-  "TAR_OPTIONS: ${{ runner.os == 'Windows' && runner.arch == 'X64' && '--dereference --keep-directory-symlink' || '' }}",
+  "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
+  "run: ./.github/actions/setup-windows/verify.ps1",
 ]
 ".github/workflows/prepare-release.yaml" = [
   "cargo update --workspace",
@@ -118,8 +117,8 @@ files = [
   "Build and stage the asset",
   "matrix.build.label",
   "vars.PRERELEASE_NAME || 'development'",
-  "samypr100/setup-dev-drive@v4", "New-Item -ItemType Junction", "Verify Windows build storage",
-  "if: runner.os == 'Windows' && runner.arch == 'X64'",
+  "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
+  "run: ./.github/actions/setup-windows/verify.ps1",
 ]
 "zensical.toml" = ['accent = "deep orange"']
 "mise.toml" = ["docs:build", "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md" "docs/"', 'tools = { rumdl = "0.3.2" }', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"']

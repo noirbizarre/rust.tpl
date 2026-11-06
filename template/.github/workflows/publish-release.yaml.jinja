@@ -62,26 +62,9 @@ jobs:
           # Every matrix leg uses the immutable run commit, even if a tag or main moves later.
           ref: ${{ github.sha }}
           persist-credentials: false
-      # Keep build I/O on ReFS without changing the release staging paths.
-      # Setup precedes cache actions so their post-save hooks run before dismount.
-      - name: Set up Windows build storage
-        if: runner.os == 'Windows' && runner.arch == 'X64'
-        uses: samypr100/setup-dev-drive@v4
-        with:
-          # This is a dynamic ceiling, not reserved space on the backing disk.
-          drive-size: 64GB
-          drive-type: Dynamic
-          drive-format: ReFS
-          drive-path: ${{ github.workspace }}/../rust-build.vhdx
-          mount-path: ${{ runner.temp }}/rust-build
-
-      - name: Link Windows build storage
-        if: runner.os == 'Windows' && runner.arch == 'X64'
-        shell: pwsh
-        run: |
-          # A subdirectory keeps protected volume metadata out of cache pruning.
-          $target = New-Item -ItemType Directory -Path "$env:DEV_DRIVE/target" -ErrorAction Stop
-          New-Item -ItemType Junction -Path "$env:GITHUB_WORKSPACE/target" -Target $target.FullName -ErrorAction Stop
+      # Setup precedes caches so their post-save hooks run before the drive is dismounted.
+      - uses: ./.github/actions/setup-windows
+        if: runner.os == 'Windows'
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -96,9 +79,6 @@ jobs:
 {%- else %}
 {%- raw %}
       - uses: Swatinem/rust-cache@v2
-        env:
-          # Save the junction's contents and retain the junction when restoring.
-          TAR_OPTIONS: ${{ runner.os == 'Windows' && runner.arch == 'X64' && '--dereference --keep-directory-symlink' || '' }}
         with:
           key: release-${{ matrix.build.target }}
 {%- endraw %}
@@ -115,14 +95,9 @@ jobs:
         if: endsWith(matrix.build.target, 'windows-msvc')
         run: echo "RUSTFLAGS=${RUSTFLAGS} -C target-feature=+crt-static" >> "$GITHUB_ENV"
       - name: Verify Windows build storage
-        if: runner.os == 'Windows' && runner.arch == 'X64'
+        if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          # Cache extraction must not silently replace the junction with an NTFS directory.
-          $target = Get-Item "$env:GITHUB_WORKSPACE/target" -ErrorAction Stop
-          if ($target.LinkType -ne 'Junction') {
-            throw 'The Cargo target junction was replaced; check the cache TAR_OPTIONS before retrying.'
-          }
+        run: ./.github/actions/setup-windows/verify.ps1
       - name: Build and stage the asset
         env:
           TARGET: ${{ matrix.build.target }}

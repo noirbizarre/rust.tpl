@@ -99,34 +99,14 @@ jobs:
             flag: macos
     steps:
       - uses: actions/checkout@v7
-      # Keep build I/O on ReFS without moving the checkout or changing report paths.
-      # Setup precedes cache actions so their post-save hooks run before dismount.
-      - name: Set up Windows build storage
-        if: runner.os == 'Windows' && runner.arch == 'X64'
-        uses: samypr100/setup-dev-drive@v4
-        with:
-          # This is a dynamic ceiling, not reserved space on the backing disk.
-          drive-size: 64GB
-          drive-type: Dynamic
-          drive-format: ReFS
-          drive-path: ${{ github.workspace }}/../rust-build.vhdx
-          mount-path: ${{ runner.temp }}/rust-build
-
-      - name: Link Windows build storage
-        if: runner.os == 'Windows' && runner.arch == 'X64'
-        shell: pwsh
-        run: |
-          # A subdirectory keeps protected volume metadata out of cache pruning.
-          $target = New-Item -ItemType Directory -Path "$env:DEV_DRIVE/target" -ErrorAction Stop
-          New-Item -ItemType Junction -Path "$env:GITHUB_WORKSPACE/target" -Target $target.FullName -ErrorAction Stop
+      # Setup precedes caches so their post-save hooks run before the drive is dismounted.
+      - uses: ./.github/actions/setup-windows
+        if: runner.os == 'Windows'
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
-        env:
-          # Save the junction's contents and retain the junction when restoring.
-          TAR_OPTIONS: ${{ runner.os == 'Windows' && runner.arch == 'X64' && '--dereference --keep-directory-symlink' || '' }}
 
       # mold is Linux-only, so it only applies to this one leg of the matrix.
       - name: Install mold (faster Linux linker)
@@ -141,27 +121,10 @@ jobs:
         with:
           cache: true
 
-      - name: Disable Windows Defender real-time scanning
-        if: matrix.os.flag == 'windows'
-        shell: pwsh
-        # A Rust test suite spawns many short-lived processes and writes just as
-        # many small files into fresh temp directories. Defender's real-time
-        # protection inspects both, and that inspection is the standard,
-        # documented reason this workload is dramatically slower on
-        # `windows-latest` than on Linux/macOS — matching the "~4x slower" this
-        # project already lives with per `.github/codecov.yml`. The runner is
-        # destroyed at the end of the job, so there is nothing to re-enable.
-        run: Set-MpPreference -DisableRealtimeMonitoring $true
-
       - name: Verify Windows build storage
-        if: runner.os == 'Windows' && runner.arch == 'X64'
+        if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          # Cache extraction must not silently replace the junction with an NTFS directory.
-          $target = Get-Item "$env:GITHUB_WORKSPACE/target" -ErrorAction Stop
-          if ($target.LinkType -ne 'Junction') {
-            throw 'The Cargo target junction was replaced; check the cache TAR_OPTIONS before retrying.'
-          }
+        run: ./.github/actions/setup-windows/verify.ps1
 
       - name: Run tests (with coverage)
         run: |
