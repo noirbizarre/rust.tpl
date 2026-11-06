@@ -1,7 +1,7 @@
 # git-tpl snapshot 1
 # case: workspace
 # Written by `git tpl test --write`. Do not edit by hand.
-100644 77dda3ddd45e28d25456054aa3306e3aee27e8dbecf8b9d2204b9e36f53609b8 550 .config/nextest.toml
+100644 4febcd13ac0c0827acbe24a3c3e1f2705df51acc3c78b052afc8c0c0e52d12f1 472 .config/nextest.toml
 100644 16177e9550b170cdb4b868a027377b7b3e563f9d131a5643d4a457ef947b3881 869 .config/rumdl.toml
 100644 098eecde769f27730038a8d8452efc355e2ce38a5756590745b862656dc9bf15 37 .cz.toml
 100644 ad9ab2a77b6f0a682e052befa15deb92789f3a46a295c11713ce2ddcf77512df 391 .editorconfig
