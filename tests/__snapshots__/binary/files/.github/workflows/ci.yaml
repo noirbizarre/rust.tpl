@@ -127,48 +127,25 @@ jobs:
         shell: pwsh
         run: ./.github/actions/setup-windows/verify.ps1
 
-      - name: Clean coverage artifacts
-        id: coverage_clean
+      - name: Run tests (with coverage)
         run: |
-          mkdir -p "$RUNNER_TEMP/ci-diagnostics"
           # --no-report also disables automatic cleaning: discard cached workspace artifacts
           # and profiles explicitly so earlier runs cannot contaminate this run's coverage.
-          bash .github/scripts/capture-ci-output.sh "$RUNNER_TEMP/ci-diagnostics/clean.log" cargo llvm-cov clean --workspace
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov nextest --profile ci --no-report
+          cargo llvm-cov report --lcov --output-path lcov.info
 
-      - name: Run tests (with coverage)
-        id: coverage_tests
-        # The capture helper preserves failures while bounding retained output.
-        run: bash .github/scripts/capture-ci-output.sh "$RUNNER_TEMP/ci-diagnostics/tests.log" cargo llvm-cov nextest --profile ci --no-report
-
-      - name: Generate coverage report
-        id: coverage_report
-        run: bash .github/scripts/capture-ci-output.sh "$RUNNER_TEMP/ci-diagnostics/report.log" cargo llvm-cov report --lcov --output-path lcov.info
-
-      - name: Set up failure diagnostics
-        if: &coverage_failed >-
-          ${{ failure() && (steps.coverage_clean.outcome == 'failure' ||
-          steps.coverage_tests.outcome == 'failure' || steps.coverage_report.outcome == 'failure') }}
-        uses: actions/setup-python@v6
-        timeout-minutes: 2
-        with:
-          python-version: '3.x'
-
-      - name: Collect failure diagnostics
-        if: *coverage_failed
-        timeout-minutes: 2
-        env:
-          COVERAGE_CLEAN_OUTCOME: ${{ steps.coverage_clean.outcome }}
-          COVERAGE_TESTS_OUTCOME: ${{ steps.coverage_tests.outcome }}
-          COVERAGE_REPORT_OUTCOME: ${{ steps.coverage_report.outcome }}
-        run: python .github/scripts/collect-ci-diagnostics.py --output "$RUNNER_TEMP/ci-diagnostics"
-
-      # Upload independently of collection success: even partial evidence is useful.
-      - name: Upload failure diagnostics
-        if: *coverage_failed
+      # Keep raw inputs even when a corrupt profile prevents generating lcov.info.
+      - name: Upload coverage artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ci-diagnostics-${{ matrix.os.flag }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-diagnostics/
+          name: coverage-${{ matrix.os.flag }}-${{ github.run_attempt }}
+          path: |
+            lcov.info
+            target/llvm-cov-target/*.profraw
+            target/llvm-cov-target/*.profdata
+            target/llvm-cov-target/*-profraw-list
           retention-days: 7
           if-no-files-found: warn
 
