@@ -107,6 +107,15 @@ link time and build IO while keeping line-number backtraces. Check/Clippy and
 nextest need different compiler outputs; unchanged repeats can reuse their own
 outputs, but switching between them can still require compilation.
 
+### Windows build storage
+
+Generated CI tests, PR builds and release builds use a ReFS Dev Drive on x64 Windows runners to reduce build I/O latency.
+An ordinary directory on the volume is linked at the checkout's `target/`, keeping coverage, test reports and release staging
+paths intact while excluding protected volume metadata from Cargo-cache traversal. Windows cache steps dereference that
+junction on save and preserve it on restore; a pre-build check rejects a restore that replaces it with an ordinary directory.
+The dynamically allocated volume has a 64 GB logical ceiling, but its actual growth still needs free space on the host disk.
+ARM Windows keeps its existing storage because setup-dev-drive does not document support for that runner.
+
 ### Development prereleases
 
 Opt in with `rolling_prerelease = true`. Successful main-push CI builds and publishes

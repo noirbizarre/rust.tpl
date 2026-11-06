@@ -18,7 +18,11 @@ docs = false
   'postinstall = "prek install"',
 ]
 "CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo"]
-".github/workflows/ci.yaml" = ["jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets"]
+".github/workflows/ci.yaml" = [
+  "jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets",
+  "samypr100/setup-dev-drive@v4", "New-Item -ItemType Junction", "Verify Windows build storage",
+  "TAR_OPTIONS: ${{ runner.os == 'Windows' && runner.arch == 'X64' && '--dereference --keep-directory-symlink' || '' }}",
+]
 ".github/workflows/publish-release.yaml" = ["jdx/mr-boxington-action@", "backend: local", "mbx publish --locked"]
 
 [expect.lacks]

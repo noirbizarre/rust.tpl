@@ -73,7 +73,15 @@ files = [
   "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
 ]
 "mise.toml" = ['tasks."tpl:check"', "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md"', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = "prek install"']
-".github/workflows/ci.yaml" = ["Disable Windows Defender real-time scanning", "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache"]
+".github/workflows/ci.yaml" = [
+  "Disable Windows Defender real-time scanning", "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
+  "samypr100/setup-dev-drive@v4", "drive-size: 64GB", "drive-type: Dynamic", "drive-format: ReFS",
+  "if: runner.os == 'Windows' && runner.arch == 'X64'",
+  'mount-path: ${{ runner.temp }}/rust-build',
+  'New-Item -ItemType Junction',
+  "TAR_OPTIONS: ${{ runner.os == 'Windows' && runner.arch == 'X64' && '--dereference --keep-directory-symlink' || '' }}",
+  "Verify Windows build storage",
+]
 "CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "isolated Python environment", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents and Pull requests read/write permissions"]
 # docs = false, so the prek hook and mise task must not reach into docs/.
 "prek.toml" = ['README\\.md)$', 'repo = "https://github.com/rvben/rumdl-pre-commit"', 'id = "rumdl-check"', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
