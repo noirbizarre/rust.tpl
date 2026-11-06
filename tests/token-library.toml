@@ -1,0 +1,17 @@
+[answers]
+crate = "token-library-example"
+description = "Token authentication for source-only publication"
+kind = "library"
+gh_ship_token_mode = "token"
+publish = true
+docs = false
+msrv = false
+
+[expect.contains]
+".github/workflows/publish-release.yaml" = ["    permissions:\n      contents: read\n      id-token: write", "cargo publish --locked"]
+
+[expect.lacks]
+".github/workflows/publish-release.yaml" = ["create-github-app-token", "steps.app-token", "contents: write", "Upload assets", "  build:"]
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]

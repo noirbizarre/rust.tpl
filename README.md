@@ -148,9 +148,10 @@ Both workflow entry points accept only `ref`. `.github/ship.yml` opts into gh-sh
 `release.publish_input: ref`, which dispatches stable releases with a qualified tag ref.
 gh-ship owns the stable draft-release lifecycle. Prereleases use `gh release view` or
 `gh release create`; both channels upload with `gh release upload "$TAG" dist/* --clobber`.
-Both channels use the release environment's GitHub App. The development release
-never becomes Latest or publishes to crates.io. Homebrew/AUR automatically run on stable
-`released` events, with manual tag-based reruns available to maintainers.
+Both channels use the selected `gh_ship_token_mode` credentials. The development release
+never becomes Latest or publishes to crates.io. With App or PAT authentication,
+Homebrew/AUR automatically run on stable `released` events, with manual tag-based
+reruns available to maintainers.
 
 Downloads are mutable and asset replacement is not atomic. Verify checksums,
 retry mismatches during updates, and record the source SHA from release notes and the rolling tag.
@@ -162,6 +163,25 @@ This draft proposal is being trialled independently in Bee before upstream accep
 Bee uses its existing reduced-debug `ci` profile for PR builds; the template uses
 the dev profile with line-table debug information. Main release builds use the
 same optimized settings.
+
+### Release authentication
+
+`gh_ship_token_mode` selects `app` (the default) or `token`, matching python.tpl.
+App mode uses the `release` environment's `APP_CLIENT_ID` variable and
+`APP_PRIVATE_KEY` secret. Install the App with Contents, Actions, Pull requests
+and Issues read/write permissions. gh-ship refreshes its orchestration tokens,
+and preparation uses `gh ship sign` for a verified release commit.
+
+Token mode uses the optional `SHIP_TOKEN` PAT from the `release` environment,
+falling back to `github.token`. A fine-grained PAT needs Contents, Actions,
+Pull requests and Issues read/write permissions; a classic PAT needs `repo` and
+`workflow` scopes. To use the default token, enable **Allow GitHub Actions to
+create and approve pull requests** in repository settings and organization policy.
+Release PRs and branch pushes made with the default token do not trigger CI;
+use a PAT when those runs are required. Token mode does not automatically sign
+preparation commits, since `gh ship sign` requires a bot token and fails with a PAT.
+Releases created with the default token also do not trigger Homebrew/AUR workflows;
+use a PAT for automatic packaging updates or dispatch those workflows manually.
 
 ## What it does not render
 

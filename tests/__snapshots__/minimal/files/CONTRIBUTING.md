@@ -131,7 +131,12 @@ no CI results. That means the repository needs:
 - a `release` environment holding the variable `APP_CLIENT_ID` and the secret
   `APP_PRIVATE_KEY`.
 - the corresponding GitHub App installed on `noirbizarre/minimal-example` with
-  Contents and Pull requests read/write permissions.
+  Contents, Actions, Pull requests and Issues read/write permissions.
+
+Preparation runs `gh ship sign` to re-create the release commit with GitHub's signature.
+
+Also configure:
+
 - squash-merge settings of `squash_merge_commit_title: PR_TITLE` and
   `squash_merge_commit_message: BLANK`, so the squash commit subject is the
   Conventional Commit title from `.github/ship.yml`.

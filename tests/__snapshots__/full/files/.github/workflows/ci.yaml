@@ -261,7 +261,7 @@ jobs:
   prerelease:
     name: 🚀 Development prerelease
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'noirbizarre/full-example' }}
-    # The publisher's stable-only crates.io steps require this caller permission too.
+    # Reusable workflows cannot elevate permissions beyond their caller.
     permissions:
       contents: read
       id-token: write

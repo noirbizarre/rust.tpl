@@ -1,3 +1,4 @@
+{%- set release_token = 'steps.app-token.outputs.token' if gh_ship_token_mode == 'app' else 'secrets.SHIP_TOKEN || github.token' %}
 {%- raw %}
 name: 📦 Publish Release
 run-name: 📦 Publish Release ${{ inputs.ref || github.ref }}
@@ -151,10 +152,16 @@ jobs:
       name: release
       url: ${{ '{{' }} github.server_url {{ '}}' }}/${{ '{{' }} github.repository {{ '}}' }}/releases/tag/${{ '{{' }} env.TAG {{ '}}' }}
 {%- endif %}
-{%- if publish %}
+{%- if publish or (has_bin and gh_ship_token_mode == 'token') %}
     permissions:
+{%- if has_bin and gh_ship_token_mode == 'token' %}
+      contents: write
+{%- else %}
       contents: read
+{%- endif %}
+{%- if publish %}
       id-token: write
+{%- endif %}
 {%- endif %}
     steps:
 {%- if has_bin or publish %}
@@ -220,34 +227,36 @@ jobs:
       - name: Checksums
         working-directory: dist
         run: sha256sum -- * > SHA256SUMS
+{%- if gh_ship_token_mode == 'app' %}
       - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           client-id: ${{ '{{' }} vars.APP_CLIENT_ID {{ '}}' }}
           private-key: ${{ '{{' }} secrets.APP_PRIVATE_KEY {{ '}}' }}
+{%- endif %}
       - name: Ensure the prerelease exists
         if: ${{ '{{' }} !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         env:
-          GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
+          GH_TOKEN: ${{ '{{' }} {{ release_token }} {{ '}}' }}
         run: |
           gh release view "$TAG" >/dev/null 2>&1 ||
             gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" \
               --notes 'Development build' --prerelease --latest=false
       - name: Upload assets to the release
         env:
-          GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
+          GH_TOKEN: ${{ '{{' }} {{ release_token }} {{ '}}' }}
         run: gh release upload "$TAG" dist/* --clobber
       - name: Update the rolling prerelease tag
         if: ${{ '{{' }} !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         env:
-          GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
+          GH_TOKEN: ${{ '{{' }} {{ release_token }} {{ '}}' }}
         run: >-
           gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/${TAG}"
           -f sha="$GITHUB_SHA" -F force=true --silent
       - name: Finalize the prerelease
         if: ${{ '{{' }} !startsWith(inputs.ref || github.ref, 'refs/tags/') {{ '}}' }}
         env:
-          GH_TOKEN: ${{ '{{' }} steps.app-token.outputs.token {{ '}}' }}
+          GH_TOKEN: ${{ '{{' }} {{ release_token }} {{ '}}' }}
         run: |
           gh release edit "$TAG" --title "$TAG" --prerelease --draft=false --latest=false \
             --notes "Main SHA: ${GITHUB_SHA}. CI: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

@@ -1,0 +1,17 @@
+[answers]
+crate = "token-workspace-example"
+description = "Token authentication with no publisher operations"
+kind = "workspace"
+gh_ship_token_mode = "token"
+publish = false
+docs = false
+msrv = false
+
+[expect.contains]
+".github/workflows/publish-release.yaml" = ["Nothing to publish."]
+
+[expect.lacks]
+".github/workflows/publish-release.yaml" = ["create-github-app-token", "steps.app-token", "contents: write", "id-token: write", "environment:", "cargo publish", "  build:"]
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]

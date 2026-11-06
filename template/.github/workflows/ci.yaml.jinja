@@ -348,11 +348,17 @@ jobs:
   prerelease:
     name: 🚀 Development prerelease
     if: ${{ '{{' }} github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == '{{ owner }}/{{ crate }}' {{ '}}' }}
-{%- if publish %}
-    # The publisher's stable-only crates.io steps require this caller permission too.
+{%- if publish or gh_ship_token_mode == 'token' %}
+    # Reusable workflows cannot elevate permissions beyond their caller.
     permissions:
+{%- if gh_ship_token_mode == 'token' %}
+      contents: write
+{%- else %}
       contents: read
+{%- endif %}
+{%- if publish %}
       id-token: write
+{%- endif %}
 {%- endif %}
     uses: ./.github/workflows/publish-release.yaml
     # Environment secrets also require forwarding across workflow_call.

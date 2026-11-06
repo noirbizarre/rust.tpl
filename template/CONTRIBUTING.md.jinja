@@ -217,6 +217,7 @@ fails on the PR rather than mid-release.
 
 ### Repository requirements
 
+{% if gh_ship_token_mode == 'app' -%}
 The release jobs authenticate as a GitHub App, not with `GITHUB_TOKEN` — the
 default token cannot trigger workflows, so a Release PR it authored would show
 no CI results. That means the repository needs:
@@ -224,7 +225,31 @@ no CI results. That means the repository needs:
 - a `release` environment holding the variable `APP_CLIENT_ID` and the secret
   `APP_PRIVATE_KEY`.
 - the corresponding GitHub App installed on `{{ owner }}/{{ crate }}` with
-  Contents and Pull requests read/write permissions.
+  Contents, Actions, Pull requests and Issues read/write permissions.
+
+Preparation runs `gh ship sign` to re-create the release commit with GitHub's signature.
+{%- else -%}
+The release jobs use `SHIP_TOKEN` from the `release` environment when configured,
+otherwise the workflow's `github.token`. No GitHub App is required.
+
+- Create a `release` environment, optionally holding a `SHIP_TOKEN` PAT.
+- A fine-grained PAT needs Contents, Actions, Pull requests and Issues read/write
+  permissions. A classic PAT needs `repo` and `workflow` scopes.
+- For the default token, enable **Allow GitHub Actions to create and approve pull requests**
+  in repository settings; organization policy must also allow it.
+
+The default token cannot trigger CI for the Release PR or release-branch pushes.
+Use a PAT when those runs are required. Preparation commits are not automatically
+signed in token mode: `gh ship sign` requires a bot token and fails with a PAT.
+{%- if homebrew or aur %}
+
+Releases created with the default token also do not trigger Homebrew/AUR workflows.
+Use a PAT for automatic packaging updates or dispatch those workflows manually.
+{%- endif %}
+{%- endif %}
+
+Also configure:
+
 - squash-merge settings of `squash_merge_commit_title: PR_TITLE` and
   `squash_merge_commit_message: BLANK`, so the squash commit subject is the
   Conventional Commit title from `.github/ship.yml`.
@@ -244,7 +269,7 @@ no CI results. That means the repository needs:
 {%- if rolling_prerelease %}
 
 The development prerelease caller uses `secrets: inherit` so the reusable
-publisher can access `APP_PRIVATE_KEY`. GitHub requires secret forwarding
+publisher can access {% if gh_ship_token_mode == 'app' %}`APP_PRIVATE_KEY`{% else %}`SHIP_TOKEN` when configured{% endif %}. GitHub requires secret forwarding
 across `workflow_call` even when the secret exists only in the publisher's
 `release` environment.
 {%- endif %}

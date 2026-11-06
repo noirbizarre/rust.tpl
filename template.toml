@@ -156,6 +156,13 @@ default = false
 when = "{{ has_bin }}"
 default_when_skipped = true
 
+[questions.gh_ship_token_mode]
+type = "choice"
+prompt = "How should gh-ship authenticate?"
+help = "app: gh-ship mints and refreshes GitHub App tokens. token: use a SHIP_TOKEN PAT or the workflow's GitHub token, without an App."
+choices = ["app", "token"]
+default = "app"
+
 [questions.publish]
 type = "boolean"
 prompt = "Publish to crates.io?"
