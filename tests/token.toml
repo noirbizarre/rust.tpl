@@ -1,0 +1,40 @@
+# Default workflow-token fallback, including rolling publication without OIDC.
+[answers]
+crate = "token-example"
+description = "Token authentication without crates.io"
+kind = "binary"
+gh_ship_token_mode = "token"
+publish = false
+docs = false
+msrv = false
+rolling_prerelease = true
+
+[expect.contains]
+".github/workflows/ship.yaml" = [
+  "    permissions:\n      contents: write\n      actions: write\n      pull-requests: write\n      issues: write",
+  "GH_TOKEN: ${{ secrets.SHIP_TOKEN || github.token }}", "SHIP_RUN_TIMEOUT: 7200",
+]
+".github/workflows/prepare-release.yaml" = [
+  "    permissions:\n      contents: write",
+  "token: ${{ secrets.SHIP_TOKEN || github.token }}",
+  "GITHUB_TOKEN: ${{ secrets.SHIP_TOKEN || github.token }}",
+  "git push origin HEAD", "if-no-files-found: error",
+]
+".github/workflows/publish-release.yaml" = [
+  "    permissions:\n      contents: write",
+  "GH_TOKEN: ${{ secrets.SHIP_TOKEN || github.token }}",
+  "Ensure the prerelease exists", "Upload assets to the release",
+  "Update the rolling prerelease tag", "Finalize the prerelease",
+]
+".github/workflows/ci.yaml" = ["    permissions:\n      contents: write\n    uses: ./.github/workflows/publish-release.yaml"]
+"CONTRIBUTING.md" = ["No GitHub App is required", "Allow GitHub Actions to create and approve pull requests", "commits are not automatically", "`SHIP_TOKEN` when configured"]
+
+[expect.lacks]
+".github/workflows/ship.yaml" = ["SHIP_APP_", "APP_CLIENT_ID", "APP_PRIVATE_KEY", "steps.app-token"]
+".github/workflows/prepare-release.yaml" = ["create-github-app-token", "APP_CLIENT_ID", "APP_PRIVATE_KEY", "steps.app-token", "gh ship sign", "Install gh-ship"]
+".github/workflows/publish-release.yaml" = ["create-github-app-token", "APP_CLIENT_ID", "APP_PRIVATE_KEY", "steps.app-token", "id-token: write", "cargo publish"]
+".github/workflows/ci.yaml" = ["id-token: write"]
+"CONTRIBUTING.md" = ["APP_CLIENT_ID", "APP_PRIVATE_KEY"]
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate", "mise run lint:md"]

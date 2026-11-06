@@ -13,8 +13,21 @@
 
 ## Before your first push
 
+{% if gh_ship_token_mode == 'app' -%}
 - Create a GitHub `release` environment with variable `APP_CLIENT_ID` and secret `APP_PRIVATE_KEY`.
-  Install that GitHub App on `{{ owner }}/{{ crate }}` with Contents and Pull requests read/write permissions.
+  Install that GitHub App on `{{ owner }}/{{ crate }}` with Contents, Actions, Pull requests and Issues read/write permissions.
+{% else -%}
+- Create a GitHub `release` environment. Optionally add a `SHIP_TOKEN` PAT; otherwise releases use `github.token`.
+  A fine-grained PAT needs Contents, Actions, Pull requests and Issues read/write permissions;
+  a classic PAT needs `repo` and `workflow` scopes.
+- To use the default token, enable **Allow GitHub Actions to create and approve pull requests**
+  in repository settings (organization policy must also allow it).
+  Release PRs and branch pushes made with the default token do not trigger CI; use a PAT if CI is required.
+{% if homebrew or aur -%}
+- Releases created with the default token do not trigger Homebrew/AUR workflows.
+  Use a PAT for automatic packaging updates or dispatch those workflows manually.
+{% endif -%}
+{% endif -%}
 - Configure squash merges with `squash_merge_commit_title: PR_TITLE` and `squash_merge_commit_message: BLANK`.
 - Onboard `{{ owner }}/{{ crate }}` to Codecov.
 {% if docs -%}

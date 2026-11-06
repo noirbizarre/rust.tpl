@@ -12,8 +12,7 @@ on:
   pull_request:
     types: [closed]
 
-# The App authenticates release operations; the default token only needs to
-# check out the repository and install the published extension.
+# Release operations receive their credentials separately below.
 permissions:
   contents: read
 
@@ -27,16 +26,22 @@ concurrency:
 jobs:
   ship:
     name: 🚢 Ship
-    # Public forks do not have the App/release secrets this job requires.
+    # Only ship releases from the configured owner's repository.
 {%- endraw %}
     if: github.repository_owner == '{{ owner }}'
+{%- if gh_ship_token_mode == 'token' %}
+    permissions:
+      contents: write
+      actions: write
+      pull-requests: write
+      issues: write
+{%- endif %}
 {%- raw %}
     runs-on: ubuntu-latest
-    # Renewable App tokens allow long builds; leave orchestration headroom
-    # beyond the two-hour dispatched-workflow wait configured below.
+    # Leave orchestration headroom beyond the two-hour workflow wait below.
     timeout-minutes: 150
 
-    # The environment holds App credentials, but orchestration is not itself
+    # The environment holds release credentials, but orchestration is not itself
     # a deployment. Only Publish Release registers a release deployment.
     environment:
       name: release
@@ -56,8 +61,16 @@ jobs:
       - name: Ship the release
         run: gh ship run
         env:
+{%- endraw %}
+{%- if gh_ship_token_mode == 'app' %}
+{%- raw %}
           # Only gh-ship needs the private key to mint and refresh its tokens.
           SHIP_APP_CLIENT_ID: ${{ vars.APP_CLIENT_ID }}
           SHIP_APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+{%- endraw %}
+{%- else %}
+          GH_TOKEN: {% raw %}${{ secrets.SHIP_TOKEN || github.token }}{% endraw %}
+{%- endif %}
+{%- raw %}
           SHIP_RUN_TIMEOUT: 7200
 {%- endraw %}

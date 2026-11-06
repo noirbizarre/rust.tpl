@@ -1,0 +1,24 @@
+# Token contents access must coexist with crates.io OIDC in publisher and caller.
+[answers]
+crate = "token-publish-example"
+description = "Token authentication with crates.io"
+kind = "library-and-binary"
+gh_ship_token_mode = "token"
+publish = true
+docs = false
+msrv = false
+rolling_prerelease = true
+
+[expect.contains]
+".github/workflows/publish-release.yaml" = [
+  "    permissions:\n      contents: write\n      id-token: write",
+  "GH_TOKEN: ${{ secrets.SHIP_TOKEN || github.token }}",
+  "rust-lang/crates-io-auth-action@v1", "cargo publish --locked",
+]
+".github/workflows/ci.yaml" = ["    permissions:\n      contents: write\n      id-token: write\n    uses: ./.github/workflows/publish-release.yaml"]
+
+[expect.lacks]
+".github/workflows/publish-release.yaml" = ["create-github-app-token", "steps.app-token", "APP_PRIVATE_KEY"]
+
+[commands]
+rendered = ["bash -c 'actionlint -config-file .github/actionlint.yml .github/workflows/*.yaml'", "gh ship validate"]
