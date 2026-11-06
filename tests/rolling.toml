@@ -44,7 +44,7 @@ absent = [".github/workflows/build-release.yaml", ".github/workflows/release-bui
 
 [expect.lacks]
 ".github/workflows/publish-release.yaml" = ["cargo publish", "inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "Publish development binaries", 'ext: ""', "include:", "build-release.yaml", "--paginate", "--slurp", "destination.outputs", "matching-refs", "for asset", "Require every binary"]
-".github/workflows/ci.yaml" = ["contents: write", "publish-main.yaml", "--release", "build: false", "needs: [lint", "  development:", "actions/upload-artifact"]
+".github/workflows/ci.yaml" = ["contents: write", "publish-main.yaml", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts"]
 ".github/workflows/homebrew.yaml" = ["types: [published]", "  stable:", "needs: stable", "--json isDraft,isPrerelease"]
 ".github/workflows/aur.yaml" = ["types: [published]", "  stable:", "needs: stable", "--json isDraft,isPrerelease"]
 
