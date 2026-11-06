@@ -33,6 +33,18 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Archive** | optional `<crate>_<tag>_<asset>.tar.gz` per Unix target in the native package layout (`bin/`, `share/doc`, man pages, completions, `lib/systemd/user`), built reproducibly, and a systemd user unit skeleton |
 | **Packaging** | optional Homebrew formula / AUR `-bin` PKGBUILD, each with its own release-triggered workflow |
 
+## CI failure evidence
+
+If coverage cleaning, tests, or coverage reporting fail, CI uploads a per-OS
+`ci-diagnostics` artifact retained for seven days. It contains bounded command
+logs, runner/tool versions, a raw-profile inventory with header samples, the
+merge input list and JUnit report when small enough, and the corrupt profiles
+named by LLVM (up to 20 files and 50 MiB total). Collection notes explain missing
+or omitted evidence. The original failure remains a failure; corrupt profiles
+are preserved rather than silently ignored. The bundle excludes build binaries
+and environment dumps.
+Cancellation or runner loss can prevent collection and upload.
+
 ## Project shapes
 
 One answer, `kind`, picks what the project builds, and everything else follows

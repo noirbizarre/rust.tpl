@@ -88,6 +88,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: mise run test
 
+  failure-diagnostics:
+    name: Failure diagnostics (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Exercise the shipped collector
+        run: python -B -m unittest discover -s tests -p 'test_ci_diagnostics.py' -v
+      - name: Verify logging preserves command failures
+        run: |
+          # An expected failure belongs inside an if so the smoke job itself passes.
+          if bash -eo pipefail -c 'exit 42' 2>&1 | tee "$RUNNER_TEMP/pipeline.log"; then
+            echo "Logging hid a command failure" >&2
+            exit 1
+          fi
+
   windows-storage:
     name: Windows storage (${{ matrix.runner }}, ${{ matrix.cache }})
     runs-on: ${{ matrix.runner }}
