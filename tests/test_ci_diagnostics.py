@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -109,11 +110,18 @@ class FailureDiagnostics(unittest.TestCase):
             "print('x' * 3000000); sys.exit(42)"
         )
         helper = SCRIPT.with_name("capture-ci-output.sh")
+        bash = "bash"
+        if os.name == "nt":
+            # Native Python can find the WSL launcher before Git Bash on PATH.
+            # Locate Bash in the Git installation that provides the CI shell.
+            git = Path(shutil.which("git")).resolve()
+            bash = str(next(parent / "bin/bash.exe" for parent in git.parents
+                            if (parent / "bin/bash.exe").is_file()))
         result = subprocess.run(
-            ["bash", helper.as_posix(), log.as_posix(), sys.executable, "-c", program],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30,
+            [bash, helper.as_posix(), log.as_posix(), sys.executable, "-c", program],
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=30,
         )
-        self.assertEqual(result.returncode, 42)
+        self.assertEqual(result.returncode, 42, result.stderr[-4096:].decode("utf-8", errors="replace"))
         self.assertLessEqual(log.stat().st_size, diagnostics.LOG_LIMIT)
         self.assertNotIn(b"warning:", log.read_bytes())
         self.collect()
