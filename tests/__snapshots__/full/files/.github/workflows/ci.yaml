@@ -100,7 +100,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Setup precedes caches so their post-save hooks run before the drive is dismounted.
-      - uses: ./.github/actions/setup-windows
+      - name: Tune Windows runner
+        uses: ./.github/actions/setup-windows
         if: runner.os == 'Windows'
 
       - uses: dtolnay/rust-toolchain@stable
@@ -209,7 +210,8 @@ jobs:
         with:
           persist-credentials: false
       # Setup precedes caches so their post-save hooks run before the drive is dismounted.
-      - uses: ./.github/actions/setup-windows
+      - name: Tune Windows runner
+        uses: ./.github/actions/setup-windows
         if: runner.os == 'Windows'
 
       - uses: dtolnay/rust-toolchain@stable
