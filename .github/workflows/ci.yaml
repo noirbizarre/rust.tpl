@@ -42,7 +42,7 @@ jobs:
       # No pinned version: this repository tracks the mise its contributors
       # actually run, so an incompatibility surfaces here instead of only on
       # whoever's machine happens to be behind.
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
         with:
           cache: true
 
@@ -72,7 +72,7 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
 
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@v5
         with:
           cache: true
 
@@ -98,11 +98,19 @@ jobs:
         cache: [rust-cache, mbx]
     steps:
       - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      # Exercise a fresh v5 bootstrap before setup redirects temporary storage onto ReFS.
+      - uses: jdx/mise-action@v5
+        with:
+          install: false
+          cache: false
+          env: false
       # The action is static template content, so test the exact file consumers receive.
       - name: Tune Windows runner
         uses: ./template/.github/actions/setup-windows
         if: runner.os == 'Windows'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify mise after relocating temporary storage
+        run: mise --version
       - name: Create a small build workload
         run: cargo init --bin --name windows-storage-smoke --vcs none .
       - uses: Swatinem/rust-cache@v2

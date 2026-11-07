@@ -19,6 +19,7 @@ docs = false
 ]
 "CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo", "all pull requests only restore"]
 ".github/workflows/ci.yaml" = [
+  "jdx/mise-action@v5",
   "jdx/mr-boxington-action@", "run: mbx check --all-targets",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",

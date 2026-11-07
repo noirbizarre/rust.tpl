@@ -74,6 +74,7 @@ files = [
 ]
 "mise.toml" = ['tasks."tpl:check"', "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md"', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = "prek install"']
 ".github/workflows/ci.yaml" = [
+  "jdx/mise-action@v5",
   "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
@@ -89,7 +90,8 @@ files = [
 ]
 "CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "isolated Python environment", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents, Actions, Pull requests and Issues read/write permissions"]
 ".github/workflows/ship.yaml" = ["SHIP_APP_CLIENT_ID:", "SHIP_APP_PRIVATE_KEY:"]
-".github/workflows/prepare-release.yaml" = ["actions/create-github-app-token@v3", "run: gh ship sign", "token: ${{ steps.app-token.outputs.token }}"]
+".github/workflows/prepare-release.yaml" = ["jdx/mise-action@v5", "actions/create-github-app-token@v3", "run: gh ship sign", "token: ${{ steps.app-token.outputs.token }}"]
+".github/workflows/template.yaml" = ["jdx/mise-action@v5"]
 # docs = false, so the prek hook and mise task must not reach into docs/.
 "prek.toml" = ['README\\.md)$', 'repo = "https://github.com/rvben/rumdl-pre-commit"', 'id = "rumdl-check"', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
 ".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']
