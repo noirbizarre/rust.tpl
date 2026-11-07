@@ -17,9 +17,9 @@ docs = false
   'idiomatic_version_file_enable_tools = []',
   'postinstall = "prek install"',
 ]
-"CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo"]
+"CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo", "all pull requests only restore"]
 ".github/workflows/ci.yaml" = [
-  "jdx/mr-boxington-action@", "save-on-pull-request: true", "run: mbx check --all-targets",
+  "jdx/mr-boxington-action@", "run: mbx check --all-targets",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
 ]
@@ -27,7 +27,8 @@ docs = false
 
 [expect.lacks]
 "mise.toml" = ["MBX_GC_AUTO", "[wrappers.cargo]", "mbx setup", 'postinstall = "mbx', "mbx build", "mbx clean"]
-".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER"]
+# Omission keeps every mbx job restore-only on PRs, including optional MSRV/build jobs.
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "save-on-pull-request:"]
 ".github/workflows/publish-release.yaml" = ["Swatinem/rust-cache", "save-on-pull-request:"]
 
 [commands]
