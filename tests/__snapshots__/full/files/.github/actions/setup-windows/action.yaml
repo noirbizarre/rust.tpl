@@ -26,6 +26,8 @@ runs:
         # A subdirectory keeps protected volume metadata out of cache pruning.
         $target = New-Item -ItemType Directory -Path "$env:DEV_DRIVE/target" -ErrorAction Stop
         New-Item -ItemType Junction -Path "$env:GITHUB_WORKSPACE/target" -Target $target.FullName -ErrorAction Stop
+        # Repository/SQLite fixtures need fast storage too, outside the cached target tree.
+        New-Item -ItemType Directory -Path "$env:DEV_DRIVE/test-temp" -ErrorAction Stop
         # Subsequent steps and cache post hooks must archive contents and preserve the junction on restore.
         $tarOptions = "$env:TAR_OPTIONS --dereference --keep-directory-symlink".Trim()
         "TAR_OPTIONS=$tarOptions" >> $env:GITHUB_ENV

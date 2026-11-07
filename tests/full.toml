@@ -89,6 +89,8 @@ files = [
   "targets: ${{ matrix.build.target }}",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
+  'windows_test_temp=$(cygpath -w "$DEV_DRIVE/test-temp")',
+  'export TMP="$windows_test_temp" TEMP="$windows_test_temp" TMPDIR="$windows_test_temp"',
   "name: Upload coverage artifacts\n        if: always()", "retention-days: 7",
   "target/llvm-cov-target/*.profraw", "target/llvm-cov-target/*-profraw-list",
 ]

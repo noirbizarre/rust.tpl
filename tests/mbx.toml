@@ -22,6 +22,8 @@ docs = false
   "jdx/mr-boxington-action@", "run: mbx check --all-targets",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
+  'windows_test_temp=$(cygpath -w "$DEV_DRIVE/test-temp")',
+  'export TMP="$windows_test_temp" TEMP="$windows_test_temp" TMPDIR="$windows_test_temp"',
 ]
 ".github/workflows/publish-release.yaml" = ["jdx/mr-boxington-action@", "backend: local", "mbx publish --locked"]
 

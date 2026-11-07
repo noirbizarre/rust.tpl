@@ -14,6 +14,10 @@ Mise's postinstall hook installs both `pre-commit` and `commit-msg` hooks.
 Prek installs Commitizen and its Emotional plugin in an isolated Python environment
 for commit-message validation.
 
+Windows CI places build outputs and test temporary files on a ReFS Dev Drive.
+Test temporary storage is separate from the cached target directory; its
+environment overrides apply only to the coverage test step.
+
 ### Mr Boxington build caching
 
 [Mr Boxington](https://mr-boxington.jdx.dev/setup) is enabled through mise's
