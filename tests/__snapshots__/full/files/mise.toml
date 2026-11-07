@@ -51,8 +51,8 @@ cargo-binstall = "latest"
 # cargo-binstall present this downloads a release archive — about three seconds
 # against several minutes to compile a crate that vendors libgit2.
 #
-# An explicit version, never `latest`: mise applies a `minimum_release_age`, so
-# `latest` resolves to whatever is old enough rather than to the newest release.
+# `latest` follows mise's minimum release age when resolving updates; mise.lock
+# records the exact selected build so local and CI installations agree.
 "cargo:git-tpl" = "latest"
 # Zensical runs through `uvx`, so uv is the only thing the docs build needs.
 uv = "latest"
