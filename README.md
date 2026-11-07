@@ -95,8 +95,9 @@ and lockable. Mise may install stable and its declared components if missing.
 
 The feature replaces sccache and rust-cache in CI with the Mr Boxington GitHub
 Action. Its default target payload includes Cargo outputs and downloads;
-main pushes and same-repository PRs can save, with PR entries scoped to the PR.
-Cross jobs retain container-produced outputs through that payload. Publication
+successful main pushes save, while all PRs only restore to avoid expensive
+archive creation and cache-budget churn. PR-only cross jobs can restore compatible
+baselines but do not populate caches of their own. Publication
 uses the action's local backend without shared compiler outputs. Existing local
 compiler wrappers keep precedence; inspect them before enabling an override.
 Remote services and editor setup require separate configuration. Automatic cache
@@ -119,6 +120,8 @@ An ordinary directory on the volume is linked at the checkout's `target/`, keepi
 paths intact while excluding protected volume metadata from Cargo-cache traversal. Windows cache steps dereference that
 junction on save and preserve it on restore; a pre-build check rejects a restore that replaces it with an ordinary directory.
 The dynamically allocated volume has a 64 GB logical ceiling, but its actual growth still needs free space on the host disk.
+The setup action exports native Windows `TMP`, `TEMP` and `TMPDIR` paths to a separate `test-temp` directory on ReFS.
+All subsequent steps and their child processes inherit this temporary storage, outside cached build outputs.
 The template's own Windows smoke jobs exercise x64 and ARM runners with both cache backends, including archive round trips.
 
 ### Development prereleases

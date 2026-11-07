@@ -14,6 +14,10 @@ Mise's postinstall hook installs both `pre-commit` and `commit-msg` hooks.
 Prek installs Commitizen and its Emotional plugin in an isolated Python environment
 for commit-message validation.
 
+Windows CI places build outputs and temporary files on a ReFS Dev Drive.
+The shared setup action exports `TMP`, `TEMP` and `TMPDIR` for all subsequent
+steps and child processes, with temporary storage outside the cached target directory.
+
 ### Mr Boxington build caching
 
 [Mr Boxington](https://mr-boxington.jdx.dev/setup) is enabled through mise's
@@ -50,9 +54,10 @@ Environment-selected wrappers still take precedence and prevent mbx caching.
 CI uses `jdx/mr-boxington-action` instead of sccache and rust-cache. Its default
 GitHub `target` payload includes Cargo outputs and registry/git downloads, so
 an additional rust-cache action is unnecessary. Successful main pushes populate
-the cache; same-repository pull requests also save in their own PR scope.
-Fork pull requests only restore. Cross-build jobs retain their container-produced
-target outputs through that payload; native builds also use compiler caching.
+the cache; all pull requests only restore to avoid expensive archive creation
+and PR-scoped entries competing for the cache budget. PR-only cross-build jobs
+can restore compatible baselines but do not populate caches of their own.
+Native builds also use compiler caching.
 Publication jobs use `backend: local` without shared compiler-output restores
 or saves. No separate remote cache service or local-to-CI connection is configured.
 

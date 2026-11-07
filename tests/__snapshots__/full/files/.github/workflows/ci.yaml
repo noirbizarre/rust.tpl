@@ -57,10 +57,10 @@ jobs:
 
       # Includes Cargo downloads and target outputs; do not duplicate rust-cache.
       # Workload generations scope fallback restores too, unlike key suffixes.
+      # PRs restore only: archiving large target trees delays feedback and churns the cache budget.
       - uses: jdx/mr-boxington-action@v1
         with:
           cache-generation: lint-v1
-          save-on-pull-request: true
 
       # Run the same hooks as `git commit`, then the heavier Rust lint task
       # separately so committing does not require a Clippy compilation.
@@ -122,7 +122,6 @@ jobs:
       - uses: jdx/mr-boxington-action@v1
         with:
           cache-generation: tests-${{ matrix.os.flag }}-v1
-          save-on-pull-request: true
 
       - name: Verify Windows build storage
         if: runner.os == 'Windows'
@@ -191,7 +190,6 @@ jobs:
         with:
           version: 1.28.0
           cache-generation: msrv-v1
-          save-on-pull-request: true
 
       # `check`, not `test`: dev-dependencies routinely require a newer
       # toolchain than the crate itself, and the MSRV is a promise about
@@ -231,12 +229,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.build.target }}
-      # The target payload retains container-produced cross outputs too.
+      # This PR-only workload restores compatible baselines without saving PR-scoped archives.
       - uses: jdx/mr-boxington-action@v1
         with:
           version: 1.28.0
           cache-generation: pr-build-${{ matrix.build.target }}-v1
-          save-on-pull-request: true
       - uses: taiki-e/install-action@cross
         if: matrix.build.cross
       # Exercise the same CRT choice as downloaded Windows release binaries.
