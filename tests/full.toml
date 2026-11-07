@@ -179,7 +179,7 @@ files = [
 "prek.toml" = ["commitlint", "markdownlint"]
 "mise.toml" = ["markdownlint", "npx"]
 ".gitignore" = ["commitlint", "node_modules/"]
-".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:"]
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:", "windows_test_temp", "cygpath"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]
