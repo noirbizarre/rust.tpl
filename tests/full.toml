@@ -89,8 +89,6 @@ files = [
   "targets: ${{ matrix.build.target }}",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
-  'windows_test_temp=$(cygpath -w "$DEV_DRIVE/test-temp")',
-  'export TMP="$windows_test_temp" TEMP="$windows_test_temp" TMPDIR="$windows_test_temp"',
   "name: Upload coverage artifacts\n        if: always()", "retention-days: 7",
   "target/llvm-cov-target/*.profraw", "target/llvm-cov-target/*-profraw-list",
 ]
@@ -181,7 +179,7 @@ files = [
 "prek.toml" = ["commitlint", "markdownlint"]
 "mise.toml" = ["markdownlint", "npx"]
 ".gitignore" = ["commitlint", "node_modules/"]
-".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:"]
+".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:", "windows_test_temp", "cygpath"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]

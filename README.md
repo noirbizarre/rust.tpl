@@ -120,9 +120,8 @@ An ordinary directory on the volume is linked at the checkout's `target/`, keepi
 paths intact while excluding protected volume metadata from Cargo-cache traversal. Windows cache steps dereference that
 junction on save and preserve it on restore; a pre-build check rejects a restore that replaces it with an ordinary directory.
 The dynamically allocated volume has a 64 GB logical ceiling, but its actual growth still needs free space on the host disk.
-The coverage test step also directs temporary files to a separate `test-temp` directory on ReFS using native Windows paths.
-These overrides are step-local, keeping fixture data outside cached build outputs
-and leaving post-hook temporary storage intact.
+The setup action exports native Windows `TMP`, `TEMP` and `TMPDIR` paths to a separate `test-temp` directory on ReFS.
+All subsequent steps and their child processes inherit this temporary storage, outside cached build outputs.
 The template's own Windows smoke jobs exercise x64 and ARM runners with both cache backends, including archive round trips.
 
 ### Development prereleases

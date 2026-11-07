@@ -119,11 +119,7 @@ jobs:
         run: ./template/.github/actions/setup-windows/verify.ps1
       - name: Build and test
         # Exercise each backend's compiler wrapper, not just archive transport.
-        run: |
-          # Match the generated test step so the Rust smoke test checks native temporary-path resolution.
-          windows_test_temp=$(cygpath -w "$DEV_DRIVE/test-temp")
-          export TMP="$windows_test_temp" TEMP="$windows_test_temp" TMPDIR="$windows_test_temp"
-          ${{ matrix.cache == 'mbx' && 'mbx' || 'cargo' }} test
+        run: ${{ matrix.cache == 'mbx' && 'mbx' || 'cargo' }} test
       - name: Check cache archive round trips and release staging
         shell: pwsh
         run: ./tests/windows-storage.ps1

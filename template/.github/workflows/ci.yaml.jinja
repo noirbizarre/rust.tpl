@@ -178,11 +178,6 @@ jobs:
 
       - name: Run tests (with coverage)
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            # Native paths keep Rust/Git/JJ fixtures on ReFS without changing post-hook temp storage.
-            windows_test_temp=$(cygpath -w "$DEV_DRIVE/test-temp")
-            export TMP="$windows_test_temp" TEMP="$windows_test_temp" TMPDIR="$windows_test_temp"
-          fi
           # --no-report also disables automatic cleaning: discard cached workspace artifacts
           # and profiles explicitly so earlier runs cannot contaminate this run's coverage.
           cargo llvm-cov clean --workspace
