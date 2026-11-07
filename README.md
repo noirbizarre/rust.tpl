@@ -95,8 +95,9 @@ and lockable. Mise may install stable and its declared components if missing.
 
 The feature replaces sccache and rust-cache in CI with the Mr Boxington GitHub
 Action. Its default target payload includes Cargo outputs and downloads;
-main pushes and same-repository PRs can save, with PR entries scoped to the PR.
-Cross jobs retain container-produced outputs through that payload. Publication
+successful main pushes save, while all PRs only restore to avoid expensive
+archive creation and cache-budget churn. PR-only cross jobs can restore compatible
+baselines but do not populate caches of their own. Publication
 uses the action's local backend without shared compiler outputs. Existing local
 compiler wrappers keep precedence; inspect them before enabling an override.
 Remote services and editor setup require separate configuration. Automatic cache

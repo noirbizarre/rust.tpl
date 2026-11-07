@@ -114,7 +114,6 @@ jobs:
         with:
           version: 1.28.0
           cache-generation: windows-storage-v1
-          save-on-pull-request: true
       - name: Verify storage after cache restoration
         shell: pwsh
         run: ./template/.github/actions/setup-windows/verify.ps1
