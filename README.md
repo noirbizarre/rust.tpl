@@ -222,8 +222,11 @@ that rename into an existing project.
 ## Project-specific additions
 
 `mise.toml`, `prek.toml` and `Cargo.toml` end with a
-`# --- project-specific ---` marker. Add below it. Git's 3-way merge then keeps
-your additions across every `git tpl update`; the template never writes there.
+`# --- project-specific ---` marker. Add below it. Global mise tools belong
+between `# --- begin project-specific tools ---` and
+`# --- end project-specific tools ---` inside `[tools]`; task-only tools belong
+on their tasks below the footer. Git's 3-way merge keeps these additions across
+template updates; the markers document ownership rather than special merge rules.
 
 `Cargo.toml`'s `[dependencies]` are seeded once and then abandoned by the
 template — Dependabot bumps them weekly in every consumer, and a template that

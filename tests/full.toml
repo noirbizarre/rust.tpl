@@ -126,7 +126,7 @@ files = [
   "run: ./.github/actions/setup-windows/verify.ps1",
 ]
 "zensical.toml" = ['accent = "deep orange"']
-"mise.toml" = ["docs:build", "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md" "docs/"', 'tools = { rumdl = "0.3.2" }', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"']
+"mise.toml" = ["docs:build", "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md" "docs/"', 'tools = { rumdl = "0.3.2" }', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".config/rumdl.toml" = [
   "# https://rumdl.dev/md013/\n[MD013]",
   'line-length = 120',
