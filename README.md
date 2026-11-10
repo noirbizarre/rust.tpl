@@ -33,9 +33,12 @@ new or existing — and keeps them updatable with `git tpl update`.
 | **Archive** | optional `<crate>_<tag>_<asset>.tar.gz` per Unix target in the native package layout (`bin/`, `share/doc`, man pages, completions, `lib/systemd/user`), built reproducibly, and a systemd user unit skeleton |
 | **Packaging** | optional Homebrew formula / AUR `-bin` PKGBUILD, each with its own release-triggered workflow |
 
-Coverage reports and raw LLVM profiles are uploaded as per-OS `coverage` artifacts
-retained for seven days, including when tests or report generation fail, so the
-available coverage data can be downloaded for local diagnosis.
+With GitHub Actions debug logging enabled, coverage reports and raw LLVM profiles
+are uploaded as per-OS `coverage` artifacts retained for seven days, including when
+tests or report generation fail, so the available coverage data can be downloaded
+for local diagnosis. Enable debug logging when re-running a workflow to collect
+these artifacts. Diagnostic uploads are best-effort: an upload failure does not
+fail CI or block coverage uploads to Codecov.
 
 ## Project shapes
 
