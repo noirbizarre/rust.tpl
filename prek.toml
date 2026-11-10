@@ -1,5 +1,11 @@
 default_install_hook_types = ["pre-commit", "commit-msg"]
 
+# Generators own these bytes; hooks must not rewrite lockfiles or recordings.
+exclude = { glob = [
+  "mise.lock",
+  "tests/__snapshots__/**",
+] }
+
 [[repos]]
 repo = "builtin"
 hooks = [

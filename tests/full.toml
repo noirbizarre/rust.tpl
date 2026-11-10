@@ -142,6 +142,11 @@ files = [
 # PR — dependabot, the release bot — would be credited as a first-timer.
 "cliff.toml" = ['is ending_with("[bot]")']
 "prek.toml" = [
+  '''exclude = { glob = [
+  "CHANGELOG.md",
+  "Cargo.lock",
+  "mise.lock",
+] }''',
   'repo = "https://github.com/rvben/rumdl-pre-commit"',
   'id = "rumdl-check"',
   'repo = "https://github.com/commitizen-tools/commitizen"',
@@ -178,7 +183,7 @@ files = [
 
 [expect.lacks]
 "CONTRIBUTING.md" = ["prek install", "commitlint"]
-"prek.toml" = ["commitlint", "markdownlint"]
+"prek.toml" = ["commitlint", "markdownlint", "tests/snapshots/", "tests/fixtures/", "__snapshots__"]
 "mise.toml" = ["markdownlint", "npx"]
 ".gitignore" = ["commitlint", "node_modules/"]
 ".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:", "windows_test_temp", "cygpath"]
