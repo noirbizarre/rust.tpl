@@ -65,9 +65,10 @@ files = [
 ".github/workflows/docs.yaml" = [
   "jdx/mise-action@v5",
   "on:\n  pull_request:",
+  "  build:\n    name: 📝 Build documentation",
   "run: mise run docs:build",
   "uses: actions/upload-pages-artifact@v5\n        if: github.event_name != 'pull_request'",
-  "  deploy:\n    name: 🚀 Deploy\n    if: github.event_name != 'pull_request'",
+  "  deploy:\n    name: 🌐 Publish documentation\n    if: github.event_name != 'pull_request'",
   "    permissions:\n      pages: write\n      id-token: write",
   "    concurrency:\n      group: pages\n      cancel-in-progress: false",
 ]
