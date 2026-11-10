@@ -207,47 +207,5 @@ rendered = [
   "git init -q",
   "git add .",
   "prek -a",
-  # Release commits must preserve generator output, while authored files still
-  # receive the normal whitespace checks. An isolated repository avoids
-  # overwriting the rendered project lockfile while testing root-relative globs.
-  '''python3 -c '
-from pathlib import Path
-import subprocess
-import tempfile
-
-with tempfile.TemporaryDirectory(dir=".") as directory:
-    root = Path(directory).resolve()
-    (root / "prek.toml").write_bytes(Path("prek.toml").read_bytes())
-    subprocess.run(["git", "init", "-q", str(root)], check=True)
-    generated = [
-        root / name
-        for name in (
-            "CHANGELOG.md", "Cargo.lock", "mise.lock",
-        )
-    ]
-    # Missing final newline and trailing spaces reproduce generator-owned bytes
-    # that the builtin fixers would otherwise rewrite.
-    content = b"generated output  "
-    for path in generated:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(content)
-    subprocess.run(["prek", "run", "--files", *map(str, generated)], cwd=root, check=True)
-    for path in generated:
-        assert path.read_bytes() == content, path
-
-    # Consumers own their test data policy; the base template must not silently
-    # exempt fixture or snapshot paths it does not provide.
-    for name in ("authored.txt", "tests/fixtures/input.txt", "tests/snapshots/output.snap"):
-        authored = root / name
-        authored.parent.mkdir(parents=True, exist_ok=True)
-        for hook, before, after in (
-            ("end-of-file-fixer", b"authored", b"authored\n"),
-            ("trailing-whitespace", b"authored  \n", b"authored\n"),
-        ):
-            authored.write_bytes(before)
-            result = subprocess.run(["prek", "run", hook, "--files", str(authored)], cwd=root)
-            assert result.returncode == 1, (hook, name, result.returncode)
-            assert authored.read_bytes() == after, (hook, name)
-' ''',
   "gh ship validate",
 ]

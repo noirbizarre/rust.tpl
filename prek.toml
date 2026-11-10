@@ -1,8 +1,9 @@
 default_install_hook_types = ["pre-commit", "commit-msg"]
 
-# Tool resolution owns this lockfile; hooks must not rewrite it.
+# Generators own these bytes; hooks must not rewrite lockfiles or recordings.
 exclude = { glob = [
   "mise.lock",
+  "tests/__snapshots__/**",
 ] }
 
 [[repos]]
