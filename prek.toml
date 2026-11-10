@@ -1,5 +1,9 @@
 default_install_hook_types = ["pre-commit", "commit-msg"]
 
+# Generators own these bytes; rewriting them can abort release commits or
+# corrupt recorded output. Match nested crates as well as the project root.
+exclude = '(^|/)(CHANGELOG\.md|Cargo\.lock|mise\.lock)$|(^|/)tests/(snapshots/.*\.snap$|__snapshots__/)'
+
 [[repos]]
 repo = "builtin"
 hooks = [

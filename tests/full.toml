@@ -140,6 +140,7 @@ files = [
 # PR — dependabot, the release bot — would be credited as a first-timer.
 "cliff.toml" = ['is ending_with("[bot]")']
 "prek.toml" = [
+  "exclude = '(^|/)(CHANGELOG\\.md|Cargo\\.lock|mise\\.lock)$|(^|/)tests/(snapshots/.*\\.snap$|__snapshots__/)'",
   'repo = "https://github.com/rvben/rumdl-pre-commit"',
   'id = "rumdl-check"',
   'repo = "https://github.com/commitizen-tools/commitizen"',
@@ -202,5 +203,45 @@ rendered = [
   "git init -q",
   "git add .",
   "prek -a",
+  # Release commits must preserve generator output, while authored files still
+  # receive the normal whitespace checks. Explicit files also cover untracked
+  # output without modifying the sandbox's index or existing Cargo.lock.
+  '''python3 -c '
+from pathlib import Path
+import subprocess
+import tempfile
+
+with tempfile.TemporaryDirectory(dir=".") as directory:
+    root = Path(directory)
+    generated = [
+        root / name
+        for name in (
+            "CHANGELOG.md", "Cargo.lock", "mise.lock",
+            "crates/example/CHANGELOG.md", "crates/example/Cargo.lock",
+            "crates/example/mise.lock", "tests/snapshots/output.snap",
+            "crates/example/tests/snapshots/output.snap",
+            "tests/__snapshots__/example/output.txt",
+        )
+    ]
+    # Missing final newline and trailing spaces reproduce generator-owned bytes
+    # that the builtin fixers would otherwise rewrite.
+    content = b"generated output  "
+    for path in generated:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    subprocess.run(["prek", "run", "--files", *map(str, generated)], check=True)
+    for path in generated:
+        assert path.read_bytes() == content, path
+
+    authored = root / "authored.txt"
+    for hook, before, after in (
+        ("end-of-file-fixer", b"authored", b"authored\n"),
+        ("trailing-whitespace", b"authored  \n", b"authored\n"),
+    ):
+        authored.write_bytes(before)
+        result = subprocess.run(["prek", "run", hook, "--files", str(authored)])
+        assert result.returncode == 1, (hook, result.returncode)
+        assert authored.read_bytes() == after, hook
+' ''',
   "gh ship validate",
 ]
