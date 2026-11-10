@@ -140,7 +140,11 @@ files = [
 # PR — dependabot, the release bot — would be credited as a first-timer.
 "cliff.toml" = ['is ending_with("[bot]")']
 "prek.toml" = [
-  "exclude = '(^|/)(CHANGELOG\\.md|Cargo\\.lock|mise\\.lock)$|(^|/)tests/(snapshots/.*\\.snap$|__snapshots__/)'",
+  '''exclude = { glob = [
+  "CHANGELOG.md",
+  "Cargo.lock",
+  "mise.lock",
+] }''',
   'repo = "https://github.com/rvben/rumdl-pre-commit"',
   'id = "rumdl-check"',
   'repo = "https://github.com/commitizen-tools/commitizen"',
@@ -177,7 +181,7 @@ files = [
 
 [expect.lacks]
 "CONTRIBUTING.md" = ["prek install", "commitlint"]
-"prek.toml" = ["commitlint", "markdownlint"]
+"prek.toml" = ["commitlint", "markdownlint", "tests/snapshots/", "tests/fixtures/", "__snapshots__"]
 "mise.toml" = ["markdownlint", "npx"]
 ".gitignore" = ["commitlint", "node_modules/"]
 ".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:", "windows_test_temp", "cygpath"]
@@ -204,23 +208,21 @@ rendered = [
   "git add .",
   "prek -a",
   # Release commits must preserve generator output, while authored files still
-  # receive the normal whitespace checks. Explicit files also cover untracked
-  # output without modifying the sandbox's index or existing Cargo.lock.
+  # receive the normal whitespace checks. An isolated repository avoids
+  # overwriting the rendered project lockfile while testing root-relative globs.
   '''python3 -c '
 from pathlib import Path
 import subprocess
 import tempfile
 
 with tempfile.TemporaryDirectory(dir=".") as directory:
-    root = Path(directory)
+    root = Path(directory).resolve()
+    (root / "prek.toml").write_bytes(Path("prek.toml").read_bytes())
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
     generated = [
         root / name
         for name in (
             "CHANGELOG.md", "Cargo.lock", "mise.lock",
-            "crates/example/CHANGELOG.md", "crates/example/Cargo.lock",
-            "crates/example/mise.lock", "tests/snapshots/output.snap",
-            "crates/example/tests/snapshots/output.snap",
-            "tests/__snapshots__/example/output.txt",
         )
     ]
     # Missing final newline and trailing spaces reproduce generator-owned bytes
@@ -229,19 +231,23 @@ with tempfile.TemporaryDirectory(dir=".") as directory:
     for path in generated:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)
-    subprocess.run(["prek", "run", "--files", *map(str, generated)], check=True)
+    subprocess.run(["prek", "run", "--files", *map(str, generated)], cwd=root, check=True)
     for path in generated:
         assert path.read_bytes() == content, path
 
-    authored = root / "authored.txt"
-    for hook, before, after in (
-        ("end-of-file-fixer", b"authored", b"authored\n"),
-        ("trailing-whitespace", b"authored  \n", b"authored\n"),
-    ):
-        authored.write_bytes(before)
-        result = subprocess.run(["prek", "run", hook, "--files", str(authored)])
-        assert result.returncode == 1, (hook, result.returncode)
-        assert authored.read_bytes() == after, hook
+    # Consumers own their test data policy; the base template must not silently
+    # exempt fixture or snapshot paths it does not provide.
+    for name in ("authored.txt", "tests/fixtures/input.txt", "tests/snapshots/output.snap"):
+        authored = root / name
+        authored.parent.mkdir(parents=True, exist_ok=True)
+        for hook, before, after in (
+            ("end-of-file-fixer", b"authored", b"authored\n"),
+            ("trailing-whitespace", b"authored  \n", b"authored\n"),
+        ):
+            authored.write_bytes(before)
+            result = subprocess.run(["prek", "run", hook, "--files", str(authored)], cwd=root)
+            assert result.returncode == 1, (hook, name, result.returncode)
+            assert authored.read_bytes() == after, (hook, name)
 ' ''',
   "gh ship validate",
 ]
