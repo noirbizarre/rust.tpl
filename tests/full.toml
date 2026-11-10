@@ -91,7 +91,7 @@ files = [
   "targets: ${{ matrix.build.target }}",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
-  "name: Upload coverage artifacts\n        if: always()", "retention-days: 7",
+  "name: Upload coverage artifacts\n        if: ${{ always() && runner.debug == '1' }}\n        # Diagnostic upload failures must not fail tests or block Codecov uploads.\n        continue-on-error: true", "retention-days: 7",
   "target/llvm-cov-target/*.profraw", "target/llvm-cov-target/*-profraw-list",
 ]
 ".github/workflows/prepare-release.yaml" = [
