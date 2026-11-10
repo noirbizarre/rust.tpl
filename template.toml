@@ -11,9 +11,9 @@
 # dependencies, packaging, release assets) is derived from it, so a project
 # only carries what its shape needs.
 #
-# Files carrying project-specific additions (mise.toml tasks, prek.toml hooks,
-# Cargo.toml dependencies) end with a `# --- project-specific ---` marker.
-# Add below it, and Git's 3-way merge keeps your additions across updates.
+# Put project additions below the project-specific footer markers, or global
+# mise tools between the inline tools markers. Git's 3-way merge keeps these
+# additions across updates.
 
 name = "rust"
 description = "Rust project base stack: mise, prek, git-cliff, gh-ship, CI and publication"

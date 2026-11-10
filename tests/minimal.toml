@@ -72,7 +72,7 @@ files = [
   "publish = false",
   "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
 ]
-"mise.toml" = ['tasks."tpl:check"', "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md"', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = "prek install"']
+"mise.toml" = ['tasks."tpl:check"', "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md"', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = "prek install"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".github/workflows/ci.yaml" = [
   "jdx/mise-action@v5",
   "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
