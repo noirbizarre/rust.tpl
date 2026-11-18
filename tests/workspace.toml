@@ -103,6 +103,16 @@ rendered = [
   '''sed -i "s#members = \[\]#members = [\"crates/example\"]#" Cargo.toml''',
   # the stub member has no tests, so `mise build` proves the shape, not `mise test`
   "mise build",
+  '''bash -euo pipefail -c '
+    output=$(mise run build 2>&1)
+    [[ "$output" == *"sources up-to-date, skipping"* ]]
+    touch crates/example/src/main.rs
+    output=$(mise run build 2>&1)
+    [[ "$output" != *"sources up-to-date, skipping"* ]]
+    cargo clean
+    output=$(mise run build 2>&1)
+    [[ "$output" != *"sources up-to-date, skipping"* ]]
+  ' ''',
   # prek requires files to be git-tracked
   "git init -q",
   "git add .",

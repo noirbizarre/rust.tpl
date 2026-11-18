@@ -72,7 +72,7 @@ files = [
   "publish = false",
   "[package.metadata.binstall.overrides.x86_64-unknown-linux-gnu]",
 ]
-"mise.toml" = ['tasks."tpl:check"', "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md"', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = "prek install"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
+"mise.toml" = ['tasks."tpl:check"', 'tasks."tpl:merge"', "lint:md", 'rumdl check .', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = [', '"prek install"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".github/workflows/ci.yaml" = [
   "jdx/mise-action@v5",
   "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
@@ -94,8 +94,8 @@ files = [
 ".github/workflows/ship.yaml" = ["SHIP_APP_CLIENT_ID:", "SHIP_APP_PRIVATE_KEY:"]
 ".github/workflows/prepare-release.yaml" = ["jdx/mise-action@v5", "actions/create-github-app-token@v3", "run: gh ship sign", "token: ${{ steps.app-token.outputs.token }}"]
 ".github/workflows/template.yaml" = ["jdx/mise-action@v5"]
-# docs = false, so the prek hook and mise task must not reach into docs/.
-"prek.toml" = ['README\\.md)$', 'repo = "https://github.com/rvben/rumdl-pre-commit"', 'id = "rumdl-check"', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
+# Future Markdown is checked even when no docs site is generated.
+"prek.toml" = ['repo = "https://github.com/rvben/rumdl-pre-commit"', 'id = "rumdl-fmt"', 'id = "rumdl-check"', 'id = "editorconfig-checker"', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
 ".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']
 
 [expect.lacks]
@@ -122,6 +122,56 @@ rendered = [
   "git init -q",
   "git add .",
   "prek -a",
+  # Parsed TOML distinguishes active hooks from disabled examples in comments.
+  '''python3 - <<'PY'
+import pathlib
+import subprocess
+import tomllib
+
+config = tomllib.loads(pathlib.Path("prek.toml").read_text())
+hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
+assert not any(hook.get("alias") == "typos-commit-msg" for hook in hooks)
+assert any(hook["id"] == "commitizen" and hook["stages"] == ["commit-msg"] for hook in hooks)
+
+def run(*args):
+    result = subprocess.run(args, capture_output=True, text=True)
+    assert result.returncode in (0, 1), result.stdout + result.stderr
+    return result
+
+# The generated root changelog is ignored, even when passed explicitly to hooks.
+changelog = pathlib.Path("CHANGELOG.md")
+invalid = "# Probe\nText without a heading separator.\n"
+changelog.write_text(invalid)
+try:
+    assert run("mise", "run", "lint:md").returncode == 0
+    for name in ("notes.md", "docs/CHANGELOG.md", ".github/probe.md"):
+        path = pathlib.Path(name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(invalid)
+        try:
+            assert run("mise", "run", "lint:md").returncode == 1, name
+            assert run("prek", "run", "rumdl-check", "--files", str(path), str(changelog)).returncode == 1, name
+            assert run("prek", "run", "rumdl-fmt", "--files", str(path), str(changelog)).returncode == 1, name
+            assert path.read_text() != invalid, name
+            assert changelog.read_text() == invalid
+            assert run("mise", "run", "lint:md").returncode == 0, name
+        finally:
+            path.unlink()
+finally:
+    changelog.unlink()
+PY''',
+  '''bash -euo pipefail -c '
+    mise run build
+    output=$(mise run build 2>&1)
+    [[ "$output" == *"sources up-to-date, skipping"* ]]
+    printf "embedded input\n" > src/freshness.txt
+    output=$(mise run build 2>&1)
+    [[ "$output" != *"sources up-to-date, skipping"* ]]
+    rm src/freshness.txt
+    cargo clean
+    output=$(mise run build 2>&1)
+    [[ "$output" != *"sources up-to-date, skipping"* ]]
+  ' ''',
   # All-files checks do not run commit-msg hooks. Exercise the actual isolated
   # environment so a missing plugin/config cannot masquerade as validation.
   '''bash -euo pipefail -c '

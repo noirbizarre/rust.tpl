@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.rs]
+indent_size = 4
+
+[*.{toml,yml,yaml,json}]
+indent_size = 2
+
+[*.{toml,yml,yaml,json}.jinja]
+indent_size = 2
+
+[*.md]
+indent_size = 2
+# Editor defaults; rumdl enforces syntax-aware indentation and prose wrapping.
+max_line_length = 120

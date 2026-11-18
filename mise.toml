@@ -1,16 +1,7 @@
 # Tooling for developing the template itself.
-#
-# There is no Rust crate here — the only builds are the ones `git tpl test`
-# runs itself, inside each test case's own `[commands]` (see tests/*.toml).
 
 [settings]
 lockfile = true
-
-# Every multi-line task below opens with a bash shebang. Without one mise runs
-# the script through `sh`, which on a GitHub runner is dash: `set -o pipefail`
-# is an error there and `< <(...)` is a syntax error. Locally `/bin/sh` is
-# often a symlink to bash, so the difference is invisible until CI — which is
-# exactly how it was found.
 
 [tools]
 prek = "latest"
@@ -22,6 +13,13 @@ actionlint = "latest"
 # Needed by the `cargo:` backend below, or it builds from source instead.
 cargo-binstall = "latest"
 "cargo:git-tpl" = "latest"
+editorconfig-checker = "latest"
+
+[hooks]
+postinstall = [
+  "prek install"
+]
+
 
 [tasks.default]
 description = "Lint, then run every test case"
@@ -47,9 +45,6 @@ run = "git tpl lint . --dirty -D warnings"
 
 [tasks.test]
 description = "Run the template's own test cases"
-# `tests/*.toml`: `[expect]`, `snapshot`, and each case's own `[commands]`,
-# which renders it, then runs `mise test`/`build`, `prek -a` and
-# `gh ship validate` against it.
 run = "git tpl test"
 
 [tasks."test:write"]

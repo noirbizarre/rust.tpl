@@ -4,6 +4,7 @@ default_install_hook_types = ["pre-commit", "commit-msg"]
 exclude = { glob = [
   "mise.lock",
   "tests/__snapshots__/**",
+  "template/**",
 ] }
 
 [[repos]]
@@ -29,24 +30,11 @@ id = "commitizen"
 stages = ["commit-msg"]
 additional_dependencies = ["emotional==0.6.1"]
 
-# actionlint publishes its own hook manifest, so this uses that instead of
-# hand-rolling a `repo = "local"` block: version bumps are then visible to
-# `prek update` the same way the Commitizen hook above already is, and
-# `name`/`entry`/`files` come from the manifest — nothing to override. mise
-# is a requirement to work on this project at all, so its shims already put
-# the pinned `actionlint` on PATH; the `actionlint-system` hook's bare
-# `entry = "actionlint"` finds it without help.
-#
-# Keep `rev` in step with `tools.actionlint` in mise.lock: nothing enforces
-# the two agree.
 [[repos]]
 repo = "https://github.com/rhysd/actionlint"
 rev = "v1.7.12"
 hooks = [{ id = "actionlint-system" }]
 
-# Mechanically enforces the same 120-column convention the template renders
-# into every consumer — this repository's own README.md gets the same
-# treatment.
 [[repos]]
 repo = "https://github.com/rvben/rumdl-pre-commit"
 rev = "v0.3.2"
@@ -58,16 +46,18 @@ files = "^README\\.md$"
 [[repos]]
 repo = "https://github.com/crate-ci/typos"
 rev = "v1.47.1"
+hooks = [
+  { id = "typos" },
+  # Check the message before it enters release history; do not rewrite it.
+  # Wait for https://github.com/crate-ci/typos/pull/1605 to avoid false positive on commit/rebase
+  # { id = "typos", alias = "typos-commit-msg", args = ["--force-exclude"], stages = ["commit-msg"]},
+]
 
-[[repos.hooks]]
-id = "typos"
-
-# Check the message before it enters release history; do not rewrite it.
-[[repos.hooks]]
-id = "typos"
-alias = "typos-commit-msg"
-args = ["--force-exclude"]
-stages = ["commit-msg"]
+[[repos]]
+repo = "https://github.com/editorconfig-checker/editorconfig-checker"
+rev = "v4.0.2"
+# Keep Markdown editor defaults without conflicting with rumdl's syntax-aware checks.
+hooks = [{ id = "editorconfig-checker", exclude_types = ["markdown"] }]
 
 [[repos]]
 repo = "local"
@@ -88,3 +78,5 @@ language = "system"
 # place rather than in two that can disagree.
 entry = "mise run lint:template"
 pass_filenames = false
+# Template files are globally excluded from file-oriented hooks.
+always_run = true
