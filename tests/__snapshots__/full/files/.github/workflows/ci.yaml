@@ -18,6 +18,7 @@ defaults:
 
 env:
   CARGO_TERM_COLOR: always
+  MISE_NO_HOOKS: "1"
   RUST_BACKTRACE: full
 
   # Shared action caching cannot reuse Cargo's private incremental state.
