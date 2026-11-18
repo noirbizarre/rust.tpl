@@ -4,6 +4,7 @@ default_install_hook_types = ["pre-commit", "commit-msg"]
 exclude = { glob = [
   "mise.lock",
   "tests/__snapshots__/**",
+  "template/**",
 ] }
 
 [[repos]]
@@ -68,6 +69,12 @@ id = "typos"
 alias = "typos-commit-msg"
 args = ["--force-exclude"]
 stages = ["commit-msg"]
+
+[[repos]]
+repo = "https://github.com/editorconfig-checker/editorconfig-checker"
+rev = "v4.0.2"
+[[repos.hooks]]
+id = "editorconfig-checker"
 
 [[repos]]
 repo = "local"
