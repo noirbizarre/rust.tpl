@@ -249,7 +249,6 @@ jobs:
 {%- if mbx %}
       - uses: jdx/mr-boxington-action@v1
         with:
-          version: 1.28.0
           cache-generation: msrv-v1
 {%- else %}
 
@@ -310,7 +309,6 @@ jobs:
       # This PR-only workload restores compatible baselines without saving PR-scoped archives.
       - uses: jdx/mr-boxington-action@v1
         with:
-          version: 1.28.0
           cache-generation: pr-build-${{ '{{' }} matrix.build.target {{ '}}' }}-v1
 {%- else %}
       - uses: Swatinem/rust-cache@v2

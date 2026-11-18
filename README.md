@@ -85,7 +85,7 @@ Two of these deserve a note:
 
 Answer `mbx = true` to enable [Mr Boxington](https://mr-boxington.jdx.dev/)
 through mise's native Rust `mr_boxington` option (mise 2026.9.2+). The default is
-off; all project shapes can opt in. Mise installs a separately pinned prebuilt
+off; all project shapes can opt in. Mise installs the latest prebuilt
 mbx, retaining the template's stable Rust channel, rustfmt and clippy. Existing
 consumers must preserve their own Rust version and tool options when merging.
 

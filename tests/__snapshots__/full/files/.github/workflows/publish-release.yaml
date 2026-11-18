@@ -66,7 +66,6 @@ jobs:
       # Published binaries must not depend on shared compiler-output caches.
       - uses: jdx/mr-boxington-action@v1
         with:
-          version: 1.28.0
           backend: local
       - uses: taiki-e/install-action@cross
         if: matrix.build.cross
@@ -127,7 +126,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: jdx/mr-boxington-action@v1
         with:
-          version: 1.28.0
           backend: local
       - name: Generate man pages and completions
         run: |
