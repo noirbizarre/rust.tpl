@@ -76,7 +76,6 @@ jobs:
       # Published binaries must not depend on shared compiler-output caches.
       - uses: jdx/mr-boxington-action@v1
         with:
-          version: 1.28.0
           backend: local
 {%- else %}
 {%- raw %}
@@ -183,7 +182,6 @@ jobs:
 {%- if mbx %}
       - uses: jdx/mr-boxington-action@v1
         with:
-          version: 1.28.0
           backend: local
 {%- else %}
       - uses: Swatinem/rust-cache@v2
@@ -269,7 +267,6 @@ jobs:
       - uses: jdx/mr-boxington-action@v1
         if: startsWith(inputs.ref || github.ref, 'refs/tags/')
         with:
-          version: 1.28.0
           backend: local
 {%- else %}
       - uses: Swatinem/rust-cache@v2
