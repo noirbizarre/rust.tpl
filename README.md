@@ -221,8 +221,8 @@ that rename into an existing project.
 
 ## Project-specific additions
 
-`mise.toml`, `prek.toml` and `Cargo.toml` end with a
-`# --- project-specific ---` marker. Add below it. Global mise tools belong
+`mise.toml`, `prek.toml` and `Cargo.toml` end with
+project-specific section markers. Add below them. Global mise tools belong
 between `# --- begin project-specific tools ---` and
 `# --- end project-specific tools ---` inside `[tools]`; task-only tools belong
 on their tasks below the footer. Git's 3-way merge keeps these additions across

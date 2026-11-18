@@ -62,6 +62,17 @@ files = [
 [commands]
 rendered = [
   "mise test",
+  '''bash -euo pipefail -c '
+    mise run build
+    output=$(mise run build 2>&1)
+    [[ "$output" == *"sources up-to-date, skipping"* ]]
+    touch build.rs
+    output=$(mise run build 2>&1)
+    [[ "$output" != *"sources up-to-date, skipping"* ]]
+    cargo clean
+    output=$(mise run build 2>&1)
+    [[ "$output" != *"sources up-to-date, skipping"* ]]
+  ' ''',
   # prek requires files to be git-tracked
   "git init -q",
   "git add .",

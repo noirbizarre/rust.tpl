@@ -128,8 +128,9 @@ files = [
   "run: ./.github/actions/setup-windows/verify.ps1",
 ]
 "zensical.toml" = ['accent = "deep orange"']
-"mise.toml" = ["docs:build", "lint:md", 'rumdl check "AGENTS.md" "CONTRIBUTING.md" "README.md" "docs/"', 'tools = { rumdl = "0.3.2" }', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
+"mise.toml" = ["docs:build", "lint:md", 'rumdl check .', 'tools = { rumdl = "0.3.2" }', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".config/rumdl.toml" = [
+  'exclude = ["./CHANGELOG.md"]',
   "# https://rumdl.dev/md013/\n[MD013]",
   'line-length = 120',
   'heading-line-length = 120',
@@ -152,13 +153,12 @@ files = [
 ] }''',
   'repo = "https://github.com/rvben/rumdl-pre-commit"',
   'id = "rumdl-check"',
+  'id = "rumdl-fmt"',
+  'id = "editorconfig-checker"',
   'repo = "https://github.com/commitizen-tools/commitizen"',
   'id = "commitizen"',
   'additional_dependencies = ["emotional==0.6.1"]',
-  'docs/.*\\.md',
   'repo = "https://github.com/crate-ci/typos"',
-  'alias = "typos-commit-msg"',
-  'args = ["--force-exclude"]',
   'stages = ["commit-msg"]',
 ]
 ".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']

@@ -15,7 +15,8 @@ docs = false
   "{{ exec(command='rustup default') | trim | split(pat=' ') | first }}",
   'MBX_TARGET_VIEWS = "0"',
   'idiomatic_version_file_enable_tools = []',
-  'postinstall = "prek install"',
+  'postinstall = [',
+  '"prek install"',
 ]
 "CONTRIBUTING.md" = ["mise exec -- cargo build --locked", "scheduler", "To undo", "all pull requests only restore"]
 ".github/workflows/ci.yaml" = [
