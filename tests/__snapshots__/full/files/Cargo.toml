@@ -19,7 +19,6 @@ license = "MIT"
 # on, the PKGBUILD's `# Maintainer:` line.
 description = "Every optional slot turned on"
 repository = "https://github.com/noirbizarre/full-example"
-homepage = "https://noirbizarre.github.io/full-example/"
 documentation = "https://noirbizarre.github.io/full-example/"
 readme = "README.md"
 keywords = ["cli", "example", "template", "rust", "scaffolding"]
