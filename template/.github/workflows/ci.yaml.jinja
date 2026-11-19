@@ -52,6 +52,10 @@ jobs:
   lint:
     name: 🕵️ Lint
     runs-on: ubuntu-latest
+{%- endraw %}
+    env:
+      MISE_ENABLE_TOOLS: {% if mbx %}rust,mr-boxington,{% endif %}cargo-binstall,prek,actionlint,shellcheck,typos,git-cliff
+{%- raw %}
     steps:
       - uses: actions/checkout@v7
 
@@ -83,6 +87,7 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
+          cache_key_prefix: mise-v2-${{ github.job }}-${{ hashFiles('.github/workflows/ci.yaml') }}
 {%- endraw %}
 {%- if mbx %}
 
@@ -117,6 +122,10 @@ jobs:
   test:
     name: 🧪 Tests (${{ matrix.os.name }})
     runs-on: ${{ matrix.os.runner }}
+{%- endraw %}
+    env:
+      MISE_ENABLE_TOOLS: {% if mbx %}rust,mr-boxington,{% endif %}cargo-binstall,cargo:cargo-nextest,cargo:cargo-llvm-cov
+{%- raw %}
     strategy:
       fail-fast: false
       matrix:
@@ -146,6 +155,7 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
+          cache_key_prefix: mise-v2-${{ github.job }}-${{ hashFiles('.github/workflows/ci.yaml') }}
 
       # Bootstrap tools first: mise installs on C: with a same-volume temporary rename.
       # Storage still precedes Cargo caches so their post hooks run before drive teardown.

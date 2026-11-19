@@ -3,8 +3,9 @@
 # Tool versions are resolved to exact builds in `mise.lock`, which is committed.
 # CI installs from these two files, so local runs and CI runs use identical tool versions.
 #
-# Tools no CI job needs are declared on their own task rather than in `[tools]`,
-# because `mise install` — what CI runs — installs `[tools]` only.
+# Tools no CI job needs are declared on their own task rather than in `[tools]`.
+# CI enables each job's required tools with MISE_ENABLE_TOOLS; local `mise install`
+# installs the project-wide toolset.
 # It matters as cargo-binstall has no prebuilt artifact for some cargo tools,
 # so a global entry would make every CI job compile them from source.
 [settings]

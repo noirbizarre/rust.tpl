@@ -12,6 +12,7 @@ on:
 
 env:
   MISE_NO_HOOKS: "1"
+  MISE_ENABLE_TOOLS: uv
 
 jobs:
   build:
@@ -25,6 +26,7 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
+          cache_key_prefix: mise-v1-${{ env.MISE_ENABLE_TOOLS }}
 
       - name: Build the site
         run: mise run docs:build

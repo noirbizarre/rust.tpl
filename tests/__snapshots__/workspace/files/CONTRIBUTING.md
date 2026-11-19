@@ -41,6 +41,11 @@ optional comprehensive check.
 
 ## Tasks
 
+CI enables only each job's required mise tools with `MISE_ENABLE_TOOLS`.
+Tool-cache prefixes identify the job and its allowlist, using the workflow hash for multi-tool jobs.
+Local development keeps the full configured toolset.
+When adding a tool used by CI, include its configured tool ID in the relevant job's allowlist too.
+
 `mise build` uses source/output freshness checks to avoid starting Cargo when
 nothing changed. Cargo handles incremental compilation whenever the task runs.
 The default tracks members under `crates/` and uses `target/debug` as a coarse

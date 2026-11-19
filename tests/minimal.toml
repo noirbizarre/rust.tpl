@@ -74,6 +74,8 @@ files = [
 ]
 "mise.toml" = ['tasks."tpl:check"', 'tasks."tpl:merge"', "lint:md", 'rumdl check .', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = [', '"prek install"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".github/workflows/ci.yaml" = [
+  "MISE_ENABLE_TOOLS: cargo-binstall,cargo:cargo-nextest,cargo:cargo-llvm-cov",
+  "cache_key_prefix: mise-v2-${{ github.job }}-",
   "jdx/mise-action@v5",
   "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",

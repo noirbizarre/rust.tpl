@@ -23,6 +23,7 @@ permissions:
 
 env:
   MISE_NO_HOOKS: "1"
+  MISE_ENABLE_TOOLS: git-cliff
 
 jobs:
   prepare:
@@ -62,6 +63,7 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
+          cache_key_prefix: mise-v1-${{ env.MISE_ENABLE_TOOLS }}
       # Use the published extension to sign the next release's commit.
       - name: Install gh-ship
         run: gh extension install noirbizarre/gh-ship

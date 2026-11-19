@@ -27,6 +27,7 @@ concurrency:
 
 env:
   MISE_NO_HOOKS: "1"
+  MISE_ENABLE_TOOLS: cargo-binstall,cargo:git-tpl
 
 jobs:
   drift:
@@ -39,6 +40,7 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
+          cache_key_prefix: mise-v2-${{ github.job }}-${{ hashFiles('.github/workflows/template.yaml') }}
 
       # `actions/checkout` fetches `refs/heads/*` and `refs/tags/*` and nothing
       # else, so `refs/tpl/<id>` is absent here however many times this project
