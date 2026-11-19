@@ -80,7 +80,7 @@ files = [
   "[build-dependencies]",
   "clap_mangen",
 ]
-# The MSRV job greps this literal line out of Cargo.toml, so the two have to
+# The MSRV job reads this value from Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/ci.yaml" = [
   "cargo llvm-cov nextest --profile ci --lcov --output-path lcov.info",
@@ -209,6 +209,40 @@ files = [
 
 [commands]
 rendered = [
+  # Exercise the emitted script, including workspace inheritance and invalid metadata.
+  '''python3 - <<'PY'
+import json
+import os
+import pathlib
+import subprocess
+import tempfile
+
+workflow = json.loads(subprocess.check_output(["yq", "-o", "json", ".", ".github/workflows/ci.yaml"]))
+script = next(step["run"] for step in workflow["jobs"]["msrv"]["steps"] if step.get("id") == "msrv")
+cases = [
+    ("[package]\nrust-version = '1.88'\n", "1.88"),
+    ("[package]\n  rust-version='1.89' # a comment\n", "1.89"),
+    ("[workspace.package]\nrust-version='1.88'\n", "1.88"),
+    ("[package]\nrust-version.workspace=true\n[workspace.package]\nrust-version='1.89'\n", "1.89"),
+    ("[package]\nrust-version='1.90'\n[workspace.package]\nrust-version='1.88'\n", "1.90"),
+    ("[package]\nname='missing'\n", None),
+    ("[package]\nrust-version=''\n", None),
+    ("[package]\nrust-version=190\n", None),
+    ("[package]\nrust-version.workspace=false\n", None),
+]
+for manifest, expected in cases:
+    with tempfile.TemporaryDirectory() as directory:
+        root = pathlib.Path(directory)
+        (root / "Cargo.toml").write_text(manifest)
+        output = root / "output"
+        result = subprocess.run(["bash", "-euo", "pipefail", "-c", script], cwd=root,
+            env=dict(os.environ, GITHUB_OUTPUT=str(output)), capture_output=True, text=True)
+        if expected is None:
+            assert result.returncode != 0, manifest
+        else:
+            assert result.returncode == 0, result.stdout + result.stderr
+            assert output.read_text() == "version=" + expected + "\n", manifest
+PY''',
   "mise run lint:md",
   "mise test",
   # prek requires files to be git-tracked

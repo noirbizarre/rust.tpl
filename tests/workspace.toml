@@ -4,7 +4,7 @@
 # everything hard-coding `bin_name` (there is no root binary) disappear
 # together. `msrv = true` is deliberate: it is the trickiest interaction, since
 # `rust-version` moves from `[package]` to `[workspace.package]` and the MSRV
-# CI job's grep has to keep matching either way.
+# CI job's structured lookup has to resolve either location.
 #
 # An empty workspace fails `cargo build` by Cargo's own design, so unlike
 # `full`/`minimal`, this case's own `[commands]` stubs a member first.
