@@ -83,6 +83,7 @@ files = [
 # The MSRV job greps this literal line out of Cargo.toml, so the two have to
 # agree — and they are rendered from different answers in different files.
 ".github/workflows/ci.yaml" = [
+  "cargo llvm-cov nextest --profile ci --lcov --output-path lcov.info",
   "jdx/mise-action@v5",
   "jdx/mr-boxington-action@v1", "run: mbx check --all-targets", "mbx build --locked", "cache-generation: lint-v1", "cache-generation: pr-build-${{ matrix.build.target }}-v1",
   "🧓 MSRV", "rust-version", "id-token: write", "  prerelease:", "name: 🚀 Development prerelease", "ref: ${{ github.sha }}", "if: github.event_name == 'pull_request'",
@@ -190,7 +191,7 @@ files = [
 "prek.toml" = ["commitlint", "markdownlint", "tests/snapshots/", "tests/fixtures/", "__snapshots__"]
 "mise.toml" = ["markdownlint", "npx"]
 ".gitignore" = ["commitlint", "node_modules/"]
-".github/workflows/ci.yaml" = ["sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:", "windows_test_temp", "cygpath"]
+".github/workflows/ci.yaml" = ["cargo llvm-cov clean", "--no-report", "cargo llvm-cov report", "sccache", "Swatinem/rust-cache", "RUSTC_WRAPPER", "--release", "build: false", "needs: [lint", "  development:", "name: Upload build artifacts", "save-on-pull-request:", "windows_test_temp", "cygpath"]
 ".github/workflows/publish-release.yaml" = ["inputs.build", "inputs.tag", "inputs.prerelease", "needs.resolve", "  resolve:", "  crates:", "include:", 'ext: ""', "build-release.yaml", "Swatinem/rust-cache", "github-cache-mode:"]
 # Historical spelling must not make git-cliff silently drop release commits.
 "cliff.toml" = ["typos --write-changes"]
