@@ -52,10 +52,6 @@ jobs:
   lint:
     name: 🕵️ Lint
     runs-on: ubuntu-latest
-{%- endraw %}
-    env:
-      MISE_ENABLE_TOOLS: {% if mbx %}rust,mr-boxington,{% endif %}cargo-binstall,prek,actionlint,shellcheck,typos,git-cliff
-{%- raw %}
     steps:
       - uses: actions/checkout@v7
 
@@ -87,7 +83,6 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
-          cache_key_prefix: mise-v2-${{ github.job }}-${{ hashFiles('.github/workflows/ci.yaml') }}
 {%- endraw %}
 {%- if mbx %}
 
@@ -122,10 +117,6 @@ jobs:
   test:
     name: 🧪 Tests (${{ matrix.os.name }})
     runs-on: ${{ matrix.os.runner }}
-{%- endraw %}
-    env:
-      MISE_ENABLE_TOOLS: {% if mbx %}rust,mr-boxington,{% endif %}cargo-binstall,cargo:cargo-nextest,cargo:cargo-llvm-cov
-{%- raw %}
     strategy:
       fail-fast: false
       matrix:
@@ -155,7 +146,6 @@ jobs:
       - uses: jdx/mise-action@v5
         with:
           cache: true
-          cache_key_prefix: mise-v2-${{ github.job }}-${{ hashFiles('.github/workflows/ci.yaml') }}
 
       # Bootstrap tools first: mise installs on C: with a same-volume temporary rename.
       # Storage still precedes Cargo caches so their post hooks run before drive teardown.
@@ -187,12 +177,7 @@ jobs:
           LLVM_PROFILE_FILE_NAME: ${{ runner.os == 'macOS' && '%m.profraw' || '%m-%b.profraw' }}
           # %b requires a build ID in each instrumented binary; Darwin keeps its native linker settings.
           RUSTFLAGS: ${{ runner.os == 'Windows' && '-C link-arg=/build-id' || runner.os == 'Linux' && '-C link-arg=-Wl,--build-id=sha1' || '' }}
-        run: |
-          # --no-report also disables automatic cleaning: discard cached workspace artifacts
-          # and profiles explicitly so earlier runs cannot contaminate this run's coverage.
-          cargo llvm-cov clean --workspace
-          cargo llvm-cov nextest --profile ci --no-report
-          cargo llvm-cov report --lcov --output-path lcov.info
+        run: cargo llvm-cov nextest --profile ci --lcov --output-path lcov.info
 
       # Debug runs need raw inputs even when a corrupt profile prevents generating lcov.info.
       - name: Upload coverage artifacts

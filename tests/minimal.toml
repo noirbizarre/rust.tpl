@@ -74,8 +74,7 @@ files = [
 ]
 "mise.toml" = ['tasks."tpl:check"', 'tasks."tpl:merge"', "lint:md", 'rumdl check .', 'tools = { rumdl = "0.3.2" }', '[hooks]', 'postinstall = [', '"prek install"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".github/workflows/ci.yaml" = [
-  "MISE_ENABLE_TOOLS: cargo-binstall,cargo:cargo-nextest,cargo:cargo-llvm-cov",
-  "cache_key_prefix: mise-v2-${{ github.job }}-",
+  "cargo llvm-cov nextest --profile ci --lcov --output-path lcov.info",
   "jdx/mise-action@v5",
   "mozilla-actions/sccache-action@", "Swatinem/rust-cache@", "RUSTC_WRAPPER: sccache",
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
@@ -95,7 +94,7 @@ files = [
 "CONTRIBUTING.md" = ["Mise's postinstall hook installs both", "isolated Python environment", "Onboard `noirbizarre/minimal-example` to Codecov", "Contents, Actions, Pull requests and Issues read/write permissions"]
 ".github/workflows/ship.yaml" = ["SHIP_APP_CLIENT_ID:", "SHIP_APP_PRIVATE_KEY:"]
 ".github/workflows/prepare-release.yaml" = ["jdx/mise-action@v5", "actions/create-github-app-token@v3", "run: gh ship sign", "token: ${{ steps.app-token.outputs.token }}"]
-".github/workflows/template.yaml" = ["jdx/mise-action@v5"]
+".github/workflows/template.yaml" = ["jdx/mise-action@v5", "MISE_ENABLE_TOOLS: cargo-binstall,cargo:git-tpl"]
 # Future Markdown is checked even when no docs site is generated.
 "prek.toml" = ['repo = "https://github.com/rvben/rumdl-pre-commit"', 'id = "rumdl-fmt"', 'id = "rumdl-check"', 'id = "editorconfig-checker"', 'repo = "https://github.com/commitizen-tools/commitizen"', 'id = "commitizen"', 'additional_dependencies = ["emotional==0.6.1"]']
 ".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']
@@ -113,7 +112,7 @@ files = [
 # publish-release.yaml:70): publish = false must drop the whole crates.io
 # steps, not merely leave them unexercised.
 # msrv = false must drop the job from ci.yaml, not merely leave it unexercised.
-".github/workflows/ci.yaml" = ["🧓 MSRV", "rust-version", "jdx/mr-boxington-action@", "runner.arch", "TAR_OPTIONS:", "Set-MpPreference"]
+".github/workflows/ci.yaml" = ["MISE_ENABLE_TOOLS", "cache_key_prefix", "🧓 MSRV", "rust-version", "jdx/mr-boxington-action@", "runner.arch", "TAR_OPTIONS:", "Set-MpPreference"]
 ".github/actions/setup-windows/action.yaml" = ["runner.arch"]
 
 [commands]
