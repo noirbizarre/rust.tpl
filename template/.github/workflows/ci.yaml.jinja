@@ -231,7 +231,13 @@ jobs:
       - name: Read the MSRV from Cargo.toml
         id: msrv
         run: |
-          version=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          # A root package's explicit version wins; an inherited version comes from the workspace.
+          version="$(yq -p toml -o json '.' Cargo.toml | jq -er '
+            .package."rust-version" as $package |
+            (if $package == null or $package == {workspace: true}
+              then .workspace.package."rust-version" else $package end) |
+            select(type == "string" and length > 0)
+          ')"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - uses: dtolnay/rust-toolchain@master
