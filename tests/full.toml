@@ -101,6 +101,7 @@ files = [
 ]
 ".github/workflows/prepare-release.yaml" = [
   "MISE_ENABLE_TOOLS: git-cliff",
+  "fetch-depth: 0",
   "cargo update --workspace",
   "gh ship sign",
   "name: ship-release",
@@ -202,6 +203,7 @@ files = [
   "cargo build",
   "Swatinem/rust-cache",
   "gh ship validate ship.release.json",
+  "fetch-tags:",
 ]
 # archive = true: the licence and unit come out of the tarball, so the AUR
 # workflow must not also fetch and hash them from the tag.

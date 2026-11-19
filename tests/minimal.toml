@@ -100,6 +100,7 @@ files = [
 ".cz.toml" = ['[tool.commitizen]', 'name = "emotional"']
 
 [expect.lacks]
+".github/workflows/prepare-release.yaml" = ["fetch-tags:"]
 "CONTRIBUTING.md" = ["Settings → Pages", "Trusted Publishing", "prek install", "commitlint"]
 "prek.toml" = ["commitlint", "markdownlint", 'docs/.*\\.md']
 ".gitignore" = ["commitlint", "node_modules/"]
