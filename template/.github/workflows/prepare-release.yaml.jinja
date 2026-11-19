@@ -65,7 +65,6 @@ jobs:
           # Full history *and* tags: git-cliff derives the next version from
           # the last tag, and a shallow clone has neither.
           fetch-depth: 0
-          fetch-tags: true
 {%- endraw %}
           token: ${{ '{{' }} {{ release_token }} {{ '}}' }}
 {%- raw %}
