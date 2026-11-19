@@ -219,8 +219,10 @@ The pre-commit hooks format and check project Markdown with rumdl and validate
 EditorConfig settings. The generated root `CHANGELOG.md` is excluded because
 git-cliff owns it. Run `mise lint:md` for a non-rewriting Markdown check.
 Rumdl owns Markdown list indentation and the 120-column prose limit, with tables
-and code blocks exempt from line wrapping. Markdown keeps its EditorConfig editor
-defaults but is excluded from the EditorConfig hook; other file types are checked.
+and code blocks exempt from line wrapping.
+Markdown and Rust keep their EditorConfig editor defaults but are excluded from the generic EditorConfig hook;
+rumdl and `cargo fmt` own their syntax-aware formatting checks, including prose and embedded strings.
+Other file types are checked by the EditorConfig hook.
 
 The official typos hook checks source files on `pre-commit`. Commit-message
 spelling checks are temporarily disabled pending
