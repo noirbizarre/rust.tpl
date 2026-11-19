@@ -55,8 +55,8 @@ hooks = [
 [[repos]]
 repo = "https://github.com/editorconfig-checker/editorconfig-checker"
 rev = "v4.0.2"
-# Keep Markdown editor defaults without conflicting with rumdl's syntax-aware checks.
-hooks = [{ id = "editorconfig-checker", exclude_types = ["markdown"] }]
+# rumdl and rustfmt understand prose and embedded Rust strings; generic indentation checks do not.
+hooks = [{ id = "editorconfig-checker", exclude_types = ["markdown", "rust"] }]
 
 [[repos]]
 repo = "local"

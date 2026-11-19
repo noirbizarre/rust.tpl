@@ -122,6 +122,51 @@ rendered = [
   "git init -q",
   "git add .",
   "prek -a",
+  # Rust's escaped string continuations are not code indentation. Keep rustfmt
+  # active while the generic checker still rejects indentation in other files.
+  '''python3 - <<'PY'
+import pathlib
+import subprocess
+import tomllib
+
+config = tomllib.loads(pathlib.Path("prek.toml").read_text())
+hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
+editorconfig = next(hook for hook in hooks if hook["id"] == "editorconfig-checker")
+assert set(editorconfig["exclude_types"]) == {"markdown", "rust"}
+fmt = next(hook for hook in hooks if hook["id"] == "fmt")
+assert fmt["entry"] == "cargo fmt --all -- --check"
+
+def run(*args):
+    result = subprocess.run(args, capture_output=True, text=True)
+    assert result.returncode in (0, 1), result.stdout + result.stderr
+    return result
+
+rust = pathlib.Path("src/lib.rs")
+original = rust.read_text()
+probe = r"""pub fn editorconfig_probe() -> &'static str {
+    "SELECT * FROM example \
+      WHERE active = true"
+}
+"""
+toml = pathlib.Path("editorconfig-probe.toml")
+try:
+    rust.write_text(original.rstrip() + "\n\n" + probe)
+    result = run("prek", "run", "editorconfig-checker", "--files", str(rust))
+    assert result.returncode == 0, result.stdout + result.stderr
+    result = run("prek", "run", "fmt", "--files", str(rust))
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    rust.write_text(original.rstrip() + "\n\npub fn editorconfig_probe()->u8{1}\n")
+    result = run("prek", "run", "fmt", "--files", str(rust))
+    assert result.returncode == 1 and "Diff in" in result.stdout + result.stderr
+
+    toml.write_text(" [probe]\n")
+    result = run("prek", "run", "editorconfig-checker", "--files", str(toml))
+    assert result.returncode == 1 and "left-padding" in result.stdout + result.stderr
+finally:
+    rust.write_text(original)
+    toml.unlink(missing_ok=True)
+PY''',
   # Parsed TOML distinguishes active hooks from disabled examples in comments.
   '''python3 - <<'PY'
 import pathlib
