@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/logo.svg" alt="full-example" width="480">
+  <img src="docs/images/logo.svg" alt="full-example">
 </p>
 
 <p align="center"><strong>Every optional slot turned on</strong></p>
