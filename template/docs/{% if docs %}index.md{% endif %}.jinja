@@ -1,5 +1,14 @@
+{% if has_wordmark -%}
+<h1 align="center"><img src="images/{{ hero_logo }}" alt="{{ crate }}" width="480"></h1>
+
+{% else -%}
+{% if has_icon -%}
+<p align="center"><img src="images/{{ hero_logo }}" alt="{{ crate }}" width="160"></p>
+
+{% endif -%}
 # {{ crate }}
 
+{% endif -%}
 {{ description }}
 
 ## Installation

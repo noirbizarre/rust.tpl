@@ -174,6 +174,18 @@ install path.\
 """
 default = true
 
+[questions.logos]
+type = "multi_choice"
+prompt = "Logo?"
+help = "Optional placeholder artwork. README and docs prefer the wordmark, then the icon. The docs header and favicon use the icon only."
+choices = [
+  { value = "wordmark", label = "Wordmark (logo.svg)" },
+  { value = "icon", label = "Icon (icon.svg)" },
+  { value = "raster-wordmark", label = "Raster Wordmark (logo.png)" },
+  { value = "raster-icon", label = "Raster Icon (icon.png)" },
+]
+default = []
+
 [questions.docs]
 type = "boolean"
 prompt = "Publish a documentation site?"
@@ -312,6 +324,11 @@ source = "data/targets.toml"
 # --- Computed ---------------------------------------------------------------
 
 [computed]
+has_wordmark = "{{ 'wordmark' in logos or 'raster-wordmark' in logos }}"
+has_icon = "{{ 'icon' in logos or 'raster-icon' in logos }}"
+icon_logo = "{{ 'icon.svg' if 'icon' in logos else ('icon.png' if 'raster-icon' in logos else '') }}"
+hero_logo = "{{ 'logo.svg' if 'wordmark' in logos else ('logo.png' if 'raster-wordmark' in logos else icon_logo) }}"
+
 # The project shape, as the three booleans every template file actually asks.
 # `kind` is read directly nowhere else, so a fifth shape changes these and not
 # thirty files.

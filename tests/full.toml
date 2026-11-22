@@ -22,6 +22,7 @@ service = true
 rolling_prerelease = true
 publish = true
 docs = true
+logos = ["wordmark", "icon", "raster-wordmark", "raster-icon"]
 docs_accent = "deep orange"
 homebrew = true
 homebrew_tap = "noirbizarre/homebrew-tap"
@@ -49,6 +50,10 @@ files = [
   ".github/workflows/template.yaml",
   "zensical.toml",
   "docs/index.md",
+  "docs/images/logo.svg",
+  "docs/images/icon.svg",
+  "docs/images/logo.png",
+  "docs/images/icon.png",
   "docs/adr/README.md",
   "Cargo.toml",
   ".editorconfig",
@@ -62,6 +67,8 @@ files = [
 ]
 
 [expect.contains]
+"README.md" = ['src="docs/images/logo.svg"']
+"docs/index.md" = ['src="images/logo.svg"']
 ".github/workflows/docs.yaml" = [
   "jdx/mise-action@v5",
   "on:\n  pull_request:",
@@ -129,7 +136,7 @@ files = [
   "uses: ./.github/actions/setup-windows\n        if: runner.os == 'Windows'",
   "run: ./.github/actions/setup-windows/verify.ps1",
 ]
-"zensical.toml" = ['accent = "deep orange"']
+"zensical.toml" = ['accent = "deep orange"', 'logo = "images/icon.svg"', 'favicon = "images/icon.svg"']
 "mise.toml" = ["docs:build", "lint:md", 'rumdl check .', 'tools = { rumdl = "0.3.2" }', "[tasks.man]", 'mr_boxington = true', 'mr-boxington = "latest"', 'version = "stable"', '# --- begin project-specific tools ---', '# --- end project-specific tools ---']
 ".config/rumdl.toml" = [
   'exclude = ["./CHANGELOG.md"]',
@@ -187,6 +194,8 @@ files = [
 ".github/workflows/aur.yaml" = ["full-example-bin"]
 
 [expect.lacks]
+"README.md" = ['src="docs/images/icon.svg"', '<h1 align="center">full-example</h1>']
+"docs/index.md" = ['src="images/icon.svg"', "# full-example"]
 "CONTRIBUTING.md" = ["prek install", "commitlint"]
 "prek.toml" = ["commitlint", "markdownlint", "tests/snapshots/", "tests/fixtures/", "__snapshots__"]
 "mise.toml" = ["markdownlint", "npx"]

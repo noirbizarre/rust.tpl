@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/icon.svg" alt="workspace-example" width="160">
-</p>
-
 <h1 align="center">workspace-example</h1>
 
 <p align="center"><strong>Cargo.toml as a virtual manifest</strong></p>

@@ -1,0 +1,19 @@
+# Raster wordmark wins over the raster icon, regardless of answer order.
+[answers]
+crate = "raster-example"
+description = "Raster branding"
+logos = ["raster-icon", "raster-wordmark"]
+docs = true
+
+[expect]
+files = ["docs/images/logo.png", "docs/images/icon.png"]
+absent = ["docs/images/logo.svg", "docs/images/icon.svg"]
+
+[expect.contains]
+"README.md" = ['src="docs/images/logo.png"', 'width="480"']
+"docs/index.md" = ['<h1 align="center"><img src="images/logo.png"']
+"zensical.toml" = ['logo = "images/icon.png"', 'favicon = "images/icon.png"']
+
+[expect.lacks]
+"README.md" = ['src="docs/images/icon.png"', '<h1 align="center">raster-example</h1>']
+"docs/index.md" = ['src="images/icon.png"', "# raster-example"]

@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="docs/images/icon.svg" alt="full-example" width="160">
+  <img src="docs/images/logo.svg" alt="full-example" width="480">
 </p>
-
-<h1 align="center">full-example</h1>
 
 <p align="center"><strong>Every optional slot turned on</strong></p>
 
