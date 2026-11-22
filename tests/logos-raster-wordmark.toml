@@ -10,7 +10,7 @@ files = ["docs/images/logo.png", "docs/images/icon.svg"]
 absent = ["docs/images/logo.svg", "docs/images/icon.png"]
 
 [expect.contains]
-"README.md" = ['src="docs/images/logo.png"', 'width="480"']
+"README.md" = ['<img src="docs/images/logo.png" alt="mixed-example">']
 "docs/index.md" = ['<h1 align="center"><img src="images/logo.png"']
 "zensical.toml" = ['logo = "images/icon.svg"', 'favicon = "images/icon.svg"']
 

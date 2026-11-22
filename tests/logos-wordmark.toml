@@ -9,7 +9,7 @@ files = ["docs/images/logo.svg"]
 absent = ["docs/images/icon.svg", "docs/images/logo.png", "docs/images/icon.png"]
 
 [expect.contains]
-"README.md" = ['src="docs/images/logo.svg"', 'width="480"']
+"README.md" = ['<img src="docs/images/logo.svg" alt="wordmark-example">']
 "docs/index.md" = ['<h1 align="center"><img src="images/logo.svg"']
 "docs/images/logo.svg" = ['viewBox="0 0 504 80"', '>wordmark-example</text>']
 
