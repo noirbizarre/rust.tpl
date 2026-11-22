@@ -1,0 +1,12 @@
+# Exercise the upper bound and nested slugs in workspace metadata.
+[answers]
+crate = "categories-five"
+description = "Five Cargo categories"
+kind = "workspace"
+categories = ["command-line-utilities", "development-tools", "development-tools::cargo-plugins", "parsing", "text-processing"]
+
+[expect.contains]
+"Cargo.toml" = [
+  "[workspace.package]",
+  'categories = ["command-line-utilities", "development-tools", "development-tools::cargo-plugins", "parsing", "text-processing"]',
+]

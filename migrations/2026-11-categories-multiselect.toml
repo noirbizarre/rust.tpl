@@ -1,0 +1,8 @@
+message = """
+`categories` is now a multiselect of zero to five crates.io slugs, fetched from \
+the crates.io API. Convert recorded CSV strings in `.config/git.tpl.toml` to \
+arrays before updating: `categories = "command-line-utilities, development-tools"` \
+becomes `categories = ["command-line-utilities", "development-tools"]`. \
+Use `categories = []` for no categories. Noninteractive updates need `--trust` \
+or an applicable git-tpl trust policy to fetch the catalogue.\
+"""

@@ -65,7 +65,7 @@ out="${OUT:-$(mktemp -d)}"
 git tpl render "$MISE_PROJECT_ROOT" --dirty \\
   --output "$out" --force \\
   --answers-from "$MISE_PROJECT_ROOT/tests/$case.toml" \\
-  --defaults --strict-answers
+  --defaults --strict-answers --trust
 echo
 echo "Rendered $case into $out"
 """

@@ -1,0 +1,7 @@
+[answers]
+crate = "categories-default-binary"
+description = "Default binary categories"
+kind = "binary"
+
+[expect.contains]
+"Cargo.toml" = ['categories = ["command-line-utilities", "development-tools"]']

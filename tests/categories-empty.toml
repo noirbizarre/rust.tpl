@@ -1,0 +1,8 @@
+# An explicitly empty selection must override the shape-dependent default.
+[answers]
+crate = "categories-empty"
+description = "No Cargo categories"
+categories = []
+
+[expect.contains]
+"Cargo.toml" = ["categories = []"]
