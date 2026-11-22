@@ -1,0 +1,18 @@
+[answers]
+crate = "icon-example"
+description = "Icon fallback"
+logos = ["icon"]
+docs = true
+
+[expect]
+files = ["docs/images/icon.svg"]
+absent = ["docs/images/logo.svg", "docs/images/logo.png", "docs/images/icon.png"]
+
+[expect.contains]
+"README.md" = ['src="docs/images/icon.svg"', 'width="160"', '<h1 align="center">icon-example</h1>']
+"docs/index.md" = ['src="images/icon.svg"', "# icon-example"]
+"zensical.toml" = ['logo = "images/icon.svg"', 'favicon = "images/icon.svg"']
+
+[expect.lacks]
+"README.md" = ['src="docs/images/logo.svg"']
+"docs/index.md" = ['src="images/logo.svg"']

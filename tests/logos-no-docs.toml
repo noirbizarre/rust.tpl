@@ -1,0 +1,15 @@
+[answers]
+crate = "readme-branding"
+description = "Branding without a documentation site"
+logos = ["icon", "wordmark"]
+docs = false
+
+[expect]
+files = ["docs/images/logo.svg", "docs/images/icon.svg"]
+absent = ["zensical.toml", "docs/index.md", ".github/workflows/docs.yaml"]
+
+[expect.contains]
+"README.md" = ['src="docs/images/logo.svg"']
+
+[expect.lacks]
+"README.md" = ["icon.svg", '<h1 align="center">readme-branding</h1>']

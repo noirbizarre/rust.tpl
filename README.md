@@ -62,7 +62,7 @@ Answered at `init`, stored in `.config/git.tpl.toml`, reused on every update.
 
 `crate`, `description`, `owner`, `author`, `copyright_holder`, `copyright_year`,
 `kind`, `keywords`, `categories`, `msrv`, `msrv_version`, `publish`, `docs`,
-`docs_accent`, `mbx`.
+`docs_accent`, `logos`, `mbx`.
 
 Only asked when the shape contains a binary (`binary`, `library-and-binary`):
 `bin_name`, `man_pages`, `archive`, `service`, `targets`, `homebrew`,
@@ -80,6 +80,27 @@ Two of these deserve a note:
 - **`targets`** is a `multi_choice` over `data/targets.toml`, which also carries
   the runner, asset name, `cross` flag and executable extension each target
   needs in the PR and publication matrices.
+
+### Logos (optional)
+
+The `logos` multi-choice defaults to `[]` (no artwork). Select **Wordmark
+(logo.svg)**, **Icon (icon.svg)**, **Raster Wordmark (logo.png)**, or **Raster Icon
+(icon.png)** in any combination. For example:
+
+```toml
+logos = ["wordmark", "icon"]
+# Or use raster artwork:
+# logos = ["raster-wordmark", "raster-icon"]
+```
+
+Replace the selected placeholders under `docs/images/` with your artwork. The
+README and documentation landing page select the first available asset in this
+order: `logo.svg` → `logo.png` → `icon.svg` → `icon.png`. With none selected, they
+show only the project heading. A wordmark replaces
+the visible project-name heading; an icon accompanies it. The documentation
+header and favicon prefer `icon.svg`, then `icon.png`; with neither, Zensical's
+defaults apply. Logos are independent of the `docs` option so README branding
+also works without a documentation site.
 
 ### Mr Boxington (optional)
 

@@ -30,6 +30,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 # asserted under `lacks` below.)
 [expect]
 absent = [
+  "docs/images/logo.svg",
+  "docs/images/icon.svg",
+  "docs/images/logo.png",
+  "docs/images/icon.png",
   ".markdownlint-cli2.yaml",
   "commitlint.config.mjs",
   ".github/workflows/docs.yaml",

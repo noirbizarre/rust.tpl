@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/icon.svg" alt="minimal-example" width="160">
-</p>
-
 <h1 align="center">minimal-example</h1>
 
 <p align="center"><strong>Every optional slot turned off</strong></p>

@@ -1,0 +1,17 @@
+# Omission exercises the empty default with a documentation site enabled.
+[answers]
+crate = "unbranded"
+description = "Default branding"
+docs = true
+
+[expect]
+absent = ["docs/images/logo.svg", "docs/images/icon.svg", "docs/images/logo.png", "docs/images/icon.png"]
+
+[expect.contains]
+"README.md" = ['<h1 align="center">unbranded</h1>']
+"docs/index.md" = ["# unbranded"]
+
+[expect.lacks]
+"README.md" = ["docs/images/"]
+"docs/index.md" = ["images/", "<img"]
+"zensical.toml" = ["logo =", "favicon ="]

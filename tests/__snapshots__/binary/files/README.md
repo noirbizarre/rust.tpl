@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/icon.svg" alt="binary-example" width="160">
-</p>
-
 <h1 align="center">binary-example</h1>
 
 <p align="center"><strong>A binary without a library</strong></p>

@@ -1,4 +1,4 @@
-# full-example
+<h1 align="center"><img src="images/logo.svg" alt="full-example" width="480"></h1>
 
 Every optional slot turned on
 
