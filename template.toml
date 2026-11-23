@@ -94,9 +94,12 @@ prompt = "Cargo keywords (comma-separated, max 5)"
 default = "{{ 'cli' if has_bin else '' }}"
 
 [questions.categories]
-type = "string"
-prompt = "Cargo categories (comma-separated)"
-default = "{{ 'command-line-utilities,development-tools' if has_bin else 'development-tools' }}"
+type = "multi_choice"
+prompt = "Cargo categories"
+help = "Select zero to five crates.io category slugs."
+choices_from = "category_choices"
+max_choices = 5
+default = "{{ ['command-line-utilities', 'development-tools'] if has_bin else ['development-tools'] }}"
 
 [questions.bin_name]
 type = "string"
@@ -321,6 +324,12 @@ default_when_skipped = true
 [data.targets]
 source = "data/targets.toml"
 
+# This complete catalogue includes nested slugs; /categories lists only roots.
+# The extensionless API URL needs an explicit response format.
+[data.crates_io_categories]
+source = "https://crates.io/api/v1/category_slugs"
+format = "json"
+
 # --- Computed ---------------------------------------------------------------
 
 [computed]
@@ -329,6 +338,7 @@ has_icon = "{{ 'icon' in logos or 'raster-icon' in logos }}"
 icon_logo = "{{ 'icon.svg' if 'icon' in logos else ('icon.png' if 'raster-icon' in logos else '') }}"
 hero_logo = "{{ 'logo.svg' if 'wordmark' in logos else ('logo.png' if 'raster-wordmark' in logos else icon_logo) }}"
 
+category_choices = "{{ data.crates_io_categories.category_slugs | map(attribute='slug') | sort | list }}"
 # The project shape, as the three booleans every template file actually asks.
 # `kind` is read directly nowhere else, so a fifth shape changes these and not
 # thirty files.

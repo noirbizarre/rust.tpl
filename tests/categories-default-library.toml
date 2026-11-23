@@ -1,0 +1,7 @@
+[answers]
+crate = "categories-default-library"
+description = "Default library categories"
+kind = "library"
+
+[expect.contains]
+"Cargo.toml" = ['categories = ["development-tools"]']

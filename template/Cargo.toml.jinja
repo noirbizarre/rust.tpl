@@ -1,5 +1,4 @@
 {%- set keyword_list = keywords | split(',') | map('trim') | select | list -%}
-{%- set category_list = categories | split(',') | map('trim') | select | list -%}
 # {{ crate }} — {{ description }}
 #
 {%- if is_workspace %}
@@ -55,7 +54,7 @@ documentation = "{{ docs_url }}"
 {%- endif %}
 readme = "README.md"
 keywords = [{% for keyword in keyword_list %}"{{ keyword }}"{% if not loop.last %}, {% endif %}{% endfor %}]
-categories = [{% for category in category_list %}"{{ category }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+categories = [{% for category in categories %}"{{ category }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 {%- if not publish %}
 # Not published to crates.io. Distribution is through the release assets alone,
 # and `cargo install {{ crate }}` would create a second install path that

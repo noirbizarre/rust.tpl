@@ -1,0 +1,7 @@
+[answers]
+crate = "categories-invalid"
+description = "Invalid Cargo category"
+categories = ["not-a-crates-io-category"]
+
+[expect]
+error = "tpl::eval::invalid_choice"

@@ -72,7 +72,7 @@ Projects rendered before `kind` existed carry `workspace = true|false` in
 `.config/git.tpl.toml`; `git tpl update` shows a migration note explaining how
 to set `kind` instead.
 
-Two of these deserve a note:
+A few of these deserve a note:
 
 - **`copyright_year`** is a question, not a clock read. Rendering is
   deterministic by design, so the template has no access to the current date —
@@ -80,6 +80,28 @@ Two of these deserve a note:
 - **`targets`** is a `multi_choice` over `data/targets.toml`, which also carries
   the runner, asset name, `cross` flag and executable extension each target
   needs in the PR and publication matrices.
+- **`categories`** is a multiselect of zero to five slugs, including nested
+  categories, fetched live from the [crates.io API](https://crates.io/api/v1/category_slugs).
+  Binary-containing shapes default to `command-line-utilities` and
+  `development-tools`; other shapes default to `development-tools`.
+  This requires git-tpl 0.17.0 or newer for `max_choices` enforcement;
+  the development tool lock includes this support.
+
+Category answers are TOML arrays, for example:
+
+```toml
+categories = ["command-line-utilities", "development-tools::cargo-plugins"]
+```
+
+Use `categories = []` for no categories. Before updating an existing project,
+convert its CSV `categories` answer in `.config/git.tpl.toml` to an array.
+CLI overrides retain git-tpl's comma-separated multiselect syntax, for example
+`--answer categories=command-line-utilities,development-tools`.
+
+Rendering and template tests require network access to crates.io, even when
+categories are supplied, because git-tpl validates membership against the live
+catalogue. Noninteractive rendering and updates need `--trust` or an applicable
+git-tpl trust policy. API failures stop rendering; there is no bundled fallback.
 
 ### Logos (optional)
 
