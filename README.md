@@ -84,8 +84,8 @@ A few of these deserve a note:
   categories, fetched live from the [crates.io API](https://crates.io/api/v1/category_slugs).
   Binary-containing shapes default to `command-line-utilities` and
   `development-tools`; other shapes default to `development-tools`.
-  This requires a git-tpl build with `max_choices` support; the currently locked
-  0.14.3 release does not enforce that bound.
+  This requires git-tpl 0.17.0 or newer for `max_choices` enforcement;
+  the development tool lock includes this support.
 
 Category answers are TOML arrays, for example:
 
