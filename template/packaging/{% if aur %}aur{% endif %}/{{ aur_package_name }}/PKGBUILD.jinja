@@ -78,9 +78,9 @@ sha256sums_aarch64=('@SHA256_AARCH64@')
 {%- if service %}
 # The systemd user unit is fetched from the tag for the same reason.
 source=("LICENSE-$pkgver::$url/raw/$pkgver/LICENSE"
-        "{{ bin_name }}-$pkgver.service::$url/raw/$pkgver/packaging/systemd/{{ crate }}.service")
+	"{{ bin_name }}-$pkgver.service::$url/raw/$pkgver/packaging/systemd/{{ crate }}.service")
 sha256sums=('@SHA256_LICENSE@'
-            '@SHA256_SERVICE@')
+	'@SHA256_SERVICE@')
 {%- else %}
 source=("LICENSE-$pkgver::$url/raw/$pkgver/LICENSE")
 sha256sums=('@SHA256_LICENSE@')

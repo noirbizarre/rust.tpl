@@ -9,6 +9,8 @@ bin_name = "bee"
 aur = true
 aur_package_name = "bee-agent"
 archive = false
+# Exercise the multiline source/checksum arrays as well as the function body.
+service = true
 targets = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]
 
 [expect]
@@ -35,4 +37,9 @@ absent = ["packaging/aur/bee-bin/PKGBUILD"]
 ".github/workflows/aur.yaml" = ["bee-bin", "bee-agent-bin"]
 
 [commands]
-rendered = ["actionlint .github/workflows/aur.yaml", "bash -n packaging/aur/bee-agent/PKGBUILD"]
+rendered = [
+  "actionlint .github/workflows/aur.yaml",
+  "bash -n packaging/aur/bee-agent/PKGBUILD",
+  # Check the generated file against its own EditorConfig, not the template repository's.
+  "editorconfig-checker packaging/aur/bee-agent/PKGBUILD",
+]
