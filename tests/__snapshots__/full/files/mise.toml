@@ -16,8 +16,6 @@ lockfile = true
 idiomatic_version_file_enable_tools = []
 
 [tools]
-# Keep the install request stable and lockable; runtime selection lives in env.
-rust = { version = "stable", components = ["rustfmt", "clippy"], mr_boxington = true }
 mr-boxington = "latest"
 actionlint = "latest"
 # actionlint silently skips its shellcheck integration when the binary is absent
@@ -35,6 +33,11 @@ uv = "latest"
 # --- begin project-specific tools ---
 # Add project-wide tools here; tools needed by only one task belong on that task.
 # --- end project-specific tools ---
+
+# Mise orders tool paths by declaration order. Keep Rust after cargo tools so
+# older binaries in $CARGO_HOME/bin cannot shadow the project's locked versions.
+# Keep the install request stable and lockable; runtime selection lives in env.
+rust = { version = "stable", components = ["rustfmt", "clippy"], mr_boxington = true }
 
 [env]
 # dtolnay selects a rustup default, not RUSTUP_TOOLCHAIN. Explicit selections
